@@ -1,0 +1,554 @@
+/* === EMME STUDIO • styles.css (Light, Black & White) === */
+
+/* Palette */
+:root{
+  --bg:#FFFFFF;            /* sfondo pagina */
+  --surface:#F8FAFC;       /* superfici (card, blocchi) */
+  --ring:#E5E7EB;          /* bordi/linee */
+  --text:#111827;          /* testo principale (quasi nero) */
+  --muted:#4B5563;         /* testo attenuato */
+  --brand:#111111;         /* bottoni primari (nero) */
+  --brand-2:#000000;       /* gradiente nero pieno */
+  --white:#ffffff;
+}
+
+/* Base */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial,sans-serif;
+  background:var(--bg); color:var(--text);
+}
+a{color:#111827;text-decoration:none;transition:opacity .15s ease}
+a:hover{opacity:.8}
+img{max-width:100%;display:block}
+
+.container{max-width:1200px;margin:0 auto;padding:0 20px}
+section{padding:56px 0;border-bottom:1px solid var(--ring)}
+.intro{max-width:900px;margin:0 auto;color:var(--muted)}
+iframe{max-width:100%}
+
+/* Header / Navbar (bianca, testi neri) */
+header{
+  position:sticky; top:0; z-index:10;
+  background:#fff;
+  border-bottom:1px solid var(--ring);
+  box-shadow:0 2px 16px rgba(0,0,0,.06);
+}
+.nav{
+  display:flex; align-items:center; justify-content:space-between;
+  height:88px;
+}
+.brand{display:flex; gap:16px; align-items:center}
+.brand img{
+  height:180px; width:auto;
+  filter:drop-shadow(0 1px 6px rgba(0,0,0,.10));
+}
+.brand strong{ color:#111827; }
+.nav-links{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
+.nav a{ color:#111827; }
+.nav a.active{ color:#000; font-weight:700; }
+
+/* Bottoni (neri) */
+.btn{
+  padding:10px 16px; border-radius:10px; font-weight:600; color:var(--white);
+  background:linear-gradient(90deg,var(--brand),var(--brand-2));
+}
+.btn:hover{ opacity:.95 }
+.btn-outline{
+  padding:10px 16px; border-radius:10px;
+  color:#111827; border:1px solid #111827; background:transparent;
+}
+.btn-outline:hover{ background:#111827; color:#fff; }
+
+/* Hero (chiara) */
+.hero{
+  min-height:72vh; display:grid; place-items:center; text-align:center;
+  border-bottom:1px solid var(--ring);
+  background-size:cover; background-position:center;
+  /* Forza overlay chiaro su eventuale inline style scuro */
+  background-image:
+    linear-gradient(rgba(255,255,255,.60), rgba(255,255,255,.60)),
+    url('assets/hero_bg1.png') !important;
+}
+.hero h1{font-size:clamp(28px,4vw,48px);margin:0 0 12px}
+.hero p{margin:0 0 24px;color:var(--muted)}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* Card / Griglie */
+.cols-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.card{
+  background:var(--surface); border:1px solid var(--ring);
+  border-radius:16px; padding:18px;
+}
+
+/* Tabelle (Listino) */
+.table{width:100%;border-collapse:separate;border-spacing:0 8px}
+.table th{text-align:left;color:#374151;font-weight:600;padding:8px}
+.table td{padding:12px;background:var(--surface);border:1px solid var(--ring)}
+.table tr td:first-child{border-top-left-radius:12px;border-bottom-left-radius:12px}
+.table tr td:last-child{border-top-right-radius:12px;border-bottom-right-radius:12px}
+
+/* Portfolio */
+.grid-portfolio{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.thumb{display:block;border-radius:14px;overflow:hidden;border:1px solid var(--ring)}
+.thumb img{width:100%;display:block}
+
+/* Badge grigio chiaro */
+.badge{
+  display:inline-flex;gap:6px;align-items:center;
+  padding:6px 10px;border-radius:999px;
+  background:#F3F4F6; color:#111827; border:1px solid var(--ring);
+}
+
+/* Footer chiaro */
+footer{
+  padding:36px 0; color:#6B7280; text-align:center;
+  background:#F9FAFB; border-top:1px solid var(--ring);
+}
+
+/* Responsive */
+@media (max-width: 768px){
+  .nav{height:80px}
+}
+@media (max-width: 480px){
+  .nav{height:76px}
+  .brand img{height:48px}
+  .nav-links{gap:12px}
+}
+/* Navbar: menu "Prenota" a tendina */
+summary { list-style: none; cursor: pointer; }
+summary::-webkit-details-marker { display: none; }
+
+.nav .menu { position: relative; }
+.nav .menu .btn { display: inline-flex; align-items: center; gap: 8px; }
+.nav summary.btn { color: #fcfcfc; }        /* testo bianco nel bottone */
+.nav .menu[open] .btn { opacity: .95; }
+
+.nav .menu .menu-panel{
+  position: absolute; right: 0; top: calc(100% + 8px);
+  background: #fff; color: #111827; z-index: 20;
+  border: 1px solid var(--ring); border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  min-width: 240px; padding: 8px;
+}
+
+.nav .menu .menu-panel a{
+  display: block; padding: 10px 12px; color: #111827;
+}
+.nav .menu .menu-panel a:hover{
+  background: #F3F4F6;
+}
+.nav .menu .menu-panel hr{
+  border: 0; height: 1px; background: var(--ring); margin: 8px 0;
+}
+/* Navbar: menu "Prenota" a tendina */
+summary { list-style: none; cursor: pointer; }
+summary::-webkit-details-marker { display: none; }
+
+.nav .menu { position: relative; }
+.nav summary.btn{ color:#fcfcfc; display:inline-flex; align-items:center; gap:8px; }
+.nav .menu[open] .btn{ opacity:.95; }
+.nav summary.btn::after{ content:"▾"; font-size:12px; line-height:1; }
+
+/* Pannello */
+.nav .menu .menu-panel{
+  position:absolute; right:0; top:calc(100% + 8px);
+  background:#fff; color:#111827; z-index:20;
+  border:1px solid var(--ring); border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.12);
+  min-width:240px; padding:8px;
+}
+.nav .menu .menu-panel a{
+  display:block; padding:10px 12px; color:#111827;
+}
+.nav .menu .menu-panel a:hover{ background:#F3F4F6; }
+/* ===== Mobile menu (hamburger) ===== */
+
+/* Bottone hamburger (visibile solo su mobile) */
+.mobile-toggle{
+  display:none;
+  width:44px; height:44px; border:0; background:transparent;
+  background-image:url('assets/hamburger-black.svg');
+  background-repeat:no-repeat; background-position:center; background-size:24px 24px;
+  cursor:pointer; border-radius:10px;
+}
+header.menu-open .mobile-toggle{
+  background-image:url('assets/close-black.svg');
+}
+
+/* Drawer laterale */
+.mobile-drawer{
+  position:fixed; inset:0 auto 0 0; width:86%; max-width:320px; height:100vh;
+  background:#fff; color:#111827; transform:translateX(-100%);
+  transition:transform .25s ease; z-index:30; padding:16px 12px 24px;
+  border-right:1px solid var(--ring); box-shadow:0 10px 30px rgba(0,0,0,.12);
+  overflow-y:auto;
+}
+.mobile-drawer a{ display:block; padding:12px 10px; color:#111827; border-radius:8px; }
+.mobile-drawer a:hover{ background:#F3F4F6; }
+.mobile-drawer .mobile-sub{ margin-top:6px; }
+.mobile-drawer .mobile-sub > summary{
+  padding:12px 10px; border-radius:8px; cursor:pointer; list-style:none;
+}
+.mobile-drawer .mobile-sub > summary::-webkit-details-marker{ display:none; }
+.mobile-drawer .mobile-sub[open] > summary{ background:#F3F4F6; }
+.mobile-drawer .mobile-sub .sub{ padding-left:18px; }
+
+/* Overlay scuro dietro al drawer */
+.mobile-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.35);
+  opacity:0; visibility:hidden; transition:opacity .25s ease, visibility .25s;
+  z-index:25;
+}
+
+/* Stato open */
+header.menu-open .mobile-drawer{ transform:translateX(0); }
+header.menu-open .mobile-overlay{ opacity:1; visibility:visible; }
+
+/* Responsive behavior */
+@media (max-width: 900px){
+  .mobile-toggle{ display:inline-block; }
+  .nav{ gap:10px; }
+  .brand{ margin-left:6px; }
+  .nav-links{ display:none; } /* nasconde la navbar desktop */
+}
+/* ===== Docenti (grid di card con foto cliccabili) ===== */
+.teachers h2{ margin-bottom:6px; }
+.teacher-grid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap:16px;
+}
+@media (max-width: 1024px){ .teacher-grid{ grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px){ .teacher-grid{ grid-template-columns: 1fr; } }
+
+.teacher-card{
+  position:relative; display:block; border-radius:16px; overflow:hidden;
+  border:1px solid var(--ring);
+  aspect-ratio: 4/5; /* alto, verticale */
+  background:#EEE center/cover no-repeat;
+  transform: translateY(0); transition: transform .2s ease, box-shadow .2s ease;
+}
+.teacher-card::after{
+  content:""; position:absolute; inset:0;
+  background: linear-gradient(180deg, rgba(0,0,0,.00) 40%, rgba(0,0,0,.45) 100%);
+  transition: opacity .2s ease; opacity:.9;
+}
+.teacher-card span{
+  position:absolute; left:12px; bottom:12px;
+  color:#fff; font-weight:700; line-height:1.1;
+  background: rgba(0,0,0,.45);
+  padding:8px 10px; border-radius:10px; backdrop-filter: blur(2px);
+}
+.teacher-card:hover{ transform: translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.10); }
+
+/* Spazio tra descrizione e griglia docenti */
+.teachers .intro{
+  margin: 0 0 80px;   /* aumenta/riduci a piacere (es. 24–40px) */
+}
+/* Centra il contenuto della hero orizz./verticalmente */
+:root{ --header-h: 88px; }                   /* altezza header desktop */
+.hero{
+  min-height: calc(100vh - var(--header-h)); /* occupa il viewport meno l'header */
+  display: grid;
+  place-items: center;                        /* centra il .container */
+  text-align: center;
+}
+.hero > .container{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;                                  /* spazio tra h1 e intro */
+}
+
+/* mobile: header un po' più basso */
+@media (max-width: 480px){
+  :root{ --header-h: 76px; }
+}
+/* Spotify embed */
+.spotify-card iframe{
+  width:100%;
+  min-height:360px;
+  border:none;
+  border-radius:12px;
+}
+/* Spazio tra descrizione e player Spotify */
+#playlist .intro{
+  margin: 0 auto 20px;   /* centrata ai lati + 20px sotto */
+}
+/* Footer: social piccoli e in riga */
+footer .socials{
+  display:flex;              /* forza il layout orizzontale */
+  gap:8px;
+  justify-content:center;    /* centrati sotto tel/whatsapp/email */
+  align-items:center;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+footer .socials.icons .social-btn{
+  display:inline-flex;
+  width:32px;                /* <- riduci dimensione bottone */
+  height:32px;
+  padding:4px;
+  border-radius:999px;
+  border:1px solid var(--ring);
+  background:#F8FAFC;
+}
+footer .socials.icons .social-btn img{
+  width:32px;                /* <- riduci icone */
+  height:32px;
+}
+/* Footer: usa il PNG come bottone (niente bordo/sfondo extra) */
+footer .socials.icons{
+  display:flex; gap:8px; justify-content:center; align-items:center; margin-top:8px;
+}
+footer .socials.icons .social-btn{
+  width:32px; height:32px; padding:0;
+  background:transparent; border:none; box-shadow:none; border-radius:0;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+footer .socials.icons .social-btn img{
+  width:100%; height:100%; display:block; object-fit:contain; /* il PNG riempie il bottone */
+}
+/* Contatti: social più piccoli e in riga */
+#social .socials{
+  display:flex !important;          /* forza il layout orizzontale */
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;                   /* va a capo solo se manca spazio */
+  justify-content:flex-start;
+}
+#social .social-btn{
+  display:inline-flex !important;
+  align-items:center;
+  gap:6px;
+  padding:12px 24px;                  /* più compatti */
+  border:0; background:transparent; /* niente bordi/sfondi: i PNG sono già tondi */
+  text-decoration:none;
+}
+#social .social-btn img{
+  width:120px; height:120px;          /* << dimensione icone */
+  display:block; object-fit:contain;
+}
+#social .social-btn span{
+  font-size:14px; line-height:1;    /* testo compatto accanto all’icona */
+}
+#social .socials{ justify-content: center !important; }
+/* Chi siamo: centra i 3 bottoni */
+#chi-siamo .teacher-grid{
+  display:flex; justify-content:center; gap:16px; flex-wrap:wrap; align-items:center;
+}
+#chi-siamo .teacher-card{
+  width:260px;                /* dà dimensione alla card */
+  flex:0 0 auto;
+  aspect-ratio:4/5;           /* già presente: ok */
+}
+/* ---- Centra tutta la pagina Contatti ---- */
+.page-contatti main{ text-align:center; }
+
+/* assicura che i blocchi ereditino l'allineamento */
+.page-contatti h1,.page-contatti h2,.page-contatti h3,
+.page-contatti p,.page-contatti .intro,.page-contatti small,
+.page-contatti section,.page-contatti .card{ text-align:inherit; }
+
+/* centra gruppi orizzontali (bottoni, social, link) */
+.page-contatti .cta,
+.page-contatti .socials,
+.page-contatti .nav-links,
+.page-contatti .teacher-grid{ justify-content:center; }
+
+/* se usi card larghe, centralele nel container */
+.page-contatti .card{ margin-left:auto; margin-right:auto; }
+
+/* centra eventuali iframe (es. moduli) nel layout */
+.page-contatti iframe{ display:block; margin:0 auto; }
+/* Chi siamo: centra titolo e descrizione */
+#chi-siamo h2{ 
+  text-align: center !important;
+}
+#chi-siamo .intro{
+  text-align: center !important;
+  margin-left: auto; 
+  margin-right: auto;  /* resta centrata anche se ha larghezza max */
+}
+
+/* ---- Centra tutto il contenuto della HOME (index) ---- */
+.page-home .hero,
+.page-home main{ text-align:center; }
+
+/* ereditano il centraggio */
+.page-home h1,.page-home h2,.page-home h3,
+.page-home p,.page-home .intro,.page-home section,.page-home .card{ text-align:inherit; }
+
+/* gruppi di bottoni/link in HOME */
+.page-home main .nav-links{               /* il blocco "Vai ai moduli" */
+  display:flex; justify-content:center; gap:12px; flex-wrap:wrap;
+}
+.page-home .cta{                          /* righe di bottoni/contatti */
+  display:flex; justify-content:center; gap:12px; flex-wrap:wrap;
+}
+
+/* centra eventuali blocchi larghi */
+.page-home .card{ margin-left:auto; margin-right:auto; }
+
+/* iframe (sezione mappa): centrato come box */
+.page-home iframe{ display:block; margin:0 auto; }
+/* HOME: centra titoli, descrizioni e bottoni specifici */
+.page-home main > section > h2,
+.page-home #playlist h2,
+.page-home #home-map h2{
+  text-align: center !important;
+}
+
+.page-home main > section > p,
+.page-home #playlist .intro,
+.page-home #home-map .intro{
+  text-align: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* "Vai ai moduli" (bottoni) */
+.page-home main .nav-links{
+  display: flex !important;
+  justify-content: center !important;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* CTA (righe bottoni/contatti) */
+.page-home main .cta{
+  display: flex !important;
+  justify-content: center !important;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+/* Social rotondi per pagine docente */
+.teacher-socials{
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  margin-top:12px;
+}
+.teacher-socials .social-btn{
+  width:40px; height:40px; padding:0; border:0; background:transparent;
+  display:inline-flex; align-items:center; justify-content:center; border-radius:50%;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.teacher-socials .social-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(0,0,0,.08); }
+.teacher-socials .social-btn img{
+  width:100%; height:100%; object-fit:contain; display:block; /* PNG già rotondi */
+}
+/* Centro titolo "Seguimi" + icone social nelle pagine docente */
+.teacher-socials-block{
+  text-align:center;       /* centra il testo nel blocco */
+  margin-top:16px;
+}
+.teacher-socials-block h3{
+  margin:0 0 8px;          /* spazio sotto il titolo */
+  text-align:inherit;      /* eredita il center */
+}
+.teacher-socials{
+  display:flex;
+  justify-content:center;  /* centra le icone orizzontalmente */
+  gap:10px;
+  flex-wrap:wrap;
+}
+/* YouTube responsive embed */
+.video-embed{
+  position:relative; width:100%; max-width:980px; margin:0 auto;
+  border:1px solid var(--ring); border-radius:12px; overflow:hidden;
+}
+.video-embed::before{ content:""; display:block; padding-top:56.25%; } /* 16:9 */
+.video-embed iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+/* Sezione video in HOME: tutto centrato */
+#promo-video { 
+  text-align: center;                 /* centra h2 e p */
+}
+#promo-video .intro{
+  text-align: center !important;      /* forza il centro se altri stili prevalgono */
+  margin: 0 auto 16px !important;     /* centra il paragrafo e aggiunge spazio sotto */
+  max-width: 68ch;                    /* opzionale: larghezza comoda di lettura */
+}
+#promo-video .video-embed{
+  margin: 0 auto;                     /* centra il box del player */
+  /* già responsive con le regole che ti ho dato prima */
+}
+/* Sezione video: centra tutto e aumenta la larghezza del player */
+.page-home #promo-video{
+  display:grid;               /* centra gli elementi figli orizzontalmente */
+  justify-items:center;
+  text-align:center;          /* centra H2 e p */
+}
+
+.page-home #promo-video h2,
+.page-home #promo-video .intro{
+  text-align:center !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+.page-home #promo-video .video-embed{
+  width:100%;
+  max-width:1400px;           /* ↑ ingrandisci il player (prova 1280/1400 se vuoi) */
+  margin:0 auto;              /* centrato */
+}
+
+/* opzionale: ancora più grande su schermi larghi */
+@media (min-width: 1400px){
+  .page-home #promo-video .video-embed{ max-width:1280px; }
+}
+#portfolio-videos{ text-align:center; }
+#portfolio-videos .intro{ text-align:center; margin:0 auto 16px; }
+
+.video-strip{
+  display:flex; gap:16px;
+  overflow-x:auto; padding:8px 0 12px;
+  scroll-snap-type:x mandatory;
+}
+.video-card{ flex:0 0 1400px; scroll-snap-align:center; }
+.video-embed{
+  position:relative; width:100%;
+  border:1px solid var(--ring); border-radius:12px; overflow:hidden;
+}
+.video-embed::before{ content:""; display:block; padding-top:56.25%; }
+.video-embed iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+
+@media (max-width:1500px){
+  .video-card{ flex-basis:min(1400px, 92vw); }
+}
+/* --- Carousel video centrato (1400px) --- */
+#portfolio-videos{ text-align:center; }
+#portfolio-videos .intro{ text-align:center; margin:0 auto 16px; }
+
+.video-carousel{
+  position:relative; width:100%; max-width:1400px; margin:0 auto;
+  display:grid; justify-items:center;
+}
+.video-embed{
+  position:relative; width:100%;
+  border:1px solid var(--ring); border-radius:12px; overflow:hidden;
+}
+.video-embed::before{ content:""; display:block; padding-top:56.25%; } /* 16:9 */
+.video-embed iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+
+.vc-arrow{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:48px; height:48px; border-radius:50%;
+  background:rgba(255,255,255,.85); border:1px solid var(--ring);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  box-shadow:0 8px 20px rgba(0,0,0,.12); transition:background .15s ease, transform .15s ease;
+}
+.vc-arrow:hover{ background:#fff; transform:translateY(-50%) scale(1.04); }
+.vc-arrow.prev{ left:8px; }
+.vc-arrow.next{ right:8px; }
+
+.vc-dots{ display:flex; gap:8px; justify-content:center; margin-top:10px; }
+.vc-dots button{
+  width:8px; height:8px; border-radius:999px; border:0; background:#D1D5DB; cursor:pointer;
+}
+.vc-dots button.active{ background:#111827; }
+
+@media (max-width:640px){
+  .vc-arrow{ width:40px; height:40px; }
+}
