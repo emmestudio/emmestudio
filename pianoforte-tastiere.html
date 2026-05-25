@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pianoforte & Tastiere Elettroniche – EMME STUDIO</title>
+  <meta name="description" content="Corso di pianoforte e tastiere elettroniche a Caltanissetta, per principianti, intermedi e avanzati." />
+  <link rel="stylesheet" href="styles.css?v=modern3" />
+</head>
+
+<body>
+<header data-nav="v2">
+  <div class="container nav">
+    <button class="mobile-toggle" aria-label="Apri menu"></button>
+
+    <a class="brand" href="index.html">
+      <img src="assets/logo.png" alt="EMME STUDIO logo" />
+      <strong>EMME STUDIO</strong>
+    </a>
+
+    <nav class="nav-links" aria-label="Navigazione principale">
+      <a href="index.html">Home</a>
+      <a href="servizi.html">Servizi</a>
+      <a href="listino.html">Listino</a>
+      <a href="portfolio.html">Portfolio</a>
+      <a href="contatti.html">Contatti</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero" style="min-height:45vh">
+  <div class="container">
+    <h1>Pianoforte & Tastiere Elettroniche</h1>
+    <p class="intro">
+      Un percorso completo e personalizzato per scoprire, sviluppare e valorizzare
+      il proprio modo di vivere la musica.
+    </p>
+  </div>
+</section>
+
+<main class="container">
+
+  <section class="welcome-box course-layout">
+
+    <div class="course-photo">
+      <img src="assets/pianoforte-tastiere.jpg" alt="Corso di Pianoforte e Tastiere Elettroniche">
+    </div>
+
+    <div class="course-text">
+
+      <h2>Il tuo percorso musicale</h2>
+
+      <p class="intro">
+        Il corso di Pianoforte & Tastiere Elettroniche è pensato per accompagnare
+        ogni allievo in un percorso su misura, aperto a tutte le età e a tutti i livelli:
+        da chi parte da zero a chi desidera perfezionare tecnica, interpretazione e creatività.
+      </p>
+
+      <p>
+        Le lezioni uniscono lo studio del pianoforte tradizionale all’utilizzo delle tastiere moderne,
+        offrendo una formazione completa che abbraccia tecnica, lettura musicale, ritmo,
+        armonia, accompagnamento, improvvisazione e uso creativo dei suoni elettronici.
+      </p>
+
+      <p>
+        I principianti potranno costruire basi solide attraverso esercizi graduali,
+        studio dei primi brani, coordinazione delle mani e comprensione del linguaggio musicale.
+        Gli studenti intermedi e avanzati potranno invece approfondire repertorio,
+        arrangiamento, interpretazione, voicing, groove, synth, sound design e applicazioni in studio o dal vivo.
+      </p>
+
+      <p>
+        Il percorso è inclusivo, flessibile e personalizzato: ogni studente viene seguito
+        rispettando i propri tempi, i propri obiettivi e il proprio stile musicale,
+        con l’obiettivo di sviluppare autonomia, sensibilità artistica e sicurezza esecutiva.
+      </p>
+
+      <h2>Finalità del corso</h2>
+
+      <div class="services-grid">
+
+        <div class="service-card">
+          <h3>Tecnica Pianistica</h3>
+        </div>
+
+        <div class="service-card">
+          <h3>Lettura Musicale</h3>
+        </div>
+
+        <div class="service-card">
+          <h3>Armonia & Accompagnamento</h3>
+        </div>
+
+        <div class="service-card">
+          <h3>Improvvisazione</h3>
+        </div>
+
+        <div class="service-card">
+          <h3>Synth & Suoni Elettronici</h3>
+        </div>
+
+        <div class="service-card">
+          <h3>Preparazione Live e Studio</h3>
+        </div>
+
+      </div>
+
+      <div class="cta" style="margin-top:28px">
+        <a class="btn" href="lezioni.html">Iscriviti al corso</a>
+        <a class="btn-outline" href="contatti.html">Richiedi informazioni</a>
+      </div>
+
+    </div>
+
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center">
+      <div>© 2025 Marcello Lachina – EMME STUDIO</div>
+      <div>Via Pier Paolo Pasolini 7, Caltanissetta</div>
+      <div>
+        <a href="tel:+393515117303">Tel 351 511 7303</a> ·
+        <a href="https://wa.me/393515117303" target="_blank" rel="noopener">WhatsApp</a> ·
+        <a href="mailto:emmestudio.mixinfo@gmail.com">emmestudio.mixinfo@gmail.com</a>
+      </div>
+      <a href="privacy.html">Privacy & Cookie</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  document.querySelectorAll('header[data-nav="v2"]').forEach(function(h){
+    var btn = h.querySelector('.mobile-toggle');
+    var overlay = h.querySelector('.mobile-overlay');
+    var drawer = h.querySelector('.mobile-drawer');
+
+    function open(){
+      h.classList.add('menu-open');
+      document.documentElement.style.overflow = 'hidden';
+    }
+
+    function close(){
+      h.classList.remove('menu-open');
+      document.documentElement.style.overflow = '';
+    }
+
+    if(btn){
+      btn.addEventListener('click', function(){
+        h.classList.contains('menu-open') ? close() : open();
+      });
+    }
+
+    if(overlay){
+      overlay.addEventListener('click', close);
+    }
+
+    if(drawer){
+      drawer.querySelectorAll('a, summary').forEach(function(el){
+        el.addEventListener('click', function(){
+          setTimeout(close, 100);
+        });
+      });
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
