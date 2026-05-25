@@ -912,3 +912,7 @@ body::before{
     transform:translate3d(40px,-35px,0) scale(1.12);
   }
 }
+main,
+section{
+  background:transparent !important;
+}
