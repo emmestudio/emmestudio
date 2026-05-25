@@ -675,3 +675,6 @@ footer .socials.icons .social-btn img{
     width:100%;
   }
 }
+.teachers .teacher-grid{
+  justify-content:center;
+}
