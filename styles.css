@@ -879,3 +879,36 @@ body::before{
     transform:translateY(-30px) translateX(20px) scale(1.08);
   }
 }
+html{
+  background:#fff;
+}
+
+body{
+  position:relative;
+  overflow-x:hidden;
+  background:transparent !important;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:-120px;
+  z-index:-1;
+  pointer-events:none;
+
+  background:
+    radial-gradient(circle at 20% 20%, rgba(0,0,0,.08), transparent 28%),
+    radial-gradient(circle at 80% 30%, rgba(120,120,120,.12), transparent 30%),
+    radial-gradient(circle at 50% 80%, rgba(0,0,0,.06), transparent 28%);
+
+  animation:bgMove 14s ease-in-out infinite alternate;
+}
+
+@keyframes bgMove{
+  from{
+    transform:translate3d(0,0,0) scale(1);
+  }
+  to{
+    transform:translate3d(40px,-35px,0) scale(1.12);
+  }
+}
