@@ -800,3 +800,53 @@ footer .socials.icons .social-btn img{
     grid-template-columns:1fr;
   }
 }
+/* Animazioni generali moderne */
+section,
+.card,
+.welcome-box,
+.service-card,
+.video-embed,
+.spotify-card{
+  animation: fadeUp .8s ease both;
+}
+
+@keyframes fadeUp{
+  from{
+    opacity:0;
+    transform:translateY(24px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* Effetto hover su card e riquadri */
+.card,
+.service-card,
+.welcome-box{
+  transition:transform .25s ease, box-shadow .25s ease;
+}
+
+.card:hover,
+.service-card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 18px 40px rgba(0,0,0,.12);
+}
+
+/* Navbar più fluida */
+.nav a,
+.btn,
+.btn-outline{
+  transition:all .25s ease;
+}
+
+/* Immagini più moderne */
+img{
+  transition:transform .35s ease;
+}
+
+.thumb:hover img,
+.course-photo:hover img{
+  transform:scale(1.04);
+}
