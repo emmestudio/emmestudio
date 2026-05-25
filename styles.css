@@ -323,19 +323,27 @@ footer .socials.icons .social-btn img{
 #social .social-btn{
   display:inline-flex !important;
   align-items:center;
-  gap:6px;
-  padding:12px 24px;                  /* più compatti */
-  border:0; background:transparent; /* niente bordi/sfondi: i PNG sono già tondi */
+  justify-content:center;
+  width:42px;
+  height:42px;
+  padding:0;
+  border:0;
+  background:transparent;
   text-decoration:none;
 }
 #social .social-btn img{
-  width:120px; height:120px;          /* << dimensione icone */
-  display:block; object-fit:contain;
+  width:42px;
+  height:42px;
+  display:block;
+  object-fit:contain;
 }
 #social .social-btn span{
-  font-size:14px; line-height:1;    /* testo compatto accanto all’icona */
+  display:none;
 }
-#social .socials{ justify-content: center !important; }
+#social .socials{
+  justify-content:center !important;
+  gap:14px;
+}
 /* Chi siamo: centra i 3 bottoni */
 #chi-siamo .teacher-grid{
   display:flex; justify-content:center; gap:16px; flex-wrap:wrap; align-items:center;
@@ -551,4 +559,3 @@ footer .socials.icons .social-btn img{
 
 @media (max-width:640px){
   .vc-arrow{ width:40px; height:40px; }
-}
