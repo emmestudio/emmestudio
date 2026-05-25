@@ -559,3 +559,51 @@ footer .socials.icons .social-btn img{
 
 @media (max-width:640px){
   .vc-arrow{ width:40px; height:40px; }
+
+  .welcome-box{
+  max-width:1000px;
+  margin:56px auto;
+  padding:42px 34px;
+  border-radius:24px;
+  background:linear-gradient(135deg,#ffffff,#f3f4f6);
+  border:1px solid var(--ring);
+  box-shadow:0 18px 45px rgba(0,0,0,.08);
+  position:relative;
+  overflow:hidden;
+  animation:welcomeFade .8s ease both;
+}
+
+.welcome-box::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  background:linear-gradient(120deg,transparent,#11182722,transparent);
+  transform:translateX(-100%);
+  animation:welcomeLight 4s ease-in-out infinite;
+}
+
+.welcome-box h2,
+.welcome-box p{
+  position:relative;
+  z-index:1;
+}
+
+.welcome-box h2{
+  margin-top:0;
+  font-size:clamp(28px,4vw,42px);
+}
+
+.welcome-box p{
+  font-size:18px;
+  line-height:1.6;
+}
+
+@keyframes welcomeFade{
+  from{opacity:0; transform:translateY(18px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+@keyframes welcomeLight{
+  0%{transform:translateX(-100%);}
+  45%,100%{transform:translateX(100%);}
+}
