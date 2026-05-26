@@ -1030,3 +1030,33 @@ img{
   text-shadow:0 4px 16px rgba(0,0,0,.9);
   padding:20px;
 }
+.services-grid .service-card.image-card{
+  min-height:230px !important;
+  background-size:contain !important;
+  background-repeat:no-repeat !important;
+  background-position:center !important;
+  background-color:#111 !important;
+  color:#fff !important;
+}
+
+.services-grid .service-card.image-card::before{
+  display:none !important;
+}
+
+.services-grid .service-card.image-card::after{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  background:rgba(0,0,0,.55) !important;
+  z-index:1 !important;
+}
+
+.services-grid .service-card.image-card h3{
+  position:relative !important;
+  z-index:2 !important;
+  color:#fff !important;
+  font-size:30px !important;
+  font-weight:800 !important;
+  text-align:center !important;
+  text-shadow:0 4px 18px rgba(0,0,0,.95) !important;
+}
