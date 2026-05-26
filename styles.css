@@ -864,3 +864,81 @@ img{
     background-size:108%;
   }
 }
+/* Sezione Chi siamo - stile premium */
+#chi-siamo{
+  text-align:center;
+}
+
+#chi-siamo .teacher-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:26px;
+  margin-top:40px;
+}
+
+#chi-siamo .teacher-card{
+  width:auto;
+  min-height:390px;
+  border-radius:28px;
+  overflow:hidden;
+  position:relative;
+  background-size:cover;
+  background-position:center;
+  box-shadow:0 22px 55px rgba(0,0,0,.16);
+  transition:transform .35s ease, box-shadow .35s ease, filter .35s ease;
+}
+
+#chi-siamo .teacher-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    to top,
+    rgba(0,0,0,.82),
+    rgba(0,0,0,.25),
+    transparent
+  );
+  z-index:1;
+}
+
+#chi-siamo .teacher-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,.22),
+    transparent
+  );
+  transform:translateX(-120%);
+  transition:transform .7s ease;
+  z-index:2;
+}
+
+#chi-siamo .teacher-card:hover{
+  transform:translateY(-10px) scale(1.02);
+  box-shadow:0 32px 75px rgba(0,0,0,.22);
+  filter:saturate(1.08);
+}
+
+#chi-siamo .teacher-card:hover::after{
+  transform:translateX(120%);
+}
+
+#chi-siamo .teacher-card span{
+  position:absolute;
+  left:22px;
+  right:22px;
+  bottom:22px;
+  z-index:3;
+  color:#fff;
+  font-size:20px;
+  line-height:1.2;
+  font-weight:800;
+  text-align:left;
+  background:rgba(0,0,0,.32);
+  padding:14px 16px;
+  border-radius:16px;
+  backdrop-filter:blur(8px);
+}
