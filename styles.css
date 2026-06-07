@@ -1061,3 +1061,14 @@ img{
   text-shadow:0 4px 18px rgba(0,0,0,.95) !important;
 }
 
+.talent-section{
+  text-align:center;
+}
+
+.talent-section .intro{
+  margin-top:16px;
+}
+
+.talent-section .services-grid{
+  margin-top:34px;
+}
