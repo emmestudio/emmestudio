@@ -1128,3 +1128,24 @@ img{
     background-position:center right;
   }
 }
+.btn{
+    background:#ffffff;
+    color:#000;
+    border:2px solid #ffffff;
+}
+
+.btn-outline{
+    background:transparent;
+    color:#ffffff;
+    border:2px solid #ffffff;
+}
+
+.btn:hover{
+    background:transparent;
+    color:#ffffff;
+}
+
+.btn-outline:hover{
+    background:#ffffff;
+    color:#000;
+}
