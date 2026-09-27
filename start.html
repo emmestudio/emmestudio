@@ -2,295 +2,814 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Emme Studio — Music & Live Production a Caltanissetta. Produzione musicale, recording, mix & master, reamping, sequenze live, playback e MIDI programming.">
+
+  <meta
+    name="description"
+    content="Emme Studio — Music & Live Production a Caltanissetta. Produzione musicale, recording, mix & master, reamping, sequenze live, playback e MIDI programming."
+  >
+
   <title>Emme Studio | Music & Live Production</title>
+
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    body.start-page{
-      min-height:100vh;
+
+    /* =========================================
+       EMME STUDIO — INSTAGRAM LANDING PAGE
+       ========================================= */
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body.start-page {
+      min-height: 100vh;
+      color: #111827;
+
+      /*
+        Background premium:
+        base grigio chiarissimo +
+        glow centrale +
+        leggere sfumature laterali.
+      */
       background:
-        radial-gradient(circle at 50% 12%, rgba(17,24,39,.055) 0, rgba(17,24,39,.018) 28%, transparent 52%),
-        linear-gradient(180deg,#F8F9FB 0%,#F3F4F6 48%,#ECEFF2 100%);
-      color:#111827;
+        radial-gradient(
+          circle at 50% 18%,
+          rgba(255,255,255,0.98) 0%,
+          rgba(255,255,255,0.78) 20%,
+          rgba(255,255,255,0.20) 48%,
+          transparent 68%
+        ),
+
+        radial-gradient(
+          circle at 12% 45%,
+          rgba(17,24,39,0.045),
+          transparent 32%
+        ),
+
+        radial-gradient(
+          circle at 88% 65%,
+          rgba(17,24,39,0.04),
+          transparent 30%
+        ),
+
+        linear-gradient(
+          145deg,
+          #f8f9fb 0%,
+          #eef0f3 48%,
+          #e8ebef 100%
+        );
+
+      background-attachment: fixed;
     }
 
-    .start-shell{
-      min-height:100vh;
-      display:flex;
-      flex-direction:column;
+
+    /* Texture molto sottile */
+
+    body.start-page::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+
+      background-image:
+        linear-gradient(
+          rgba(17,24,39,0.012) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(17,24,39,0.012) 1px,
+          transparent 1px
+        );
+
+      background-size: 42px 42px;
+
+      mask-image:
+        linear-gradient(
+          to bottom,
+          rgba(0,0,0,.35),
+          transparent 75%
+        );
+
+      -webkit-mask-image:
+        linear-gradient(
+          to bottom,
+          rgba(0,0,0,.35),
+          transparent 75%
+        );
     }
 
-    .start-main{
-      flex:1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:38px 20px 30px;
+
+    /* =========================================
+       STRUTTURA
+       ========================================= */
+
+    .start-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
     }
 
-    .start-wrap{
-      width:min(100%, 820px);
-      margin:0 auto;
-      text-align:center;
-      position:relative;
+    .start-main {
+      flex: 1;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 36px 20px 30px;
     }
 
-    .start-wrap::before{
-      content:"";
-      position:absolute;
-      z-index:-1;
-      width:520px;
-      height:520px;
-      left:50%;
-      top:40px;
-      transform:translateX(-50%);
-      border-radius:50%;
-      background:radial-gradient(circle,rgba(255,255,255,.92) 0%,rgba(255,255,255,.42) 48%,transparent 72%);
-      filter:blur(8px);
-      pointer-events:none;
+    .start-wrap {
+      width: min(100%, 820px);
+      margin: 0 auto;
+
+      text-align: center;
+
+      position: relative;
     }
 
-    .start-logo{
-      width:min(520px, 84vw);
-      max-height:220px;
-      object-fit:contain;
-      margin:0 auto 10px;
+
+    /* Glow dietro al contenuto */
+
+    .start-wrap::before {
+      content: "";
+
+      position: absolute;
+
+      z-index: -1;
+
+      width: 650px;
+      height: 650px;
+
+      left: 50%;
+      top: 20px;
+
+      transform: translateX(-50%);
+
+      border-radius: 50%;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(255,255,255,.96) 0%,
+          rgba(255,255,255,.52) 42%,
+          transparent 72%
+        );
+
+      filter: blur(10px);
+
+      pointer-events: none;
     }
 
-    .start-kicker{
-      margin:0 0 34px;
-      font-size:13px;
-      line-height:1.4;
-      font-weight:900;
-      letter-spacing:.18em;
-      text-transform:uppercase;
-      color:#4B5563;
+
+    /* =========================================
+       LOGO
+       ========================================= */
+
+    .start-logo-link {
+      display: block;
+
+      width: min(390px, 72vw);
+      height: 120px;
+
+      margin: 0 auto 6px;
+
+      overflow: hidden;
+
+      position: relative;
     }
 
-    .start-title{
-      margin:0 auto 12px;
-      max-width:680px;
-      font-size:clamp(34px, 7vw, 62px);
-      line-height:1.02;
-      letter-spacing:-.04em;
+    /*
+      Il PNG originale contiene spazio bianco.
+      La scala aumenta il logo reale senza
+      modificare il file assets/logo.png.
+    */
+
+    .start-logo {
+      position: absolute;
+
+      width: 100%;
+      height: 100%;
+
+      left: 50%;
+      top: 50%;
+
+      object-fit: contain;
+
+      transform:
+        translate(-50%, -50%)
+        scale(1.55);
+
+      transform-origin: center;
+
+      margin: 0;
     }
 
-    .start-subtitle{
-      max-width:590px;
-      margin:0 auto 34px;
-      color:#4B5563;
-      font-size:clamp(16px, 2.4vw, 19px);
-      line-height:1.55;
+
+    /* =========================================
+       BRAND LABEL
+       ========================================= */
+
+    .start-kicker {
+      margin: 8px 0 34px;
+
+      font-size: 13px;
+      line-height: 1.4;
+
+      font-weight: 900;
+
+      letter-spacing: .20em;
+
+      text-transform: uppercase;
+
+      color: #374151;
     }
 
-    .start-services{
-      display:grid;
-      grid-template-columns:repeat(2, minmax(0,1fr));
-      gap:14px;
-      margin:0 auto 28px;
-      text-align:left;
+
+    /* =========================================
+       HERO
+       ========================================= */
+
+    .start-title {
+      margin: 0 auto 14px;
+
+      max-width: 700px;
+
+      font-size: clamp(36px, 7vw, 62px);
+
+      line-height: 1.02;
+
+      letter-spacing: -.045em;
+
+      color: #111827;
     }
 
-    .start-card{
-      padding:25px 24px;
-      border:1px solid #E5E7EB;
-      border-radius:22px;
-      background:rgba(255,255,255,.82);
-      backdrop-filter:blur(10px);
-      box-shadow:0 16px 42px rgba(17,24,39,.075);
+    .start-subtitle {
+      max-width: 620px;
+
+      margin: 0 auto 36px;
+
+      color: #4B5563;
+
+      font-size: clamp(16px, 2.4vw, 19px);
+
+      line-height: 1.55;
     }
 
-    .start-card-label{
-      display:block;
-      margin-bottom:16px;
-      font-size:12px;
-      font-weight:900;
-      letter-spacing:.14em;
-      text-transform:uppercase;
+
+    /* =========================================
+       SERVICES
+       ========================================= */
+
+    .start-services {
+      display: grid;
+
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+      gap: 16px;
+
+      margin: 0 auto 30px;
+
+      text-align: left;
     }
 
-    .start-card h2{
-      margin:0 0 14px;
-      font-size:24px;
-      line-height:1.1;
+    .start-card {
+      padding: 27px 25px;
+
+      border:
+        1px solid rgba(255,255,255,.85);
+
+      border-radius: 24px;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255,255,255,.90),
+          rgba(248,250,252,.76)
+        );
+
+      backdrop-filter: blur(14px);
+
+      -webkit-backdrop-filter: blur(14px);
+
+      box-shadow:
+        0 18px 45px rgba(17,24,39,.075),
+        inset 0 1px 0 rgba(255,255,255,.9);
+
+      transition:
+        transform .25s ease,
+        box-shadow .25s ease;
     }
 
-    .start-card ul{
-      margin:0;
-      padding:0;
-      list-style:none;
-      color:#4B5563;
-      line-height:1.8;
-      font-size:15px;
+    .start-card:hover {
+      transform: translateY(-4px);
+
+      box-shadow:
+        0 24px 55px rgba(17,24,39,.11),
+        inset 0 1px 0 rgba(255,255,255,.95);
     }
 
-    .start-actions{
-      display:grid;
-      gap:10px;
-      margin-top:8px;
+    .start-card-label {
+      display: block;
+
+      margin-bottom: 15px;
+
+      font-size: 12px;
+
+      font-weight: 900;
+
+      letter-spacing: .15em;
+
+      text-transform: uppercase;
+
+      color: #111827;
+    }
+
+    .start-card h2 {
+      margin: 0 0 15px;
+
+      font-size: 24px;
+
+      line-height: 1.1;
+
+      color: #111827;
+    }
+
+    .start-card ul {
+      margin: 0;
+
+      padding: 0;
+
+      list-style: none;
+
+      color: #4B5563;
+
+      line-height: 1.85;
+
+      font-size: 15px;
+    }
+
+
+    /* =========================================
+       CTA
+       ========================================= */
+
+    .start-actions {
+      display: grid;
+
+      gap: 11px;
+
+      margin-top: 8px;
     }
 
     .start-primary,
-    .start-secondary{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      width:100%;
-      min-height:58px;
-      border-radius:14px;
-      padding:14px 20px;
-      font-weight:800;
-      transition:transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+    .start-secondary {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      width: 100%;
+
+      min-height: 58px;
+
+      border-radius: 15px;
+
+      padding: 14px 20px;
+
+      font-weight: 800;
+
+      letter-spacing: .01em;
+
+      transition:
+        transform .2s ease,
+        box-shadow .2s ease,
+        background .2s ease,
+        color .2s ease;
     }
 
-    .start-primary{
-      background:#111;
-      color:#fff;
-      border:2px solid #111;
-      box-shadow:0 12px 28px rgba(0,0,0,.13);
+
+    /* CTA principale */
+
+    .start-primary {
+      background: #111111;
+
+      color: #ffffff;
+
+      border: 2px solid #111111;
+
+      box-shadow:
+        0 14px 32px rgba(0,0,0,.16);
     }
 
-    .start-secondary{
+    .start-primary:hover {
+      transform: translateY(-2px);
+
+      background: #000;
+
+      color: #fff;
+
+      box-shadow:
+        0 18px 40px rgba(0,0,0,.20);
+
+      opacity: 1;
+    }
+
+
+    /* CTA secondaria */
+
+    .start-secondary {
       background:
-        radial-gradient(circle at 50% 12%, rgba(17,24,39,.055) 0, rgba(17,24,39,.018) 28%, transparent 52%),
-        linear-gradient(180deg,#F8F9FB 0%,#F3F4F6 48%,#ECEFF2 100%);
-      color:#111827;
-      border:1px solid #D1D5DB;
+        rgba(255,255,255,.62);
+
+      color: #111827;
+
+      border:
+        1px solid rgba(17,24,39,.14);
+
+      backdrop-filter: blur(8px);
+
+      -webkit-backdrop-filter: blur(8px);
     }
 
-    .start-primary:hover,
-    .start-secondary:hover{
-      transform:translateY(-2px);
-      opacity:1;
+    .start-secondary:hover {
+      transform: translateY(-2px);
+
+      background: #ffffff;
+
+      color: #111827;
+
+      opacity: 1;
     }
 
-    .start-meta{
-      margin:26px 0 0;
-      color:#6B7280;
-      font-size:13px;
-      line-height:1.7;
+
+    /* =========================================
+       META
+       ========================================= */
+
+    .start-meta {
+      margin: 28px 0 0;
+
+      color: #6B7280;
+
+      font-size: 13px;
+
+      line-height: 1.7;
     }
 
-    .start-meta a{
-      font-weight:700;
-      color:#111827;
+    .start-meta a {
+      font-weight: 700;
+
+      color: #111827;
     }
 
-    .start-footer{
-      padding:18px 20px 26px;
-      text-align:center;
-      color:#9CA3AF;
-      font-size:12px;
-      border-top:0;
-      background:transparent;
+
+    /* =========================================
+       FOOTER
+       ========================================= */
+
+    .start-footer {
+      padding: 18px 20px 26px;
+
+      text-align: center;
+
+      color: #9CA3AF;
+
+      font-size: 12px;
+
+      border: 0;
+
+      background: transparent;
     }
 
-    @media (max-width:640px){
-      .start-main{
-        align-items:flex-start;
-        padding-top:24px;
+
+    /* =========================================
+       MOBILE
+       ========================================= */
+
+    @media (max-width: 640px) {
+
+      .start-main {
+        align-items: flex-start;
+
+        padding:
+          20px 16px 28px;
       }
 
-      .start-logo{
-        width:min(390px, 88vw);
-        max-height:165px;
+
+      /* Logo più importante anche su smartphone */
+
+      .start-logo-link {
+        width: min(350px, 88vw);
+
+        height: 105px;
+
+        margin-bottom: 4px;
       }
 
-      .start-kicker{
-        margin-bottom:27px;
+      .start-logo {
+        transform:
+          translate(-50%, -50%)
+          scale(1.55);
       }
 
-      .start-title{
-        font-size:clamp(34px, 11vw, 48px);
+
+      .start-kicker {
+        margin:
+          6px 0 27px;
+
+        font-size: 11px;
+
+        letter-spacing: .18em;
       }
 
-      .start-subtitle{
-        margin-bottom:26px;
+
+      .start-title {
+        font-size:
+          clamp(35px, 11vw, 48px);
+
+        line-height: 1.02;
       }
 
-      .start-services{
-        grid-template-columns:1fr;
+
+      .start-subtitle {
+        margin-bottom: 27px;
+
+        padding: 0 4px;
+
+        font-size: 16px;
       }
 
-      .start-card{
-        padding:22px 20px;
+
+      .start-services {
+        grid-template-columns: 1fr;
+
+        gap: 13px;
+
+        margin-bottom: 24px;
       }
+
+
+      .start-card {
+        padding: 23px 21px;
+
+        border-radius: 20px;
+      }
+
+
+      .start-card h2 {
+        font-size: 22px;
+      }
+
+
+      .start-primary,
+      .start-secondary {
+        min-height: 56px;
+
+        font-size: 14px;
+      }
+
+
+      .start-wrap::before {
+        width: 420px;
+
+        height: 520px;
+      }
+
     }
+
+
+    /* =========================================
+       SMALL MOBILE
+       ========================================= */
+
+    @media (max-width: 380px) {
+
+      .start-title {
+        font-size: 34px;
+      }
+
+      .start-logo-link {
+        height: 92px;
+      }
+
+      .start-card {
+        padding: 21px 18px;
+      }
+
+    }
+
   </style>
 </head>
 
+
 <body class="start-page">
+
   <div class="start-shell">
+
     <main class="start-main">
+
       <div class="start-wrap">
 
-        <a href="index.html" aria-label="Vai al sito Emme Studio">
-          <img class="start-logo" src="assets/logo.png" alt="Emme Studio">
+
+        <!-- LOGO -->
+
+        <a
+          class="start-logo-link"
+          href="index.html"
+          aria-label="Vai al sito Emme Studio"
+        >
+
+          <img
+            class="start-logo"
+            src="assets/logo.png"
+            alt="Emme Studio"
+          >
+
         </a>
 
-        <p class="start-kicker">Music &amp; Live Production</p>
 
-        <h1 class="start-title">Hai un progetto?<br>Portiamolo al livello successivo.</h1>
+        <!-- IDENTITÀ -->
 
-        <p class="start-subtitle">
-          Dalla produzione in studio alla preparazione del live:
-          un unico workflow per costruire, rifinire e portare sul palco la tua musica.
+        <p class="start-kicker">
+          Music &amp; Live Production
         </p>
 
+
+        <!-- HERO -->
+
+        <h1 class="start-title">
+          Hai un progetto?<br>
+          Portiamolo al livello successivo.
+        </h1>
+
+
+        <p class="start-subtitle">
+
+          Dalla produzione in studio alla preparazione del live:
+          un unico workflow per costruire, rifinire e portare sul palco
+          la tua musica.
+
+        </p>
+
+
+        <!-- SERVIZI -->
+
         <div class="start-services">
-          <article class="start-card">
-            <span class="start-card-label">Studio</span>
-            <h2>Music Production</h2>
-            <ul>
-              <li>Produzione &amp; Arrangiamento</li>
-              <li>Recording</li>
-              <li>Editing</li>
-              <li>Mix &amp; Master</li>
-              <li>Reamping</li>
-            </ul>
-          </article>
+
+
+          <!-- STUDIO -->
 
           <article class="start-card">
-            <span class="start-card-label">Live</span>
-            <h2>Live Production</h2>
+
+            <span class="start-card-label">
+              Studio
+            </span>
+
+            <h2>
+              Music Production
+            </h2>
+
             <ul>
-              <li>Live Sequences</li>
-              <li>Playback Programming</li>
-              <li>MIDI Programming</li>
+
+              <li>
+                Produzione &amp; Arrangiamento
+              </li>
+
+              <li>
+                Recording
+              </li>
+
+              <li>
+                Editing
+              </li>
+
+              <li>
+                Mix &amp; Master
+              </li>
+
+              <li>
+                Reamping
+              </li>
+
             </ul>
+
           </article>
+
+
+          <!-- LIVE -->
+
+          <article class="start-card">
+
+            <span class="start-card-label">
+              Live
+            </span>
+
+            <h2>
+              Live Production
+            </h2>
+
+            <ul>
+
+              <li>
+                Live Sequences
+              </li>
+
+              <li>
+                Playback Programming
+              </li>
+
+              <li>
+                MIDI Programming
+              </li>
+
+            </ul>
+
+          </article>
+
         </div>
 
+
+        <!-- CTA -->
+
         <div class="start-actions">
+
+
+          <!-- WHATSAPP -->
+
           <a
             class="start-primary"
             href="https://wa.me/393515117303?text=Ciao%21%20Ho%20scoperto%20Emme%20Studio%20su%20Instagram%20e%20vorrei%20parlarvi%20del%20mio%20progetto."
             target="_blank"
             rel="noopener noreferrer"
           >
+
             RACCONTACI IL TUO PROGETTO →
+
           </a>
 
-          <a class="start-secondary" href="index.html">
+
+          <!-- SITO -->
+
+          <a
+            class="start-secondary"
+            href="index.html"
+          >
+
             Scopri Emme Studio →
+
           </a>
+
         </div>
 
+
+        <!-- INFO -->
+
         <p class="start-meta">
-          Caltanissetta, Sicily<br>
-          <a href="https://www.instagram.com/emmestudio_recording/" target="_blank" rel="noopener noreferrer">
+
+          Caltanissetta, Sicily
+
+          <br>
+
+          <a
+            href="https://www.instagram.com/emmestudio_recording/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+
             @emmestudio_recording
+
           </a>
+
         </p>
 
       </div>
+
     </main>
 
+
     <footer class="start-footer">
+
       © Emme Studio
+
     </footer>
+
+  </div>
+
+</body>
+</html>
   </div>
 </body>
 </html>
