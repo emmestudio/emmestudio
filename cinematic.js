@@ -30,7 +30,7 @@ if (menu && navigation) {
 // Short, one-time entrances. The reading flow always uses native browser scrolling.
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let revealObserver;
-const revealItems = [...document.querySelectorAll('.section-heading, .cards article, .split-copy, .studio-photo, .live-grid > div, .work-links > a, .contact > h2, .contact > .actions, .contact-details')];
+const revealItems = [...document.querySelectorAll('.section-heading, .cards article, .split-copy, .studio-photo, .live-grid > div, .work-links > a, .contact > h2, .contact > .actions, .contact-details, .team-card, .contact-info, .map-card')];
 function revealAll() {
   revealObserver?.disconnect();
   revealItems.forEach((item) => item.classList.add('is-visible'));
