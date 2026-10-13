@@ -2,7 +2,7 @@
 
 Applicazione Next.js separata dal sito GitHub Pages, accesso Google riservato al proprietario verificato, token OAuth cifrati nel database e pagine escluse dall'indicizzazione.
 
-Dashboard e archivio persistente dei progetti; calendario dedicato con lettura e scrittura dirette su Google. Lo scope Calendar è autorizzato separatamente dall'identità. Gli accessi del team NON sono ancora attivi. Specifiche e limiti: `../docs/CALENDAR-APPOINTMENTS.md` e `../docs/PROJECT-MANAGEMENT.md`.
+Dashboard e archivio persistente dei progetti; calendario dedicato con lettura e scrittura dirette su Google. Lo scope Calendar è autorizzato separatamente dall'identità. Accessi del team con ruoli Consultazione e Modifica, abilitati dall’amministratore. Gli account artista limitati a singoli progetti non sono ancora disponibili. Specifiche e limiti: `../docs/CALENDAR-APPOINTMENTS.md` e `../docs/PROJECT-MANAGEMENT.md`.
 
 ## Configurazione
 Progetto Vercel dedicato, root directory `portal-backend`. Non cambiare il progetto Accademia né il branch main.
@@ -21,4 +21,4 @@ Solo dopo configurazione e migrazione: avviare e verificare OAuth, rifiuto accou
 La tabella progetti è descritta in `db/002-projects.sql`; `scripts/migrate-projects.mjs` è un comando esplicito di configurazione sul progetto Emme Studio. Il build ordinario resta `npm run build`, senza seed, test su eventi esterni o migrazioni automatiche.
 
 ## Fasi successive
-Permessi per team e progetti, brani/versioni, revisioni e attività. Il calendario usa Google come unico archivio degli eventi: non occorre un outbox o un mirror nel database in questa prima versione. Un eventuale mirror con webhook richiederà una fase separata.
+Permessi per artisti e singoli progetti, brani/versioni, revisioni e archivio file. Il calendario usa Google come unico archivio degli eventi: non occorre un outbox o un mirror nel database in questa prima versione. Un eventuale mirror con webhook richiederà una fase separata.

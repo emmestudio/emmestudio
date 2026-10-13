@@ -2,6 +2,8 @@ import { getAuth } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { ownerAllowed } from '@/lib/config';
 import { calendarAuthorized, sameOrigin } from '@/lib/calendar-policy';
+import { workspaceSession } from '@/lib/workspace-session';
+import { canManageAccess } from '@/lib/access-policy';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const reply = (data: unknown, status = 200) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -17,12 +19,13 @@ async function context(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const ctx = await context(request);
-    if (!ctx) return reply({ error: 'Accesso richiesto.' }, 401);
-    const permission = Boolean(ctx.google && calendarAuthorized(ctx.google.scopes));
-    const result = await getDb().query('SELECT calendar_id, state FROM studio_calendar WHERE owner_id=$1', [ctx.session.user.id]);
+    const session = await workspaceSession(request.headers);
+    if (!session) return reply({ error: 'Accesso richiesto.' }, 401);
+    const account = await getDb().query('SELECT scope FROM account WHERE "userId"=$1 AND "providerId"=$2', [session.workspaceOwnerId, 'google']);
+    const permission = Boolean(account.rows[0] && calendarAuthorized((account.rows[0].scope ?? '').split(/[ ,]+/)));
+    const result = await getDb().query('SELECT calendar_id, state FROM studio_calendar WHERE owner_id=$1', [session.workspaceOwnerId]);
     const row = result.rows[0];
-    return reply({ permission, state: row?.state ?? 'idle', connected: Boolean(row?.calendar_id), calendarName: row?.calendar_id ? 'Emme Studio — Appuntamenti' : null });
+    return reply({ permission, state: row?.state ?? 'idle', connected: Boolean(row?.calendar_id), calendarName: row?.calendar_id ? 'Emme Studio — Appuntamenti' : null, canManage: canManageAccess(session.role) });
   } catch { return reply({ error: 'Impossibile verificare il collegamento. Riprova tra poco.' }, 503); }
 }
 

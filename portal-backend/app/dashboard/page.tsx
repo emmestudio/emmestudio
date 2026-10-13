@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { ownerSession } from '@/lib/owner-session';
+import { workspaceSession } from '@/lib/workspace-session';
 import { listProjects } from '@/lib/projects';
 import { calendarContext } from '@/lib/calendar-context';
 import { projectProgress } from '@/lib/project-data';
@@ -11,13 +11,13 @@ import { localDisplay } from '@/lib/event-data';
 export const dynamic = 'force-dynamic';
 const date = new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 export default async function Page() {
-  const requestHeaders = await headers(); const session = await ownerSession(requestHeaders);
+  const requestHeaders = await headers(); const session = await workspaceSession(requestHeaders);
   if (!session) redirect('/accesso');
   const now = new Date(); const end = new Date(now.getTime() + 30 * 86400000);
   const [projectResult, calendarResult, taskResult] = await Promise.allSettled([
-    listProjects(session.user.id),
+    listProjects(session.workspaceOwnerId),
     calendarContext(new Request(process.env.BETTER_AUTH_URL! + '/dashboard', { headers: requestHeaders })).then(({ events }) => events.list(now.toISOString(), end.toISOString())),
-    listTasks(session.user.id)
+    listTasks(session.workspaceOwnerId)
   ]);
   const projects = projectResult.status === 'fulfilled' ? projectResult.value : [];
   const active = projects.filter(project => !['Completato', 'Archiviato'].includes(project.status));

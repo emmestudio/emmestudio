@@ -16,8 +16,8 @@ export async function GET(request: Request) {
     const params = new URL(request.url).searchParams;
     const start = params.get('start') ?? ''; const end = params.get('end') ?? '';
     if (!/^\d{4}-\d{2}-\d{2}T/.test(start) || !/^\d{4}-\d{2}-\d{2}T/.test(end) || !Number.isFinite(Date.parse(start)) || !Number.isFinite(Date.parse(end)) || Date.parse(end) <= Date.parse(start) || Date.parse(end) - Date.parse(start) > 400 * 86400000) return reply({ error: 'Intervallo calendario non valido.' }, 400);
-    const { events } = await calendarContext(request);
-    return reply({ events: (await events.list(start, end)).map(view), checkedAt: new Date().toISOString() });
+    const { events, canEdit, canOpenGoogle } = await calendarContext(request);
+    return reply({ events: (await events.list(start, end)).map(view), checkedAt: new Date().toISOString(), canEdit, canOpenGoogle });
   } catch (error) { return failure(error); }
 }
 async function mutate(request: Request, action: 'create' | 'update' | 'remove') {
@@ -26,7 +26,7 @@ async function mutate(request: Request, action: 'create' | 'update' | 'remove') 
     const body = await request.json().catch(() => null);
     if (!body || typeof body.id !== 'string' || !/^[a-zA-Z0-9_-]{5,1024}$/.test(body.id)) return reply({ error: 'Richiesta appuntamento non valida.' }, 400);
     if (action !== 'create' && (typeof body.etag !== 'string' || !body.etag || body.etag.length > 200 || /[\r\n]/.test(body.etag))) return reply({ error: 'Versione appuntamento non valida. Aggiorna l’elenco.' }, 400);
-    const { events } = await calendarContext(request);
+    const { events } = await calendarContext(request, true);
     if (action === 'remove') { await events.remove(body.id, body.etag); return reply({ removed: true }); }
     let event: GoogleEvent;
     try { event = action === 'create' ? await events.create(body.id, body.draft) : await events.update(body.id, body.etag, body.draft); }

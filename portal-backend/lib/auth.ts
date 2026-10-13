@@ -3,7 +3,8 @@ import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { Pool } from "pg";
-import { configurationReady, ownerAllowed } from "./config";
+import { configurationReady } from "./config";
+import { allowedLogin } from './login-access';
 
 let instance: ReturnType<typeof betterAuth> | undefined;
 
@@ -28,14 +29,14 @@ export function getAuth() {
     },
     databaseHooks: {
       user: { create: { before: async user => {
-        if (!ownerAllowed(user.email, user.emailVerified)) throw new APIError("FORBIDDEN", { message: "Accesso riservato all'amministratore dello studio." });
+        if (!await allowedLogin(user.email, user.emailVerified)) throw new APIError("FORBIDDEN", { message: "Questo account non è abilitato al portale." });
         return { data: user };
       } } },
       session: { create: { before: async session => {
         // Re-check every login, including accounts already registered.
         const ctx = await instance!.$context;
         const user = await ctx.internalAdapter.findUserById(session.userId);
-        if (!user || !ownerAllowed(user.email, user.emailVerified)) throw new APIError("FORBIDDEN", { message: "Accesso non abilitato." });
+        if (!user || !await allowedLogin(user.email, user.emailVerified)) throw new APIError("FORBIDDEN", { message: "Accesso non abilitato." });
         return { data: session };
       } } }
     },
