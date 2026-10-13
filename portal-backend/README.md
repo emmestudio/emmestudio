@@ -1,8 +1,8 @@
 # Emme Studio — backend del portale
 
-Prima fase: applicazione Next.js separata dal sito GitHub Pages, accesso Google riservato al proprietario verificato, token OAuth cifrati nel database, stato di configurazione esplicito e pagine escluse dall'indicizzazione.
+Applicazione Next.js separata dal sito GitHub Pages, accesso Google riservato al proprietario verificato, token OAuth cifrati nel database e pagine escluse dall'indicizzazione.
 
-La sincronizzazione Calendar e gli accessi del team NON sono ancora attivi. Nessun evento reale viene scritto. Il client OAuth iniziale richiede solo identità; lo scope Calendar sarà richiesto separatamente al collegamento del calendario.
+Dashboard e archivio persistente dei progetti; calendario dedicato con lettura e scrittura dirette su Google. Lo scope Calendar è autorizzato separatamente dall'identità. Gli accessi del team NON sono ancora attivi. Specifiche e limiti: `../docs/CALENDAR-APPOINTMENTS.md` e `../docs/PROJECT-MANAGEMENT.md`.
 
 ## Configurazione
 Progetto Vercel dedicato, root directory `portal-backend`. Non cambiare il progetto Accademia né il branch main.
@@ -17,5 +17,8 @@ Provisionare un database Postgres separato. Dopo linking e verifica ambiente, ge
 `npm ci`, `npm run typecheck`, `npm test`, `npm run build`.
 Solo dopo configurazione e migrazione: avviare e verificare OAuth, rifiuto account diversi e revoca sessioni. GET `/api/health` espone soltanto lo stato, senza valori delle variabili.
 
+## Migrazioni delle nuove funzionalità
+La tabella progetti è descritta in `db/002-projects.sql`; `scripts/migrate-projects.mjs` è un comando esplicito di configurazione sul progetto Emme Studio. Il build ordinario resta `npm run build`, senza seed, test su eventi esterni o migrazioni automatiche.
+
 ## Fasi successive
-Collegamento calendario dedicato con scope minimo; archivio persistente appuntamenti/outbox; sincronizzazione bidirezionale con etag, watch, syncToken e recupero errori; test end-to-end; permessi per team e progetti. Specifica: `../docs/GOOGLE-CALENDAR-INTEGRATION.md`.
+Permessi per team e progetti, brani/versioni, revisioni e attività. Il calendario usa Google come unico archivio degli eventi: non occorre un outbox o un mirror nel database in questa prima versione. Un eventuale mirror con webhook richiederà una fase separata.
