@@ -62,3 +62,12 @@ Branch di lavoro: `restyling-cinematic-2026`. Nessuna modifica a `main`, hosting
 - Regia: lieve zoom al passaggio del mouse; pannello live con reticolo tecnico discreto.
 - Nessuna libreria aggiuntiva, nessun autoplay e nessuno scroll artificiale. Movimento ridotto rispettato anche se la preferenza cambia durante la visita. Senza JavaScript i contenuti restano visibili.
 - Logo bianco allegato inserito come `assets/logo-white.png`, copia identica del PNG ricevuto. Nessuno sfondo aggiunto; margini trasparenti gestiti con CSS, marchio e cornice conservati. Eliminata la scritta duplicata accanto al logo.
+
+### Verifica della revisione dinamica
+
+- Sintassi JavaScript e controllo whitespace superati.
+- Browser desktop: PNG bianco caricato, marchio e cornice interamente visibili, nessun overflow orizzontale.
+- Ingressi osservati sulle tre schede (opacità finale 1), transizioni attive, contenuti Live visibili dopo navigazione.
+- Barra di avanzamento aggiornata durante lo scorrimento e voce Live Show contrassegnata come sezione corrente.
+- Ritorno al contenuto tramite skip link verificato.
+- Verifica visuale mobile ancora pendente come nella prima fase. Riduzione movimento gestita nel codice e nel CSS; non emulata nel browser cloud.
