@@ -231,3 +231,4 @@
 .process-list li:hover{transform:translateY(-4px);border-color:#807359;background:#202228;box-shadow:0 12px 32px #0003}
 @media(max-width:650px){.process-list{grid-template-columns:1fr}.process-list li{padding:28px}.process-label{margin-bottom:20px}}
 @media(hover:none),(prefers-reduced-motion:reduce){.process-list li:hover{transform:none}}
+.process-list li{gap:0}
