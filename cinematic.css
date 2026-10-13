@@ -11,3 +11,57 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
 /* Keep the original dark logo readable on the Cinematic header. */
 .brand img{background:var(--fg);border-radius:2px;padding:3px}
+
+/* Cinematic motion: native scrolling, composited transforms, no scroll hijacking. */
+:root{--ease-out:cubic-bezier(.16,1,.3,1);--scroll-progress:0;--glow:#c9ae8638}
+.nav::after{content:"";position:absolute;bottom:-1px;left:0;right:0;height:2px;background:linear-gradient(90deg,#c9ae86,#ece1ca);transform:scaleX(var(--scroll-progress));transform-origin:left;pointer-events:none}
+.nav{transition:box-shadow .35s ease,background .35s ease}
+.nav.is-scrolled{background:#101114fa;box-shadow:0 12px 34px #0003}
+#links>a:not(.navcta){position:relative}
+#links>a:not(.navcta)::after{content:"";position:absolute;bottom:4px;left:0;right:0;height:1px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease-out)}
+#links>a:hover::after,#links>a[aria-current="location"]::after{transform:scaleX(1)}
+#links>a[aria-current="location"]{color:var(--accent)}
+.button,.navcta{position:relative;isolation:isolate;overflow:hidden;transition:transform .4s var(--ease-out),box-shadow .4s ease,background .3s ease,border-color .3s ease,color .3s ease}
+.button::before,.navcta::before{content:"";position:absolute;inset:-80% -40%;z-index:-1;background:linear-gradient(115deg,transparent 35%,#ffffff4d 50%,transparent 65%);transform:translateX(-100%);transition:transform .75s var(--ease-out);pointer-events:none}
+.button>span[aria-hidden],.navcta>span[aria-hidden],.text-link>span[aria-hidden],.cards a>span[aria-hidden]{display:inline-block;transition:transform .35s var(--ease-out)}
+.button:hover,.navcta:hover{transform:translateY(-3px);box-shadow:0 12px 34px #0004}
+.button:hover::before,.navcta:hover::before{transform:translateX(100%)}
+.button:hover>span[aria-hidden],.navcta:hover>span[aria-hidden],.text-link:hover>span[aria-hidden],.cards a:hover>span[aria-hidden]{transform:translate(3px,-3px)}
+.button:active,.navcta:active{transform:translateY(0) scale(.98)}
+.outline:hover,.navcta:hover{border-color:var(--accent);box-shadow:0 0 28px var(--glow)}
+.cards article,.work-links>a{position:relative;transition:transform .55s var(--ease-out),border-color .4s ease,box-shadow .4s ease,background .4s ease}
+.cards article::before{content:"";position:absolute;left:24px;right:24px;top:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .4s ease;pointer-events:none}
+.cards article:hover,.cards article:focus-within,.work-links>a:hover{transform:translateY(-7px);border-color:#807359;box-shadow:0 16px 44px #0003;background:#1d1e23}
+.cards article:hover::before,.cards article:focus-within::before{opacity:1}
+.studio-photo img{transition:transform 1.2s var(--ease-out)}
+.studio-photo:hover img{transform:scale(1.035)}
+.live-system{position:relative;overflow:hidden}
+.live-system::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#c9ae8605 1px,transparent 1px),linear-gradient(90deg,#c9ae8605 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(black,transparent)}
+.live-system>div{transition:padding-left .4s var(--ease-out),background .4s ease}
+.live-system>div:hover{padding-left:38px;background:#ffffff03}
+.hero-content,.hero-bottom{z-index:1}
+.hero{isolation:isolate;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 80% 25%,#c9ae8612,transparent 55%)}
+/* Content stays visible without JavaScript or IntersectionObserver. */
+.motion-ready .hero-content>.eyebrow{animation:cinematic-enter .8s var(--ease-out) both}
+.motion-ready .hero-content>h1{animation:cinematic-enter 1s .1s var(--ease-out) both}
+.motion-ready .hero-description{animation:cinematic-enter 1s .2s var(--ease-out) both}
+.motion-ready .hero-content>.actions{animation:cinematic-enter 1s .3s var(--ease-out) both}
+.reveal-pending{opacity:0;transform:translateY(28px);transition:opacity .85s var(--ease-out),transform .85s var(--ease-out);transition-delay:var(--reveal-delay,0ms)}
+.reveal-pending.is-visible{opacity:1;transform:none}
+@keyframes cinematic-enter{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@media(hover:none){.button:hover,.navcta:hover,.cards article:hover,.work-links>a:hover{transform:none}.studio-photo:hover img{transform:none}.live-system>div:hover{padding-left:32px}}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation:none!important;transition:none!important}
+ .reveal-pending{opacity:1;transform:none}
+ .button:hover,.navcta:hover,.cards article:hover,.cards article:focus-within,.work-links>a:hover,.button:active,.navcta:active{transform:none}
+ .studio-photo:hover img{transform:none}
+ .button:hover>span[aria-hidden],.navcta:hover>span[aria-hidden],.text-link:hover>span[aria-hidden],.cards a:hover>span[aria-hidden]{transform:none}
+}
+.reveal-pending.reveal-pending{transition:opacity .85s var(--ease-out),transform .85s var(--ease-out),border-color .4s ease,box-shadow .4s ease,background .4s ease}
+@media(prefers-reduced-motion:reduce){.reveal-pending.reveal-pending{transition:none!important}}
+/* Supplied white wordmark: untouched PNG, with its transparent canvas fitted by CSS. */
+.nav{padding-block:10px}
+.brand img{width:188px;height:68px;object-fit:cover;object-position:center;background:none;border-radius:0;padding:0}
+@media(max-width:900px){.nav{padding-block:8px}.brand img{width:165px;height:60px}}
+@media(max-width:650px){.brand img{width:160px;height:58px}}

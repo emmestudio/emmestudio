@@ -52,3 +52,13 @@ Branch di lavoro: `restyling-cinematic-2026`. Nessuna modifica a `main`, hosting
 - Schermate di revisione in `docs/previews/`.
 - **Limite**: verifica visiva a viewport mobile e verifica interattiva del menu mobile ancora da completare. Il browser locale non era disponibile e il download di Chromium non è riuscito; il browser cloud ha consentito il controllo desktop, senza API di ridimensionamento esposta. I breakpoint sono implementati ma non dichiarati collaudati su telefono.
 - Nessun invio di Google Forms o verifica della ricezione dei moduli eseguito in questa fase.
+
+## Revisione dinamica richiesta da Marcello
+
+- Pulsanti: sollevamento breve, riflesso, movimento delle frecce, pressione al clic.
+- Schede: sollevamento, bordo luminoso e risposta al focus da tastiera.
+- Ingressi una volta per elemento con IntersectionObserver e ritardo tra le schede.
+- Navigazione: barra di avanzamento sottile, indicazione della sezione corrente, ombra dopo lo scorrimento.
+- Regia: lieve zoom al passaggio del mouse; pannello live con reticolo tecnico discreto.
+- Nessuna libreria aggiuntiva, nessun autoplay e nessuno scroll artificiale. Movimento ridotto rispettato anche se la preferenza cambia durante la visita. Senza JavaScript i contenuti restano visibili.
+- Logo bianco allegato inserito come `assets/logo-white.png`, copia identica del PNG ricevuto. Nessuno sfondo aggiunto; margini trasparenti gestiti con CSS, marchio e cornice conservati. Eliminata la scritta duplicata accanto al logo.
