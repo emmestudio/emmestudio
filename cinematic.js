@@ -30,7 +30,7 @@ if (menu && navigation) {
 // Short, one-time entrances. The reading flow always uses native browser scrolling.
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let revealObserver;
-const revealItems = [...document.querySelectorAll('.section-heading, .cards article, .split-copy, .studio-photo, .live-grid > div, .work-links > a, .playlist-panel, .contact > h2, .contact > .actions, .contact-details, .team-card, .contact-info, .map-card')];
+const revealItems = [...document.querySelectorAll('.section-heading, .cards article, .split-copy, .studio-photo, .live-grid > div, .work-links > a, .playlist-panel, .contact > h2, .contact > .actions, .contact-details, .team-card, .contact-info, .map-card, .artist-feature, .artist-area-grid article, .process-list li, .artist-audience')];
 function revealAll() {
   revealObserver?.disconnect();
   revealItems.forEach((item) => item.classList.add('is-visible'));
@@ -70,7 +70,7 @@ revealItems.forEach((item) => item.addEventListener('focusin', () => item.classL
 const header = document.querySelector('.nav');
 const sectionLinks = [...document.querySelectorAll('#links a')];
 const linkedSections = sectionLinks.map((link) => ({
-  link, section:link.hash ? document.getElementById(decodeURIComponent(link.hash.slice(1))) : null
+  link, section:link.hash && new URL(link.href).pathname === window.location.pathname ? document.getElementById(decodeURIComponent(link.hash.slice(1))) : null
 })).filter((item) => item.section);
 let scrollFrame = 0;
 function updateScrollState() {
