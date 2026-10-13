@@ -221,3 +221,13 @@
 .artist-hero-copy>.eyebrow{font-size:12px;color:#ded3bf;letter-spacing:.17em}
 @media(max-width:650px){.artist-feature{padding-block:45px}.artist-teaser{background:linear-gradient(90deg,#181a20f5,#181a20d6),url('assets/decorative/production.webp') center/cover}.artist-teaser .eyebrow{font-size:8px}.artist-hero-copy>.eyebrow{font-size:10px}.artist-teaser h2{font-size:clamp(29px,7vw,46px)}}
 @media(hover:none),(prefers-reduced-motion:reduce){.artist-teaser:hover .button,.artist-teaser:hover .button>span{transform:none}}
+/* Four balanced stages, with the description kept directly below each title. */
+.process-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;border-top:0;align-items:stretch}
+.process-list li{min-width:0;padding:32px;border:1px solid var(--line);background:#191b20;display:flex;flex-direction:column;transition:transform .5s var(--ease-out),border-color .4s ease,background .4s ease,box-shadow .4s ease}
+.process-label{display:block;font-size:10px;font-weight:700;letter-spacing:.17em;color:var(--accent);margin-bottom:25px}
+.process-list h3{font-size:clamp(25px,2.8vw,36px);line-height:1.18;margin:0 0 16px}
+.process-list li>p{font-size:15px;line-height:1.8;margin:0 0 26px;max-width:none}
+.process-list li>.process-outcome{margin:auto 0 0;padding-top:20px;border-top:1px solid #3c3e46;color:#dac9ad;font-size:12px;line-height:1.5}
+.process-list li:hover{transform:translateY(-4px);border-color:#807359;background:#202228;box-shadow:0 12px 32px #0003}
+@media(max-width:650px){.process-list{grid-template-columns:1fr}.process-list li{padding:28px}.process-label{margin-bottom:20px}}
+@media(hover:none),(prefers-reduced-motion:reduce){.process-list li:hover{transform:none}}
