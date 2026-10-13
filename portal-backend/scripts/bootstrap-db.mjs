@@ -15,7 +15,7 @@ try {
   await guard.query('SELECT pg_advisory_lock(187346207)');
   try {
     const tables = await guard.query("SELECT tablename FROM pg_tables WHERE schemaname='public'");
-    const allowed = new Set(['user', 'session', 'account', 'verification', 'rateLimit']);
+    const allowed = new Set(['user', 'session', 'account', 'verification', 'rateLimit', 'studio_calendar']);
     if (tables.rows.some(row => !allowed.has(row.tablename))) throw new Error('SETUP_DATABASE_NOT_EMPTY_OR_AUTH_ONLY');
     // Use a separate pool while holding the advisory lock.
     const migrationPool = new Pool({ connectionString: process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL, max: 1, connectionTimeoutMillis: 15000 });
@@ -25,6 +25,12 @@ try {
       if (plan.toBeAdded.length) throw new Error('SETUP_EXISTING_SCHEMA_REQUIRES_REVIEW');
       console.log('Emme Studio auth setup: tables to create', plan.toBeCreated.map(table => table.table).join(', '));
       await plan.runMigrations();
+      await migrationPool.query(`CREATE TABLE IF NOT EXISTS studio_calendar (
+        owner_id TEXT PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,
+        calendar_id TEXT UNIQUE,
+        state TEXT NOT NULL DEFAULT 'idle' CHECK (state IN ('idle','creating','connected','uncertain')),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`);
       console.log('Emme Studio auth setup complete. No sample data inserted.');
     } finally { await migrationPool.end(); }
   } finally {
