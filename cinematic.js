@@ -68,8 +68,10 @@ reducedMotion.addEventListener('change', () => {
 revealItems.forEach((item) => item.addEventListener('focusin', () => item.classList.add('is-visible')));
 
 const header = document.querySelector('.nav');
-const sectionLinks = [...document.querySelectorAll('#links a[href^="#"]')];
-const linkedSections = sectionLinks.map((link) => ({link, section:document.querySelector(link.getAttribute('href'))})).filter((item) => item.section);
+const sectionLinks = [...document.querySelectorAll('#links a')];
+const linkedSections = sectionLinks.map((link) => ({
+  link, section:link.hash ? document.getElementById(decodeURIComponent(link.hash.slice(1))) : null
+})).filter((item) => item.section);
 let scrollFrame = 0;
 function updateScrollState() {
   scrollFrame = 0;
