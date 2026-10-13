@@ -71,3 +71,15 @@ Branch di lavoro: `restyling-cinematic-2026`. Nessuna modifica a `main`, hosting
 - Barra di avanzamento aggiornata durante lo scorrimento e voce Live Show contrassegnata come sezione corrente.
 - Ritorno al contenuto tramite skip link verificato.
 - Verifica visuale mobile ancora pendente come nella prima fase. Riduzione movimento gestita nel codice e nel CSS; non emulata nel browser cloud.
+
+## Chi siamo e contatti — revisione del 13 ottobre
+
+- Team recuperato dalla vecchia pagina `contatti.html`: Marcello Lachina, Salvatore MOODY Di Majo, Alan Marotta, Francesco Lega.
+- Foto originali conservate e copie WebP per la home (99.046 byte complessivi). Ruoli, testi sintetici e Instagram ripresi dai profili esistenti; nessun collegamento segnaposto aggiunto.
+- Biografie consultabili nelle schede con `details/summary`, senza uscire dal nuovo design; schede responsive a quattro, due o una colonna.
+- Sezione contatti ampliata con Marcello, telefono, WhatsApp, email, sede, orari e social già pubblicati nel sito originale.
+- Google Maps incorporato con lazy loading, titolo accessibile e indirizzo completo; collegamento esterno Maps conservato dalla vecchia pagina.
+- Nuovo collegamento “Chi siamo” nel menu e animazioni di ingresso estese al team e al blocco contatti.
+- Verifica desktop: quattro foto caricate, nessun overflow orizzontale, apertura/chiusura della biografia di Marcello, mappa caricata con indirizzo Via Pasolini Pier Paolo 7, Caltanissetta. Riferimenti locali e ID univoci controllati; sintassi JS e whitespace superati.
+- Verifica visuale mobile ancora da completare. Nessun messaggio inviato e nessun modulo esterno compilato.
+- Aggiornamento logo: `object-fit: contain` evita il ritaglio del PNG completo a tutti i breakpoint.
