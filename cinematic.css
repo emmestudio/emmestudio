@@ -67,7 +67,7 @@
 @media(max-width:650px){.brand img{width:160px;height:68px}}
 /* People and location: the original studio team, in the Cinematic system. */
 .team{border-top:1px solid var(--line)}
-.team-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;align-items:start}
+.team-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
 .team-card{min-width:0;background:#191a1e;border:1px solid var(--line);overflow:hidden;transition:border-color .4s ease,box-shadow .4s ease}
 .team-card:hover,.team-card:focus-within{border-color:#807359;box-shadow:0 16px 44px #0003}
 .team-portrait{aspect-ratio:4/5;overflow:hidden;background:#24262c}
