@@ -207,3 +207,17 @@
 @media(max-width:650px){.service-art{margin:-28px -28px 24px;height:190px}.artist-gallery{gap:12px}.artist-gallery figcaption{font-size:13px}.live-art{height:190px}}
 @media(max-width:400px){.artist-gallery{grid-template-columns:1fr}.artist-gallery figure>div{aspect-ratio:2/1}}
 @media(hover:none),(prefers-reduced-motion:reduce){.cards article:hover .service-art img,.live-art:hover img,.artist-gallery figure:hover img{transform:none}}
+/* Give artist development a distinctive, concise featured gateway. */
+.artist-feature{padding-block:65px;background:#101114;border-block:0}
+.artist-teaser{position:relative;isolation:isolate;display:block;padding:clamp(30px,4vw,60px);border:1px solid #8b795b;background:linear-gradient(90deg,#181a20fc 0%,#181a20f5 48%,#181a20ba 78%,#181a20a1 100%),url('assets/decorative/production.webp') right center/cover;box-shadow:0 0 60px #c9ae8607;overflow:hidden}
+.artist-teaser::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(transparent,var(--accent),transparent);pointer-events:none}
+.artist-teaser h2{font-size:clamp(36px,4.7vw,72px);line-height:1.08;max-width:1000px;margin-bottom:25px}
+.artist-teaser .eyebrow{color:#ded3bf;font-size:10px;letter-spacing:.15em;max-width:650px}
+.artist-teaser>div>p:not(.eyebrow){max-width:640px;color:#c8c9d0}
+.artist-teaser .button{margin-top:28px;border:0;min-width:200px;transition:transform .4s var(--ease-out),box-shadow .4s ease,background .3s ease}
+.artist-teaser:hover .button{background:var(--accent);transform:translateY(-3px);box-shadow:0 12px 30px #0004}
+.artist-teaser:hover .button>span{transform:translate(3px,-3px)}
+#links>.nav-artist{color:var(--accent)}
+.artist-hero-copy>.eyebrow{font-size:12px;color:#ded3bf;letter-spacing:.17em}
+@media(max-width:650px){.artist-feature{padding-block:45px}.artist-teaser{background:linear-gradient(90deg,#181a20f5,#181a20d6),url('assets/decorative/production.webp') center/cover}.artist-teaser .eyebrow{font-size:8px}.artist-hero-copy>.eyebrow{font-size:10px}.artist-teaser h2{font-size:clamp(29px,7vw,46px)}}
+@media(hover:none),(prefers-reduced-motion:reduce){.artist-teaser:hover .button,.artist-teaser:hover .button>span{transform:none}}
