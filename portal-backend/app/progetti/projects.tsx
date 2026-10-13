@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { projectKinds, projectStates, projectProgress, type ProjectDraft, type StudioProject } from '@/lib/project-data';
 const empty = (): ProjectDraft => ({ title: '', artist: '', kind: 'Singolo', status: 'Pianificazione', deadline: null, vision: '', notes: '', music: 0, live: 0, image: 0 });
 const date = (value: string) => new Intl.DateTimeFormat('it-IT', { dateStyle: 'medium', timeZone: 'Europe/Rome' }).format(new Date(value + 'T12:00:00Z'));
@@ -53,6 +54,6 @@ export default function Projects() {
       <label>Scadenza<input type="date" value={draft.deadline ?? ''} onChange={event => setDraft({ ...draft, deadline: event.target.value || null })} /></label><label>Visione e obiettivo<textarea rows={3} maxLength={3000} value={draft.vision} onChange={event => setDraft({ ...draft, vision: event.target.value })} /></label>
       <h3>Aree di lavoro</h3><p className="small">L’indicatore è aggiornato manualmente: ogni area ha lo stesso peso.</p><div className="areas-form">{(['music', 'live', 'image'] as const).map((key, index) => <label key={key}>{['Produzione musicale', 'Produzione live', 'Immagine e comunicazione'][index]}<select value={draft[key]} onChange={event => setDraft({ ...draft, [key]: Number(event.target.value) })}><option value={0}>Da avviare · 0%</option><option value={50}>In corso · 50%</option><option value={100}>Completata · 100%</option></select></label>)}</div>
       <label>Note del progetto<textarea rows={5} maxLength={10000} value={draft.notes} onChange={event => setDraft({ ...draft, notes: event.target.value })} /></label><p className="small">Per conservare un progetto concluso, imposta lo stato “Archiviato”. Puoi riattivarlo in seguito.</p></fieldset>
-      <p role="status" aria-live="polite">{editorError}</p><button className="button" disabled={busy} type="submit">{busy ? 'Salvataggio…' : 'Salva progetto'}</button></form></dialog>
+      <p role="status" aria-live="polite">{editorError}</p><div className="dialog-actions"><button className="button" disabled={busy} type="submit">{busy ? 'Salvataggio…' : 'Salva progetto'}</button>{editor && editor !== 'new' ? <Link className="text-button" href={'/attivita?project=' + editor.id}>Attività del progetto ↗</Link> : null}</div></form></dialog>
   </section>;
 }
