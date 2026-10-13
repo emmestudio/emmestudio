@@ -1,0 +1,12 @@
+# Decorative visuals — Emme Studio
+
+Generated with built-in ImageGen. Project assets: assets/decorative/production.webp, assets/decorative/recording.webp, assets/decorative/live.webp. These are illustrative, not documentation of studio equipment or real events. Original outputs retained separately; web versions resized to 960×640 and encoded as WebP.
+
+## production
+Use case: stylized-concept. Asset type: cinematic decorative thumbnail for Emme Studio music production website. Create a polished editorial macro close-up of an unbranded analog mixing console, sculptural brushed graphite faders and one softly glowing warm champagne-gold signal light, dark studio setting with blurred hints of a piano keyboard. Wide horizontal 3:2 composition, tactile materials, controlled moody chiaroscuro, minimal elegant modern music production aesthetic. Graphite charcoal black and muted brass palette, subtly futuristic but credible professional. No people, no text, no logos, no watermark, no bright neon, no identifiable location. This is a conceptual visual, not a photograph of the real Emme Studio.
+
+## recording
+Use case: stylized-concept. Asset type: cinematic decorative thumbnail for Emme Studio recording website. Create a polished editorial close-up of an unbranded large diaphragm studio microphone in a suspension shock mount with a circular pop filter, dark acoustic recording space fading into black, delicate champagne-gold rim light and a very subtle warm reflection. Wide horizontal 3:2 composition. Minimal, refined, tactile graphite metal, warm cinematic highlights, modern professional studio mood, subtly futuristic but realistic. No people, no text, no logos, no watermark, no bright neon, no identifiable venue. Conceptual illustrative image, not a photograph of the actual studio.
+
+## live
+Use case: stylized-concept. Asset type: cinematic decorative thumbnail for Emme Studio live show production website. Create an elegant wide 3:2 stage atmosphere viewed from behind the side of a performance stage, silhouette of an empty unbranded microphone stand at the left and restrained warm champagne-gold light beams cutting through a little haze over a dark stage, faint blurred lighting truss geometry in background. No performers and no audience faces, no text, no logos, no watermark. Graphite charcoal and muted warm gold palette, deep cinematic contrast, refined contemporary music show mood, professional and subtly futuristic rather than nightclub neon. Conceptual illustrative stage visual, not documentation of a real event.

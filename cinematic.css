@@ -188,3 +188,22 @@
 @media(max-width:500px){.artist-visual{max-width:260px}.signal-wave{gap:4px}.artist-teaser>div>p:not(.eyebrow){font-size:15px}}
 @media(hover:none){.artist-area-grid article:hover,.artist-teaser:hover>.button{transform:none}}
 @media(prefers-reduced-motion:reduce){.signal-orbit,.signal-wave i{animation:none}.signal-wave i{transform:scaleY(.8);opacity:1}.artist-area-grid article:hover,.artist-teaser:hover>.button,.artist-teaser:hover>.button>span{transform:none}}
+/* Conceptual imagery, optimized for decorative use. */
+.service-art{margin:-32px -32px 25px;height:170px;overflow:hidden;background:#121317}
+.service-art img{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1s var(--ease-out),filter .6s ease;filter:brightness(.8)}
+.cards article:hover .service-art img{transform:scale(1.045);filter:brightness(1)}
+.live-art{position:relative;margin:45px 0 0;height:260px;overflow:hidden;border:1px solid var(--line)}
+.live-art img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 48%;filter:brightness(.8);transition:transform 1.2s var(--ease-out)}
+.live-art:hover img{transform:scale(1.035)}
+.live-art figcaption{position:absolute;right:18px;bottom:14px;font-size:9px;color:#eee;background:#101114b0;padding:5px 8px}
+.artist-gallery{padding:45px var(--pad) 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;max-width:1800px;margin:auto}
+.artist-gallery figure{margin:0;min-width:0}
+.artist-gallery figure>div{overflow:hidden;aspect-ratio:16/9;border:1px solid var(--line)}
+.artist-gallery img{display:block;width:100%;height:100%;object-fit:cover;filter:brightness(.8);transition:transform 1s var(--ease-out),filter .6s ease}
+.artist-gallery figure:hover img{transform:scale(1.045);filter:brightness(1)}
+.artist-gallery figcaption{font-size:17px;letter-spacing:-.02em;padding-top:15px;color:#d2d3d8}
+.visual-note{grid-column:1/-1;font-size:9px;color:var(--muted);margin:0;letter-spacing:.06em}
+@media(max-width:900px){.service-art{margin:-24px -24px 24px}}
+@media(max-width:650px){.service-art{margin:-28px -28px 24px;height:190px}.artist-gallery{gap:12px}.artist-gallery figcaption{font-size:13px}.live-art{height:190px}}
+@media(max-width:400px){.artist-gallery{grid-template-columns:1fr}.artist-gallery figure>div{aspect-ratio:2/1}}
+@media(hover:none),(prefers-reduced-motion:reduce){.cards article:hover .service-art img,.live-art:hover img,.artist-gallery figure:hover img{transform:none}}
