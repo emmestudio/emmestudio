@@ -41,3 +41,14 @@ Branch di lavoro: `restyling-cinematic-2026`. Nessuna modifica a `main`, hosting
 - Crediti e titoli pubblicabili per ogni produzione del portfolio.
 - Posizione e contenuti aggiornati dei corsi, dei collaboratori, del listino e della sala prove.
 - Descrizione dei servizi video e sviluppo artista: evitare promesse operative non confermate.
+
+## Verifica della prima fase — 13 ottobre 2026
+
+- `node --check cinematic.js`: superato.
+- `git diff --check`: superato.
+- Controllo dei riferimenti locali dell'anteprima: nessun file mancante.
+- Browser Chrome tramite HTML Preview: controllo visivo dell'intera home desktop, immagini caricate, nessun overflow orizzontale a viewport 1363 px, collegamento interno Live Show verificato.
+- Logo scuro originale su supporto chiaro, dopo correzione emersa dal controllo visivo.
+- Schermate di revisione in `docs/previews/`.
+- **Limite**: verifica visiva a viewport mobile e verifica interattiva del menu mobile ancora da completare. Il browser locale non era disponibile e il download di Chromium non è riuscito; il browser cloud ha consentito il controllo desktop, senza API di ridimensionamento esposta. I breakpoint sono implementati ma non dichiarati collaudati su telefono.
+- Nessun invio di Google Forms o verifica della ricezione dei moduli eseguito in questa fase.
