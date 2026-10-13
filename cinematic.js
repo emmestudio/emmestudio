@@ -47,7 +47,7 @@ if (!reducedMotion.matches && 'IntersectionObserver' in window) {
     }, { threshold: 0, rootMargin: '0px 0px -24px 0px' });
     revealItems.forEach((item) => {
       // Stagger siblings rather than delaying whole sections.
-      if (item.matches('.cards article, .work-links > a')) {
+      if (item.matches('.cards article, .work-links > a, .artist-area-grid article')) {
         item.style.setProperty('--reveal-delay', `${[...item.parentElement.children].indexOf(item) * 70}ms`);
       }
       item.classList.add('reveal-pending');

@@ -152,3 +152,39 @@
 @media(max-width:650px){.artist-area-grid,.artist-audience,.process-list li{grid-template-columns:1fr}.artist-area-grid article{padding:28px}.process-list li{gap:16px}.back-link{margin-bottom:40px}.artist-page-hero{padding-top:35px}.artist-pillars{gap:10px}.artist-pillars>span{font-size:11px}}
 .process-list li{display:block}
 .process-list p{max-width:780px;margin:18px 0 0}
+/* A concise home gateway and a dedicated Cinematic artist experience. */
+.artist-feature{padding-block:60px}
+.artist-teaser{display:flex;justify-content:space-between;align-items:center;gap:45px}
+.artist-teaser h2{font-size:clamp(32px,3.5vw,52px);margin-bottom:20px}
+.artist-teaser>div>p:not(.eyebrow){max-width:640px;color:var(--muted);font-size:16px;margin:0;line-height:1.8}
+.artist-teaser>.button{flex-shrink:0;border-color:#706653}
+.artist-teaser:hover>.button{background:#c9ae8612;border-color:var(--accent);box-shadow:0 0 30px var(--glow);transform:translateY(-3px)}
+.artist-teaser:hover>.button>span{transform:translate(3px,-3px)}
+.artist-hero-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:35px;align-items:center}
+.artist-hero-copy h1{font-size:clamp(45px,5.3vw,78px);line-height:1.06}
+.artist-visual{position:relative;min-height:390px;aspect-ratio:1;max-width:470px;width:100%;justify-self:center;isolation:isolate;background:radial-gradient(circle,#c9ae8619,transparent 67%)}
+.signal-orbit{position:absolute;border:1px solid #c9ae8638;border-radius:50%;inset:5%;transform:rotate(-25deg);pointer-events:none}
+.orbit-one{border-top-color:#c9ae86a8;animation:signal-turn 26s linear infinite}
+.orbit-two{inset:16%;border-bottom-color:#c9ae8670;animation:signal-turn 32s linear reverse infinite}
+.orbit-three{inset:28%;border-style:dashed;opacity:.6}
+.signal-core{position:absolute;inset:28%;border-radius:50%;border:1px solid #c9ae8645;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#2f2c27,#17191e);box-shadow:0 0 80px #c9ae8610}
+.signal-wave{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;height:120px}
+.signal-wave i{display:block;width:3px;height:var(--height);max-height:75%;border-radius:2px;background:linear-gradient(#ece1ca,var(--accent));transform:scaleY(.6);animation:signal-pulse 2.8s ease-in-out infinite;animation-delay:calc(var(--bar) * -170ms)}
+.signal-point{position:absolute;width:8px;height:8px;background:var(--accent);border-radius:50%;box-shadow:0 0 16px #c9ae8660}
+.point-one{left:15%;top:20%}.point-two{right:9%;top:65%}.point-three{left:37%;bottom:17%;width:5px;height:5px}
+@keyframes signal-turn{to{transform:rotate(335deg)}}
+@keyframes signal-pulse{0%,100%{transform:scaleY(.5);opacity:.65}50%{transform:scaleY(1);opacity:1}}
+.motion-ready .artist-hero-copy>.eyebrow{animation:cinematic-enter .8s var(--ease-out) both}
+.motion-ready .artist-hero-copy>h1{animation:cinematic-enter 1s .1s var(--ease-out) both}
+.motion-ready .artist-hero-copy>.lead{animation:cinematic-enter 1s .2s var(--ease-out) both}
+.motion-ready .artist-hero-copy>.actions{animation:cinematic-enter 1s .3s var(--ease-out) both}
+.artist-area-grid article{position:relative;transition:transform .55s var(--ease-out),border-color .4s ease,box-shadow .4s ease,background .4s ease}
+.artist-area-grid article::before{content:"";position:absolute;left:24px;right:24px;top:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .4s ease}
+.artist-area-grid article:hover{transform:translateY(-6px);border-color:#807359;background:#23252b;box-shadow:0 16px 40px #0003}
+.artist-area-grid article:hover::before{opacity:1}
+.process-list li{transition:border-color .4s ease,background .4s ease}
+.process-list li:hover{border-color:#807359;background:#ffffff02}
+@media(max-width:900px){.artist-hero-grid{grid-template-columns:1fr}.artist-visual{min-height:0;max-width:300px;margin:10px auto 0}.artist-hero-copy h1{max-width:750px}.artist-teaser{align-items:flex-start;flex-direction:column;gap:28px}.artist-feature{padding-block:50px}}
+@media(max-width:500px){.artist-visual{max-width:260px}.signal-wave{gap:4px}.artist-teaser>div>p:not(.eyebrow){font-size:15px}}
+@media(hover:none){.artist-area-grid article:hover,.artist-teaser:hover>.button{transform:none}}
+@media(prefers-reduced-motion:reduce){.signal-orbit,.signal-wave i{animation:none}.signal-wave i{transform:scaleY(.8);opacity:1}.artist-area-grid article:hover,.artist-teaser:hover>.button,.artist-teaser:hover>.button>span{transform:none}}
