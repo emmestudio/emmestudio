@@ -10,6 +10,6 @@ Creazione idempotente con ID UUID compatibile con Google e impronta della richie
 
 Fuso Europe/Rome, eventi giornalieri con ultimo giorno incluso nell'interfaccia e fine esclusiva nell'API. Conversione esplicita estate/inverno. Orari inesistenti o ambigui al cambio dell'ora sono rifiutati e spiegati. Eventi ricorrenti e con invitati vengono mostrati con link Google, senza modifica nel portale; nessun invito automatico.
 
-Verifica: test unitari per paginazione, cancellati, conflitti, retry, date e ora legale; typecheck e build. `scripts/verify-calendar.mjs` esegue una prova reale solo sul progetto Emme Studio: crea un evento tecnico temporaneo senza invitati, modifica, controlla conflitti e lettura, converte giornaliero/orario e lo elimina. Va eseguito esplicitamente, non nei build ordinari.
+Verifica: 12 test locali per paginazione, cancellati, conflitti, retry, date e ora legale; typecheck e build. La prova automatica sul calendario reale non è stata eseguita: la revisione automatica ha respinto il comando di verifica nel deploy perché avrebbe potuto ripetere mutazioni esterne durante le build. La pubblicazione esegue soltanto `npm run build`. Il collaudo finale con OAuth e un appuntamento reale rimane da completare nell'interfaccia autenticata.
 
 Fasi successive: utenti team e permessi, collegamento eventi ai progetti, eventuali ricorrenze e inviti espliciti. Il progetto e database Accademia non sono coinvolti.

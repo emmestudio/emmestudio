@@ -27,7 +27,7 @@ export function validateDraft(input: unknown): EventDraft {
     if (!validDate(data.start) || !validDate(data.end) || data.end <= data.start) throw new Error('Controlla le date di inizio e fine.');
   } else {
     const pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:\d{2})$/;
-    if (!pattern.test(data.start) || !pattern.test(data.end) || !Number.isFinite(Date.parse(data.start)) || !Number.isFinite(Date.parse(data.end)) || Date.parse(data.end) <= Date.parse(data.start)) throw new Error('La fine deve essere successiva all’inizio.');
+    if (!pattern.test(data.start) || !pattern.test(data.end) || !validDate(data.start.slice(0, 10)) || !validDate(data.end.slice(0, 10)) || !Number.isFinite(Date.parse(data.start)) || !Number.isFinite(Date.parse(data.end)) || Date.parse(data.end) <= Date.parse(data.start)) throw new Error('Controlla gli orari: la fine deve essere successiva all’inizio.');
   }
   return { title: data.title.trim(), description: data.description, location: data.location, category: data.category, allDay: data.allDay, start: data.start, end: data.end };
 }

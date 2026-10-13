@@ -15,6 +15,7 @@ test('all-day exclusive end handles month and leap year boundaries', () => {
   assert.equal(plusDay('2028-02-28'), '2028-02-29');
   assert.throws(() => validateDraft({ ...draft, end: draft.start }), /fine/);
   assert.throws(() => validateDraft({ ...draft, title: '' }), /titolo/);
+  assert.throws(() => validateDraft({ ...draft, start: '2026-02-30T10:00:00Z', end: '2026-03-03T10:00:00Z' }), /orari/);
 });
 test('event listing follows pagination and skips cancelled events', async () => {
   const queries: string[] = [];
