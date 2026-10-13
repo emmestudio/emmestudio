@@ -1,0 +1,43 @@
+# Emme Studio — Restyling Cinematic 2026
+
+Branch di lavoro: `restyling-cinematic-2026`. Nessuna modifica a `main`, hosting o dominio.
+
+## Fasi e approvazioni
+
+1. **Home e sistema grafico**: `cinematic-preview.html`, `cinematic.css`, `cinematic.js`. Revisione con Marcello prima di estendere il design.
+2. **Pagine principali**: Music Production, Live Show Production, Studio, Portfolio, Contatti/Preventivo; contenuti e collegamenti coerenti.
+3. **Pagine secondarie**: corsi, profili, listino, pagina start, privacy e 404. Preservare gli URL esistenti o predisporre reindirizzamenti espliciti. Non eliminare corsi, collaboratori o prezzi senza approvazione del contenuto.
+4. **Verifica integrata**: browser desktop/mobile, tastiera, collegamenti, moduli, metadati per pagina, sitemap, immagini. Pubblicazione su `main` solo dopo approvazione esplicita. Dominio fuori da questo intervento.
+
+## Analisi del codice esistente
+
+- 23 file HTML statici, nessuna pipeline di build. Il restyling può restare compatibile con GitHub Pages senza framework o backend aggiuntivi.
+- Home attuale orientata soprattutto a corsi, recording e mix/mastering; manca una pagina Live Show Production.
+- Header, footer e controller mobile ripetuti con differenze tra le pagine. Alcune pagine corsi/profili hanno il pulsante mobile ma nessuno script per attivarlo.
+- `index.html` contiene una chiusura `section` aggiuntiva prima delle lezioni.
+- `styles.css` contiene circa 29 KB di regole; `start.html` usa un sistema grafico autonomo con CSS incorporato.
+- Hero PNG da 13.213.156 byte, 5376×3584. Diverse immagini corso pesano circa 2 MB e il ritratto di Marcello circa 3 MB.
+- Il portfolio ha sei anteprime con link `#` e nomi generici. La prima sorgente video non coincide con l'indice iniziale del controller.
+- Collegamenti segnaposto `INSERISCI_LINK_*` in `contatti.html` e `salvatore-moody-di-majo.html`.
+- Immagine Open Graph indicata da molte pagine (`og-image-1200x630-logo-badge-smaller.png`) assente dagli asset. Da correggere quando si aggiornano i metadati.
+- Preventivo, iscrizioni e sala prove usano Google Forms incorporati; mantenere gli identificativi esistenti. Il semplice controllo del codice non dimostra che invio e ricezione funzionino.
+- YouTube, Spotify, Maps e Forms sono caricati direttamente nelle pagine attuali. Nella migrazione predisporre caricamento volontario dei contenuti esterni e rivedere la relativa informativa.
+- Nel repository non risultano sitemap o robots.txt. Nell'anteprima `noindex, nofollow` impedisce di promuovere una pagina provvisoria; SEO di produzione da completare nelle fasi successive.
+
+## Prima fase implementata
+
+- Logo originale e contatti esistenti mantenuti.
+- Home con gerarchia Music Production / Recording & Editing / Mix & Mastering, spazio studio, sezione live tecnica e accessi al portfolio esistente.
+- Palette scura con accento caldo, tipografia di sistema, nessun font remoto o dipendenza JavaScript.
+- Visual già presente convertito a WebP 1920×1280 da 98.206 byte: riduzione del 99,3% rispetto al PNG originale. Originale conservato.
+- Visual dichiarato illustrativo; non presentarlo come fotografia della sede. Foto reali da inserire dopo la revisione.
+- Menu con `aria-expanded`, `aria-controls`, Escape, chiusura al clic esterno e reset al cambio breakpoint. Skip link, focus visibile, titolo H1 unico, preferenza di movimento ridotto.
+- Anteprima senza iframe: collegamenti espliciti a Spotify, YouTube e Maps.
+- Nuova home isolata: le pagine attuali non sono ancora state migrate e il link privacy conserva la pagina esistente.
+
+## Da concordare nelle prossime fasi
+
+- Foto reali: regia, outboard, vocal booth, amplificatori/pedaliere, panoramica della sala.
+- Crediti e titoli pubblicabili per ogni produzione del portfolio.
+- Posizione e contenuti aggiornati dei corsi, dei collaboratori, del listino e della sala prove.
+- Descrizione dei servizi video e sviluppo artista: evitare promesse operative non confermate.
