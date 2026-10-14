@@ -1,4 +1,4 @@
-import { type Operations } from "./operations-data.ts";
+import { validateOperations, type Operations } from "./operations-data.ts";
 import { validDate } from "./event-data.ts";
 export const projectKinds = ["Singolo", "Album", "Live", "Percorso artistico"];
 export const projectStates = [
@@ -22,6 +22,7 @@ export type ProjectDraft = {
   music: number;
   live: number;
   image: number;
+  operations?: Operations;
 };
 export type StudioProject = ProjectDraft & {
   id: string;
@@ -78,7 +79,18 @@ export function validateProject(input: unknown): ProjectDraft {
       data.service.length > 200)
   )
     throw new ProjectInputError("Servizio non valido.");
+  let operations: Operations | undefined;
+  if (data.operations !== undefined) {
+    try {
+      operations = validateOperations(data.operations, data.kind);
+    } catch {
+      throw new ProjectInputError(
+        "Controlla fase, responsabili, prossima azione e attesa del progetto.",
+      );
+    }
+  }
   return {
+    operations,
     artistId: data.artistId as string | null | undefined,
     service:
       typeof data.service === "string" ? data.service.trim() : "Da definire",

@@ -1,4 +1,5 @@
 "use client";
+import { emptyOperations } from "@/lib/operations-data";
 import RemoveButton from "../remove-button";
 import OperationsPanel from "./operations-panel";
 import ProjectBoard from "./project-board";
@@ -38,6 +39,7 @@ const empty = (): ProjectDraft => ({
   music: 0,
   live: 0,
   image: 0,
+  operations: emptyOperations(),
 });
 const date = (value: string) =>
   new Intl.DateTimeFormat("it-IT", {
@@ -393,15 +395,11 @@ export default function Projects() {
           {editor && editor !== "new" ? (
             <OperationsPanel
               key={editor.id + editor.version}
-              project={editor}
+              project={{ ...editor, title: draft.title, kind: draft.kind }}
               writable={writable && !busy}
               ledger={ledger}
-              onSaved={() => {
-                dialog.current?.close();
-                setEditor(null);
-                setMessage("Organizzazione aggiornata.");
-                setRefresh((n) => n + 1);
-              }}
+              operations={draft.operations ?? emptyOperations()}
+              onChange={(operations) => setDraft({ ...draft, operations })}
             />
           ) : null}
           <fieldset disabled={busy || !writable}>
@@ -537,7 +535,14 @@ export default function Projects() {
                 <select
                   value={draft.kind}
                   onChange={(event) =>
-                    setDraft({ ...draft, kind: event.target.value })
+                    setDraft({
+                      ...draft,
+                      kind: event.target.value,
+                      operations: {
+                        ...(draft.operations ?? emptyOperations()),
+                        phase: "",
+                      },
+                    })
                   }
                 >
                   {projectKinds.map((kind) => (

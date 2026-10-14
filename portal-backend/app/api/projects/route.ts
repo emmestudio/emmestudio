@@ -71,6 +71,7 @@ async function save(request: Request, update: boolean) {
     )
       return reply({ error: "Versione preventivo non valida." }, 400);
     const extras = {
+      actor: session.user?.email ?? "Team Emme Studio",
       newArtist: body.newArtist
         ? { id: body.newArtist.id, draft: validateArtist(body.newArtist.draft) }
         : undefined,

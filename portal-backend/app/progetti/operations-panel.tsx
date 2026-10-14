@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  emptyOperations,
   projectPhases,
   type Operations,
   blockedTask,
@@ -24,29 +23,27 @@ export default function OperationsPanel({
   project,
   writable,
   ledger,
-  onSaved,
+  operations,
+  onChange,
 }: {
   project: StudioProject;
   writable: boolean;
   ledger: Ledger | null;
-  onSaved: () => void;
+  operations: Operations;
+  onChange: (operations: Operations) => void;
 }) {
-  const [d, setD] = useState<Operations>({
-      ...emptyOperations(),
-      ...project.operations,
-    }),
-    [team, setTeam] = useState<Person[]>([]),
+  const d = operations,
+    setD = onChange;
+  const [team, setTeam] = useState<Person[]>([]),
     [tasks, setTasks] = useState<StudioTask[]>([]),
     [items, setItems] = useState<ProductionItem[]>([]),
     [checks, setChecks] = useState<Delivery[]>([]),
     [hours, setHours] = useState<Hour[]>([]),
     [error, setError] = useState(""),
-    [busy, setBusy] = useState(false),
     [ready, setReady] = useState(false);
   useEffect(() => {
     const c = new AbortController();
     setReady(false);
-    setD({ ...emptyOperations(), ...project.operations });
     Promise.all(
       ["/api/team", "/api/tasks", "/api/production", "/api/workflow"].map(
         async (url) => {
@@ -79,29 +76,6 @@ export default function OperationsPanel({
       });
     return () => c.abort();
   }, [project.id, project.version]);
-  async function save() {
-    setBusy(true);
-    setError("");
-    try {
-      const r = await fetch("/api/operations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "operations",
-          id: project.id,
-          version: project.version,
-          draft: d,
-        }),
-      });
-      const b = await r.json();
-      if (!r.ok) throw Error(b.error);
-      onSaved();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Salvataggio non completato.");
-    } finally {
-      setBusy(false);
-    }
-  }
   const open = tasks.filter((t) => t.status !== "Completata"),
     balance = ledger ? projectBalance(project.id, ledger, todayRome()) : null;
   return (
@@ -141,10 +115,10 @@ export default function OperationsPanel({
         ) : null}
       </div>
       <p className="small">
-        Referente, fase, prossima azione e attese si aggiornano con «Salva
-        organizzazione».
+        Tutti i dati di questa scheda si aggiornano insieme con «Salva
+        progetto».
       </p>
-      <fieldset disabled={!writable || busy}>
+      <fieldset disabled={!writable}>
         <div className="form-grid">
           <label>
             Referente del progetto
@@ -239,14 +213,6 @@ export default function OperationsPanel({
             />
           </label>
         </div>
-        <button
-          type="button"
-          className="secondary"
-          disabled={!writable || busy}
-          onClick={() => void save()}
-        >
-          {busy ? "Salvataggio…" : "Salva organizzazione"}
-        </button>
       </fieldset>
       <p role="status">{error}</p>
       <div className="phase-path">

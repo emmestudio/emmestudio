@@ -5,7 +5,7 @@
 In Progetti sono disponibili Bacheca, Elenco, Settimana e, per gli amministratori, Cestino.
 La bacheca raggruppa gli stati esistenti: Pianificazione → Da pianificare, In produzione/Attivo → In lavorazione, In uscita → Da consegnare, Completato/Archiviato → Completati. Un motivo di attesa sposta un progetto attivo in In attesa. La ricerca e il filtro restano applicati alle viste.
 
-Nella scheda progetto, la Cabina di regia raccoglie referente, collaboratori, fase, prossima azione, motivo di attesa e data di ricontatto. Questi campi si salvano con Salva organizzazione; gli altri dati con Salva progetto. I percorsi delle fasi differiscono per Singolo, Album, Live e Percorso artistico. Le fasi sono dichiarazioni del team, non certificazioni automatiche del lavoro completato.
+Nella scheda progetto, la Cabina di regia raccoglie referente, collaboratori, fase, prossima azione, motivo di attesa e data di ricontatto. Tutti i dati della scheda si salvano insieme con Salva progetto, in una transazione che comprende anche l’eventuale preventivo. I percorsi delle fasi differiscono per Singolo, Album, Live e Percorso artistico. Le fasi sono dichiarazioni del team, non certificazioni automatiche del lavoro completato.
 
 Il riepilogo mostra attività completate, ore effettivamente registrate, checklist e, solo all'amministratore, incassi e residuo del preventivo confermato. La matrice dei brani riporta lo stato del brano e il rapporto sessioni completate / pianificate per strumenti, voce, editing, mix e mastering. L'assenza di sessioni non equivale a completamento.
 

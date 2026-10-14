@@ -609,7 +609,7 @@ export async function verifyVisual({
       .getByLabel("Prossima azione")
       .fill("Confermare le sessioni con il team");
     await page
-      .getByRole("button", { name: "Salva organizzazione", exact: true })
+      .getByRole("button", { name: "Salva progetto", exact: true })
       .click();
     await page.locator("dialog").waitFor({ state: "hidden" });
     await page

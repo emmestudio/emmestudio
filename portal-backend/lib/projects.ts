@@ -8,6 +8,7 @@ import {
 } from "./project-data";
 import { type ArtistDraft } from "./artist-data";
 import { type QuoteDraft } from "./finance-data";
+import { resolveAssignee } from "./team";
 import { writeQuote } from "./finance";
 type Row = ProjectDraft & {
   id: string;
@@ -51,6 +52,7 @@ export type ProjectExtras = {
   newArtist?: { id: string; draft: ArtistDraft };
   quote?: QuoteDraft;
   quoteVersion?: number;
+  actor?: string;
 };
 export async function saveProject(
   owner: string,
@@ -63,7 +65,7 @@ export async function saveProject(
   try {
     await c.query("BEGIN");
     const digest = createHash("sha256")
-      .update(JSON.stringify({ d, extras }))
+      .update(JSON.stringify({ d, extras: { ...extras, actor: undefined } }))
       .digest("hex");
     const existing = await c.query(
       "SELECT * FROM studio_projects WHERE owner_id=$1 AND id=$2 FOR UPDATE",
@@ -154,6 +156,45 @@ export async function saveProject(
           `INSERT INTO studio_projects(id,owner_id,title,artist,kind,status,deadline,vision,notes,music,live,image,artist_id,service,request_digest) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
           [...v, digest],
         );
+    if (d.operations) {
+      const previous = {
+        ...emptyOperations(),
+        ...existing.rows[0]?.operations,
+      };
+      for (const email of [
+        d.operations.leadEmail,
+        ...d.operations.collaborators,
+      ].filter(Boolean)) {
+        if (
+          email !== previous.leadEmail &&
+          !previous.collaborators.includes(email)
+        ) {
+          try {
+            await resolveAssignee(c, owner, email);
+          } catch {
+            throw new ProjectInputError(
+              "Seleziona persone abilitate del team.",
+            );
+          }
+        }
+      }
+      await c.query(
+        "UPDATE studio_projects SET operations=$3 WHERE owner_id=$1 AND id=$2",
+        [owner, id, JSON.stringify(d.operations)],
+      );
+      r.rows[0].operations = d.operations;
+      if (JSON.stringify(previous) !== JSON.stringify(d.operations))
+        await c.query(
+          "INSERT INTO studio_work_history(resource_id,owner_id,kind,version,snapshot,actor) VALUES($1,$2,'operations',$3,$4,$5)",
+          [
+            id,
+            owner,
+            r.rows[0].version,
+            JSON.stringify(d.operations),
+            extras.actor ?? "Team Emme Studio",
+          ],
+        );
+    }
     if (extras.quote)
       await writeQuote(c, owner, id, extras.quote, extras.quoteVersion ?? 0);
     await c.query("COMMIT");
