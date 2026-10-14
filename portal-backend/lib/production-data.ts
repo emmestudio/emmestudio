@@ -1,5 +1,6 @@
 import { validDate } from "./event-data.ts";
 import { validId } from "./task-data.ts";
+export const sessionPhases = ["Registrazione strumenti", "Registrazione voce", "Editing", "Mix", "Mastering", "Altro"] as const;
 export type ProductionKind =
   "track" | "recording" | "material" | "revision" | "live";
 export type Field = {
@@ -26,6 +27,10 @@ export const productionSpecs: Record<
     ],
     fields: [
       { key: "bpm", label: "BPM" },
+      { key: "duration", label: "Durata (mm:ss)" },
+      { key: "genre", label: "Genere / sound" },
+      { key: "arrangement", label: "Arrangiamento e note di produzione", type: "textarea" },
+      { key: "releaseDate", label: "Data uscita prevista", type: "date" },
       { key: "key", label: "Tonalità" },
       { key: "credits", label: "Crediti e musicisti", type: "textarea" },
       { key: "lyrics", label: "Testo del brano", type: "textarea" },
@@ -40,13 +45,17 @@ export const productionSpecs: Record<
   recording: {
     label: "Registrazioni",
     singular: "Registrazione",
-    states: ["Pianificata", "Registrata", "Da rifare", "Archiviata"],
+    states: ["Pianificata", "In corso", "Completata", "Registrata", "Da rifare", "Archiviata"],
     fields: [
-      { key: "instrument", label: "Strumento / parte", required: true },
-      { key: "musician", label: "Musicista", required: true },
+      { key: "phase", label: "Fase di produzione" },
+      { key: "instrument", label: "Strumento / parte" },
+      { key: "musician", label: "Musicista / voce / referente" },
       { key: "engineer", label: "Tecnico / studio" },
       { key: "recordedOn", label: "Data sessione", type: "date" },
       { key: "sessionLink", label: "Sessione o cartella Drive", type: "url" },
+      { key: "studio", label: "Sala / studio" },
+      { key: "take", label: "Take / versione di lavoro" },
+      { key: "result", label: "Esito sessione e prossimi passi", type: "textarea" },
     ],
   },
   material: {
@@ -225,15 +234,15 @@ export function validateProduction(input: unknown): ProductionDraft {
     throw new ProductionInputError("Brano non valido.");
   if (
     (kind === "track" && d.trackId !== null) ||
-    (kind === "recording" && !d.trackId)
+    (kind === "live" && d.trackId !== null)
   )
-    throw new ProductionInputError("Collega la registrazione a un brano.");
+    throw new ProductionInputError("Collegamento al brano non valido.");
   if (!d.details || typeof d.details !== "object" || Array.isArray(d.details))
     throw new ProductionInputError("Dettagli non validi.");
   const raw = d.details as Record<string, unknown>;
   const details: Record<string, string> = {};
   for (const f of spec.fields) {
-    const v = raw[f.key];
+    const v = raw[f.key] ?? (f.required ? undefined : "");
     if (
       typeof v !== "string" ||
       v.length > (f.type === "textarea" ? 10000 : 1000) ||
@@ -256,6 +265,13 @@ export function validateProduction(input: unknown): ProductionDraft {
       Number(details.bpm) > 400)
   )
     throw new ProductionInputError("BPM non validi.");
+  if (kind === "recording") {
+    if (details.phase && !sessionPhases.includes(details.phase as typeof sessionPhases[number]))
+      throw new ProductionInputError("Fase di produzione non valida.");
+    if ((!details.phase || details.phase === "Registrazione strumenti" || details.phase === "Registrazione voce") &&
+        (!details.instrument || !details.musician))
+      throw new ProductionInputError("Indica parte e musicista della registrazione.");
+  }
   if (
     kind === "revision" &&
     d.status === "Approvata" &&
@@ -280,7 +296,7 @@ export function validateProduction(input: unknown): ProductionDraft {
     );
   if (
     kind === "recording" &&
-    d.status === "Registrata" &&
+    (d.status === "Registrata" || d.status === "Completata") &&
     (!details.recordedOn || details.recordedOn > today)
   )
     throw new ProductionInputError(
@@ -292,6 +308,8 @@ export function validateProduction(input: unknown): ProductionDraft {
     (!details.showDate || details.showDate > today)
   )
     throw new ProductionInputError("Inserisci la data effettiva dello show.");
+  if ((kind === "material" || kind === "revision") && !d.trackId)
+    throw new ProductionInputError("Materiali e revisioni devono essere collegati a un brano.");
   return {
     projectId: d.projectId,
     kind,
