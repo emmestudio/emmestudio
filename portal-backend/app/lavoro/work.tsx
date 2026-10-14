@@ -757,7 +757,7 @@ export default function Work() {
             </button>
           </div>
           <p className="small">
-            Copia giornaliera alle 04:00 UTC, con controllo di rilettura. Copie
+            Backup automatici predisposti, in attesa di autorizzazione al trasferimento su Vercel Blob privato. Copie
             conservate nello spazio privato dello studio, senza cancellazione
             automatica. Sono esclusi credenziali Google, eventi Calendar e file
             esterni.

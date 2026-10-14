@@ -5,6 +5,7 @@ export const maxDuration = 60;
 export async function GET(r: Request) {
   if (!cronAuthorized(r.headers.get("authorization"), process.env.CRON_SECRET))
     return Response.json({ error: "Non autorizzato." }, { status: 401 });
+  if(process.env.STUDIO_BACKUPS_ENABLED!=="true")return Response.json({error:"Trasferimento backup in attesa di autorizzazione."},{status:403});
   if (
     process.env.VERCEL_PROJECT_ID !== "prj_wYBGT1TA8DnuvDY0fIaYnLS1P8MK" ||
     process.env.VERCEL_ENV !== "production"

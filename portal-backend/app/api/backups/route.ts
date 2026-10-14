@@ -49,6 +49,7 @@ export async function POST(r: Request) {
         { error: "Riservato all’amministratore." },
         { status: 403 },
       );
+    if(process.env.STUDIO_BACKUPS_ENABLED!=="true")return Response.json({error:"Trasferimento backup in attesa di autorizzazione."},{status:403});
     return Response.json(await createBackup(s.workspaceOwnerId), {
       headers: { "Cache-Control": "no-store" },
     });

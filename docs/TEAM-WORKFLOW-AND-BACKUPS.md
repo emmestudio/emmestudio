@@ -37,3 +37,7 @@ Export aggiornato al formato v2; ripristino locale dei dati verificato su Postgr
 Test su validazioni, assegnazioni, isolamento, tempi, concorrenza, template ripetuti, blocchi di consegna, storia, backup privati e checksum. Prove browser con moduli reali e API reali sul database locale isolato, desktop/mobile; compilazione Next.js e controlli degli accessi anonimi sul deployment. OAuth è esterno all’harness: il login reale di un collaboratore e la revoca della sua sessione vanno ancora collaudati con un account effettivamente abilitato. La prima copia reale viene verificata dopo il deployment; il ciclo giornaliero successivo non si può anticipare come verifica avvenuta.
 
 Tutto sul branch `restyling-cinematic-2026`, senza modifiche a main, DNS o progetto/database Accademia. È stata mantenuta la struttura della scheda brano introdotta dagli aggiornamenti più recenti.
+
+## Stato dell’autorizzazione ai backup reali
+
+La verifica automatica delle autorizzazioni ha rifiutato l’attivazione di una copia reale contenente dati personali ed economici su Vercel Blob, richiedendo autorizzazione specifica dell’utente al contenuto e alla destinazione. Nessuna copia reale è stata verificata. La pianificazione cron è rimossa e i comandi di trasferimento richiedono `STUDIO_BACKUPS_ENABLED=true`, non impostato. Dopo approvazione esplicita saranno attivati il trasferimento e il job giornaliero, e verificata la prima copia. Il deposito privato è predisposto.
