@@ -16,7 +16,7 @@ export async function verifyVisual({
     ? await import(pathToFileURL(join(runtime, "playwright/index.js")).href)
     : await import("playwright");
   const { chromium } = playwright.default ?? playwright;
-  const source = `import React from 'react'; import {createRoot} from 'react-dom/client'; import Artists from '${root}/app/artisti/artists.tsx'; import Projects from '${root}/app/progetti/projects.tsx'; import Finance from '${root}/app/guadagni/finance.tsx'; import Production from '${root}/app/produzione/production.tsx'; import Costs from '${root}/app/costi/costs.tsx'; import Navigation from '${root}/app/navigation.tsx'; const path=location.pathname;const titles=path==='/produzione'?['Dalla prima idea.','Alla consegna finale.']:path==='/costi'?['Costi chiari.','Decisioni più consapevoli.']:path==='/artisti'?['Ogni artista.','Un percorso da costruire.']:path==='/guadagni'?['Il valore del lavoro.','Ogni cifra sotto controllo.']:['Una visione.','Un progetto concreto.'];createRoot(document.getElementById('app')).render(<><header className="brand"><img src="/logo-white.png" alt="Emme Studio" width="150" height="75"/><Navigation/></header><main className={path==='/produzione'||path==='/costi'?'shell dashboard':'shell'}><span className="eyebrow">EMME STUDIO · PORTALE</span><h1>{titles[0]}<br/><em>{titles[1]}</em></h1>{path==='/produzione'?<Production/>:path==='/costi'?<Costs/>:path==='/artisti'?<Artists/>:path==='/guadagni'?<Finance/>:<Projects/>}</main></>);`;
+  const source = `import React from 'react'; import {createRoot} from 'react-dom/client'; import Artists from '${root}/app/artisti/artists.tsx'; import Projects from '${root}/app/progetti/projects.tsx'; import Finance from '${root}/app/guadagni/finance.tsx'; import Production from '${root}/app/produzione/production.tsx'; import Costs from '${root}/app/costi/costs.tsx'; import Work from '${root}/app/lavoro/work.tsx'; import Navigation from '${root}/app/navigation.tsx'; const path=location.pathname;const titles=path==='/lavoro'?['Il lavoro al posto giusto.','Ogni giorno.']:path==='/produzione'?['Dalla prima idea.','Alla consegna finale.']:path==='/costi'?['Costi chiari.','Decisioni più consapevoli.']:path==='/artisti'?['Ogni artista.','Un percorso da costruire.']:path==='/guadagni'?['Il valore del lavoro.','Ogni cifra sotto controllo.']:['Una visione.','Un progetto concreto.'];createRoot(document.getElementById('app')).render(<><header className="brand"><img src="/logo-white.png" alt="Emme Studio" width="150" height="75"/><Navigation/></header><main className={path==='/produzione'||path==='/costi'?'shell dashboard':'shell'}><span className="eyebrow">EMME STUDIO · PORTALE</span><h1>{titles[0]}<br/><em>{titles[1]}</em></h1>{path==='/lavoro'?<Work/>:path==='/produzione'?<Production/>:path==='/costi'?<Costs/>:path==='/artisti'?<Artists/>:path==='/guadagni'?<Finance/>:<Projects/>}</main></>);`;
   await writeFile(join(scratch, "ui.tsx"), source);
   await build({
     entryPoints: [join(scratch, "ui.tsx")],
@@ -51,7 +51,11 @@ export async function verifyVisual({
       },
     ],
   });
-  globalThis.emmeTestSession = { workspaceOwnerId: "owner", role: "admin" };
+  globalThis.emmeTestSession = {
+    workspaceOwnerId: "owner",
+    role: "admin",
+    user: { email: "owner@example.test", name: "Studio Owner" },
+  };
   const server = createServer(async (req, res) => {
     try {
       const origin = `http://127.0.0.1:${server.address().port}`;
@@ -67,19 +71,27 @@ export async function verifyVisual({
           return;
         }
         const api =
-          url.pathname === "/api/production"
-            ? svc.productionApi
-            : url.pathname === "/api/costs"
-              ? svc.costApi
-              : url.pathname === "/api/export"
-                ? svc.exportApi
-                : url.pathname === "/api/artists"
-                  ? svc.artistApi
-                  : url.pathname === "/api/projects"
-                    ? svc.projectApi
-                    : url.pathname === "/api/finance"
-                      ? svc.financeApi
-                      : null;
+          url.pathname === "/api/backups"
+            ? svc.backupApi
+            : url.pathname === "/api/team"
+              ? svc.teamApi
+              : url.pathname === "/api/workflow"
+                ? svc.workflowApi
+                : url.pathname === "/api/tasks"
+                  ? svc.tasksApi
+                  : url.pathname === "/api/production"
+                    ? svc.productionApi
+                    : url.pathname === "/api/costs"
+                      ? svc.costApi
+                      : url.pathname === "/api/export"
+                        ? svc.exportApi
+                        : url.pathname === "/api/artists"
+                          ? svc.artistApi
+                          : url.pathname === "/api/projects"
+                            ? svc.projectApi
+                            : url.pathname === "/api/finance"
+                              ? svc.financeApi
+                              : null;
         if (!api) {
           res.writeHead(404).end();
           return;
@@ -279,7 +291,9 @@ export async function verifyVisual({
       .waitFor();
     await page.getByRole("button", { name: "+ Brano", exact: true }).click();
     await page.getByLabel("Titolo", { exact: true }).fill("Brano dal modulo");
-    await page.getByLabel("Responsabile", { exact: true }).fill("Team studio");
+    await page
+      .getByLabel("Referente / gruppo (testo)", { exact: true })
+      .fill("Team studio");
     await page.getByLabel("BPM", { exact: true }).fill("120");
     await page
       .getByRole("button", { name: "Salva scheda", exact: true })
@@ -302,12 +316,18 @@ export async function verifyVisual({
     await workspace.getByRole("button", { name: /^Sessioni/ }).click();
     await workspace.getByRole("button", { name: "+ Nuova sessione" }).click();
     await page.getByLabel("Titolo", { exact: true }).fill("Voci demo");
-    await page.getByLabel("Fase di produzione").selectOption("Registrazione voce");
+    await page
+      .getByLabel("Fase di produzione")
+      .selectOption("Registrazione voce");
     await page.getByLabel("Strumento / parte").fill("Voce");
     await page.getByLabel("Musicista / voce / referente").fill("Cantante");
-    await page.getByRole("button", { name: "Salva scheda", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Salva scheda", exact: true })
+      .click();
     await workspace.getByRole("heading", { name: "Voci demo" }).waitFor();
-    await workspace.getByRole("button", { name: /^Materiali e versioni/ }).click();
+    await workspace
+      .getByRole("button", { name: /^Materiali e versioni/ })
+      .click();
     await workspace.getByRole("button", { name: "+ Nuovo materiale" }).click();
     await page.getByLabel("Titolo", { exact: true }).fill("Mix dimostrativo");
     await page
@@ -317,35 +337,73 @@ export async function verifyVisual({
     await page
       .getByLabel("Link file / cartella Drive")
       .fill("https://drive.google.com/file/example");
-    await page.getByRole("button", { name: "Salva scheda", exact: true }).click();
-    await workspace.getByRole("heading", { name: "Mix dimostrativo", exact: true }).waitFor();
+    await page
+      .getByRole("button", { name: "Salva scheda", exact: true })
+      .click();
+    await workspace
+      .getByRole("heading", { name: "Mix dimostrativo", exact: true })
+      .waitFor();
     await workspace.getByRole("button", { name: /^Revisioni/ }).click();
     await workspace.getByRole("button", { name: "+ Nuova revisione" }).click();
-    await page.getByLabel("Titolo", { exact: true }).fill("Revisione dimostrativa");
+    await page
+      .getByLabel("Titolo", { exact: true })
+      .fill("Revisione dimostrativa");
     await page.getByLabel("Versione oggetto della revisione").fill("Mix v01");
     await page
       .getByLabel("Feedback ricevuto e modifiche richieste")
       .fill("Ridurre il livello della voce");
-    await page.locator("dialog.production-dialog").getByRole("combobox", {name:/^Stato/}).selectOption("Approvata");
+    await page
+      .locator("dialog.production-dialog")
+      .getByRole("combobox", { name: /^Stato/ })
+      .selectOption("Approvata");
     await page
       .getByLabel("Approvazione ricevuta da / tramite")
       .fill("Artista, via email");
     await page.getByLabel("Data approvazione").fill("2026-01-02");
-    await page.getByRole("button", { name: "Salva scheda", exact: true }).click();
-    await workspace.getByRole("heading", { name: "Revisione dimostrativa", exact: true }).waitFor();
-    await workspace.screenshot({ path: join(shots, "brano-workspace-desktop.png") });
+    await page
+      .getByRole("button", { name: "Salva scheda", exact: true })
+      .click();
+    await workspace
+      .getByRole("heading", { name: "Revisione dimostrativa", exact: true })
+      .waitFor();
+    await workspace.screenshot({
+      path: join(shots, "brano-workspace-desktop.png"),
+    });
     await page.setViewportSize({ width: 390, height: 844 });
-    assert.ok(await workspace.evaluate((el) => el.getBoundingClientRect().right <= innerWidth + 2), "song workspace mobile overflow");
-    await workspace.screenshot({ path: join(shots, "brano-workspace-mobile.png") });
-    await workspace.getByRole("button", { name: "Chiudi scheda brano" }).click();
+    assert.ok(
+      await workspace.evaluate(
+        (el) => el.getBoundingClientRect().right <= innerWidth + 2,
+      ),
+      "song workspace mobile overflow",
+    );
+    await workspace.screenshot({
+      path: join(shots, "brano-workspace-mobile.png"),
+    });
+    await workspace
+      .getByRole("button", { name: "Chiudi scheda brano" })
+      .click();
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.getByRole("group", { name: "Aree produzione" }).getByRole("button", { name: /^Registrazioni/ }).click();
-    await page.getByRole("button", { name: "+ Registrazione autonoma" }).click();
+    await page
+      .getByRole("group", { name: "Aree produzione" })
+      .getByRole("button", { name: /^Registrazioni/ })
+      .click();
+    await page
+      .getByRole("button", { name: "+ Registrazione autonoma" })
+      .click();
     await page.getByLabel("Titolo", { exact: true }).fill("Mix autonomo");
     await page.getByLabel("Fase di produzione").selectOption("Mix");
-    await page.getByRole("button", { name: "Salva scheda", exact: true }).click();
-    await page.getByRole("heading", { name: "Mix autonomo", exact: true }).waitFor();
-    assert.equal((await svc.listProduction("owner")).find((i) => i.title === "Mix autonomo")?.trackId, null);
+    await page
+      .getByRole("button", { name: "Salva scheda", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Mix autonomo", exact: true })
+      .waitFor();
+    assert.equal(
+      (await svc.listProduction("owner")).find(
+        (i) => i.title === "Mix autonomo",
+      )?.trackId,
+      null,
+    );
     await page.getByRole("button", { name: /^Show live/ }).click();
     await page
       .getByRole("button", { name: "+ Show live", exact: true })
@@ -448,7 +506,83 @@ export async function verifyVisual({
         fullPage: true,
       });
     }
-    globalThis.emmeTestSession = { workspaceOwnerId: "owner", role: "viewer" };
+
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto(base + "/lavoro?project=" + projectId + "&tab=Modelli");
+    await page
+      .getByRole("heading", {
+        name: "Un punto di partenza per ogni progetto",
+        exact: true,
+      })
+      .waitFor();
+    await page
+      .getByLabel("Responsabile iniziale")
+      .selectOption("owner@example.test");
+    await page.getByLabel("Stima ore del progetto").fill("10");
+    await page
+      .getByRole("button", { name: "Applica modello", exact: true })
+      .click();
+    await page
+      .getByText("Modello applicato: Singolo", { exact: false })
+      .waitFor();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Applica modello", exact: true })
+        .isDisabled(),
+      true,
+    );
+    await page
+      .getByRole("button", { name: "Il mio lavoro", exact: true })
+      .click();
+    await page
+      .getByRole("heading", {
+        name: "Definire reference e arrangiamento",
+        exact: true,
+      })
+      .waitFor();
+    await page.screenshot({
+      path: join(shots, "lavoro-desktop.png"),
+      fullPage: true,
+    });
+    await page
+      .getByRole("button", { name: "Ore lavorate", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "+ Registra ore", exact: true })
+      .click();
+    await page.getByLabel("Data lavoro").fill("2026-01-03");
+    await page.getByLabel("Minuti lavorati").fill("120");
+    await page.getByLabel("Lavoro svolto").fill("Sessione di mix del team");
+    await page
+      .locator("dialog")
+      .getByRole("button", { name: "Salva", exact: true })
+      .click();
+    await page.locator("dialog").waitFor({ state: "hidden" });
+    await page.getByText("Sessione di mix del team", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Consegne", exact: true }).click();
+    await page.locator(".ledger-row input[type=checkbox]").first().check();
+    await page
+      .getByRole("heading", { name: /1 \/ 5 verifiche completate/ })
+      .waitFor();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole("button", { name: "Urgenze", exact: true }).click();
+    await page
+      .getByRole("heading", { name: "Revisioni in attesa", exact: true })
+      .waitFor();
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+    );
+    await page.screenshot({
+      path: join(shots, "urgenze-mobile.png"),
+      fullPage: true,
+    });
+    globalThis.emmeTestSession = {
+      workspaceOwnerId: "owner",
+      role: "viewer",
+      user: { email: "team@example.test", name: "Team" },
+    };
     await page.goto(base + "/progetti?project=" + projectId);
     await page.getByLabel("Titolo progetto").waitFor();
     assert.equal(await page.getByLabel("Titolo progetto").isDisabled(), true);

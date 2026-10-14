@@ -27,6 +27,7 @@ export default function Navigation() {
     <nav aria-label="Navigazione portale">
       {[
         ["/dashboard", "Panoramica"],
+        ["/lavoro", "Il mio lavoro"],
         ["/artisti", "Artisti"],
         ["/progetti", "Progetti"],
         ["/produzione", "Produzione"],

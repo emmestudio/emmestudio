@@ -12,6 +12,10 @@ export const backupTables = [
   "studio_payments",
   "studio_costs",
   "studio_cost_history",
+  "studio_workflow",
+  "studio_hours",
+  "studio_delivery",
+  "studio_work_history",
   "portal_members",
 ];
 export async function restoreBusinessExport(
@@ -27,14 +31,22 @@ export async function restoreBusinessExport(
   if (
     !backup ||
     backup.format !== "emme-studio-workspace" ||
-    backup.version !== 1 ||
+    ![1, 2].includes(backup.version ?? 0) ||
     !backup.data ||
     Object.keys(backup.data).some(
       (k) => !backupTables.includes(k) && k !== "team",
     )
   )
     throw new Error("RESTORE_INVALID_FORMAT");
-  const data = backup.data;
+  const data = { ...backup.data };
+  if (backup.version === 1)
+    for (const k of [
+      "studio_workflow",
+      "studio_hours",
+      "studio_delivery",
+      "studio_work_history",
+    ])
+      data[k] ??= [];
   for (const table of backupTables) {
     const rows = data[table === "portal_members" ? "team" : table];
     if (!Array.isArray(rows) || rows.length > 100000)

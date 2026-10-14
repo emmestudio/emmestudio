@@ -71,3 +71,4 @@
 }
 
 @media(max-width:800px){.production-toolbar{grid-template-columns:minmax(0,1fr)}}
+.shell>section>.card fieldset{border:0;padding:0;min-width:0}.shell>section>.card fieldset label{display:grid;gap:8px;font-size:13px;margin-bottom:18px}.dashboard-project .small{white-space:nowrap}.ledger-row .checkbox>span{min-width:0}.ledger-row .checkbox p{overflow-wrap:anywhere}.event-dialog fieldset>div label{display:grid;gap:8px;font-size:13px;margin-bottom:18px}

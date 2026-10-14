@@ -616,6 +616,14 @@ export default function Projects() {
             {editor && editor !== "new" ? (
               <Link
                 className="text-button"
+                href={"/lavoro?project=" + editor.id + "&tab=Modelli"}
+              >
+                Modelli, ore e consegne ↗
+              </Link>
+            ) : null}
+            {editor && editor !== "new" ? (
+              <Link
+                className="text-button"
                 href={"/produzione?project=" + editor.id}
               >
                 Brani, materiali e show ↗

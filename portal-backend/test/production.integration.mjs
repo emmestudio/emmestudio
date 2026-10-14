@@ -81,7 +81,8 @@ export async function verifyProduction({ svc, db, root, projectId }) {
     "Tecnico",
   );
   assert.equal(
-    (await svc.listProduction("owner")).find((i) => i.id === standaloneId)?.trackId,
+    (await svc.listProduction("owner")).find((i) => i.id === standaloneId)
+      ?.trackId,
     null,
   );
   const materialId = randomUUID();
@@ -95,9 +96,16 @@ export async function verifyProduction({ svc, db, root, projectId }) {
       url: "https://drive.google.com/example",
     },
   };
-  await svc.saveProduction("owner", materialId, undefined, svc.validateProduction(material), "Tecnico");
+  await svc.saveProduction(
+    "owner",
+    materialId,
+    undefined,
+    svc.validateProduction(material),
+    "Tecnico",
+  );
   assert.equal(
-    (await svc.listProduction("owner")).find((i) => i.id === materialId)?.trackId,
+    (await svc.listProduction("owner")).find((i) => i.id === materialId)
+      ?.trackId,
     trackId,
   );
   const q = (await svc.listLedger("owner")).quotes[0];
@@ -189,6 +197,7 @@ export async function verifyProduction({ svc, db, root, projectId }) {
       "004-members.sql",
       "005-artists-finance.sql",
       "006-production-finance.sql",
+      "007-workflow.sql",
     ])
       await restored.exec(await readFile(join(root, "db", f), "utf8"));
     const client = { query: (q, v) => restored.query(q, v) };

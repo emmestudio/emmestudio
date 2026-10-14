@@ -30,3 +30,7 @@ Profili artista collegati ai progetti, direzione artistica e panoramica dei lavo
 ## Produzione interna, preventivi e costi
 
 Il portale serve esclusivamente al team. Brani, registrazioni, materiali/versioni, revisioni e schede show live si gestiscono in Produzione. Preventivi dettagliati e pagina stampabile PDF, costi/margini ed esportazione protetta sono riservati all’amministratore. Flussi, limiti e verifiche: [INTERNAL-PRODUCTION-WORKSPACE](../docs/INTERNAL-PRODUCTION-WORKSPACE.md).
+
+## Organizzazione del team e backup
+
+Il mio lavoro, urgenze, ore lavorate, modelli e checklist con blocchi di consegna. Backup giornalieri privati e copia manuale riservata all’amministratore. [Flussi, verifiche e limiti](../docs/TEAM-WORKFLOW-AND-BACKUPS.md).

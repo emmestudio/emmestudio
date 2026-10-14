@@ -34,7 +34,7 @@ globalThis.emmeTestSession = { workspaceOwnerId: "owner", role: "admin" };
 const root = resolve(".");
 await writeFile(
   join(scratch, "entry.ts"),
-  `export * from '${root}/lib/projects.ts'; export * from '${root}/lib/finance.ts'; export * from '${root}/lib/artists.ts'; export * as projectApi from '${root}/app/api/projects/route.ts'; export * as artistApi from '${root}/app/api/artists/route.ts'; export * as financeApi from '${root}/app/api/finance/route.ts'; export * from '${root}/lib/production.ts'; export * from '${root}/lib/production-data.ts'; export * from '${root}/lib/costs.ts'; export * from '${root}/lib/cost-data.ts'; export * from '${root}/lib/backup-data.ts'; export * as productionApi from '${root}/app/api/production/route.ts'; export * as costApi from '${root}/app/api/costs/route.ts'; export * as exportApi from '${root}/app/api/export/route.ts'; export {default as quotePage} from '${root}/app/preventivi/[id]/page.tsx';`,
+  `export * from '${root}/lib/projects.ts'; export * from '${root}/lib/finance.ts'; export * from '${root}/lib/artists.ts'; export * as projectApi from '${root}/app/api/projects/route.ts'; export * as artistApi from '${root}/app/api/artists/route.ts'; export * as financeApi from '${root}/app/api/finance/route.ts'; export * from '${root}/lib/production.ts'; export * from '${root}/lib/production-data.ts'; export * from '${root}/lib/costs.ts'; export * from '${root}/lib/cost-data.ts'; export * from '${root}/lib/backup-data.ts'; export * as productionApi from '${root}/app/api/production/route.ts'; export * as costApi from '${root}/app/api/costs/route.ts'; export * as exportApi from '${root}/app/api/export/route.ts'; export * from '${root}/lib/workflow.ts'; export * from '${root}/lib/work-data.ts'; export * from '${root}/lib/tasks.ts'; export * as workflowApi from '${root}/app/api/workflow/route.ts'; export * as teamApi from '${root}/app/api/team/route.ts'; export * as tasksApi from '${root}/app/api/tasks/route.ts'; export * from '${root}/lib/backups.ts'; export * as backupApi from '${root}/app/api/backups/route.ts'; export {default as quotePage} from '${root}/app/preventivi/[id]/page.tsx';`,
 );
 try {
   await build({
@@ -53,6 +53,10 @@ try {
       {
         name: "isolated-db",
         setup(b) {
+          b.onResolve({ filter: /^@vercel\/blob$/ }, () => ({
+            path: "blob-test",
+            namespace: "test",
+          }));
           b.onResolve({ filter: /^next\/(link|headers|navigation)$/ }, (a) => ({
             path: a.path,
             namespace: "test",
@@ -72,17 +76,19 @@ try {
           b.onLoad({ filter: /.*/, namespace: "test" }, (a) => ({
             resolveDir: root,
             contents:
-              a.path === "next/link"
-                ? "import React from 'react';export default function Link(props){return React.createElement('a',props,props.children);}"
-                : a.path === "next/headers"
-                  ? "export const headers=async()=>new Headers();"
-                  : a.path === "next/navigation"
-                    ? 'export const redirect=(p)=>{throw new Error("REDIRECT "+p)};export const notFound=()=>{throw new Error("NOT_FOUND")};'
-                    : a.path === "db"
-                      ? "export const getDb=()=>globalThis.emmeTestDb;"
-                      : a.path === "workspace-session"
-                        ? "export const workspaceSession=async()=>globalThis.emmeTestSession;"
-                        : "",
+              a.path === "blob-test"
+                ? "export const put=(...a)=>globalThis.emmeTestBlob.put(...a);export const get=(...a)=>globalThis.emmeTestBlob.get(...a);export const list=(...a)=>globalThis.emmeTestBlob.list(...a);export const del=(...a)=>globalThis.emmeTestBlob.del(...a);"
+                : a.path === "next/link"
+                  ? "import React from 'react';export default function Link(props){return React.createElement('a',props,props.children);}"
+                  : a.path === "next/headers"
+                    ? "export const headers=async()=>new Headers();"
+                    : a.path === "next/navigation"
+                      ? 'export const redirect=(p)=>{throw new Error("REDIRECT "+p)};export const notFound=()=>{throw new Error("NOT_FOUND")};'
+                      : a.path === "db"
+                        ? "export const getDb=()=>globalThis.emmeTestDb;"
+                        : a.path === "workspace-session"
+                          ? "export const workspaceSession=async()=>globalThis.emmeTestSession;"
+                          : "",
             loader: "js",
           }));
         },
@@ -91,7 +97,7 @@ try {
   });
   const svc = await import(join(scratch, "services.mjs"));
   await db.exec(
-    "CREATE TABLE \"user\"(id TEXT PRIMARY KEY); INSERT INTO \"user\" VALUES('owner'),('foreign');",
+    "CREATE TABLE \"user\"(id TEXT PRIMARY KEY,email TEXT,name TEXT); INSERT INTO \"user\"(id,email,name) VALUES('owner','owner@example.test','Studio Owner'),('foreign','foreign@example.test','Foreign');",
   );
   for (const file of [
     "002-projects.sql",
@@ -99,6 +105,7 @@ try {
     "004-members.sql",
     "005-artists-finance.sql",
     "006-production-finance.sql",
+    "007-workflow.sql",
   ])
     await db.exec(await readFile(join(root, "db", file), "utf8"));
   const artistId = randomUUID(),
@@ -300,6 +307,8 @@ try {
   );
   const { verifyProduction } = await import("./production.integration.mjs");
   await verifyProduction({ svc, db, root, projectId });
+  const { verifyWorkflow } = await import("./workflow.integration.mjs");
+  await verifyWorkflow({ svc, db, root, projectId, artistId });
   if (process.argv.includes("--visual")) {
     const { verifyVisual } = await import("./management.visual.mjs");
     await verifyVisual({ root, scratch, svc, projectId, artistId });

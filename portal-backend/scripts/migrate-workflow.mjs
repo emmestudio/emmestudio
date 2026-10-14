@@ -3,7 +3,10 @@ import { Pool } from "pg";
 if (
   process.env.VERCEL_PROJECT_ID !== "prj_wYBGT1TA8DnuvDY0fIaYnLS1P8MK" ||
   process.env.VERCEL_ENV !== "production" ||
-  !["https://emme-studio-portale.vercel.app","https://portal.emmestudioproduction.it"].includes(process.env.BETTER_AUTH_URL)
+  ![
+    "https://emme-studio-portale.vercel.app",
+    "https://portal.emmestudioproduction.it",
+  ].includes(process.env.BETTER_AUTH_URL)
 )
   throw new Error("MIGRATION_WRONG_PROJECT");
 const pool = new Pool({
@@ -34,7 +37,15 @@ try {
       "studio_quotes",
       "studio_installments",
       "studio_payments",
- "studio_production","studio_production_history","studio_quote_history","studio_costs","studio_cost_history", "studio_workflow","studio_hours","studio_delivery","studio_work_history",
+      "studio_production",
+      "studio_production_history",
+      "studio_quote_history",
+      "studio_costs",
+      "studio_cost_history",
+      "studio_workflow",
+      "studio_hours",
+      "studio_delivery",
+      "studio_work_history",
     ]);
     if (
       !tables.rows.some((row) => row.tablename === "studio_tasks") ||

@@ -81,6 +81,16 @@ export async function saveProject(
       await c.query("ROLLBACK");
       return null;
     }
+    if (d.status === "Completato") {
+      const missing = await c.query(
+        "SELECT id FROM studio_delivery WHERE owner_id=$1 AND project_id=$2 AND required=true AND done=false LIMIT 1",
+        [owner, id],
+      );
+      if (missing.rows[0])
+        throw new ProjectInputError(
+          "Completa le verifiche obbligatorie di consegna prima di chiudere il progetto.",
+        );
+    }
     let artistId = d.artistId;
     if (extras.newArtist) {
       const a = extras.newArtist.draft;

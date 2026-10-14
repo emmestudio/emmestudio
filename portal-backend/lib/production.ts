@@ -1,4 +1,5 @@
 import "server-only";
+import { resolveAssignee } from "./team";
 import { createHash } from "node:crypto";
 import { getDb } from "./db";
 import {
@@ -75,6 +76,32 @@ export async function saveProduction(
           "Il brano deve appartenere a questo progetto.",
         );
     }
+    const a =
+      old.rows[0]?.data?.assigneeEmail &&
+      old.rows[0].data.assigneeEmail === d.assigneeEmail
+        ? undefined
+        : await resolveAssignee(c, owner, d.assigneeEmail);
+    d = {
+      ...d,
+      assigneeEmail:
+        a === undefined
+          ? (old.rows[0]?.data?.assigneeEmail ?? null)
+          : (a?.email ?? null),
+      assignee:
+        a === undefined && old.rows[0]?.data?.assigneeEmail
+          ? old.rows[0].data.assignee
+          : (a?.name ?? d.assignee),
+    };
+    if (d.kind === "track" && d.status === "Consegnato") {
+      const missing = await c.query(
+        "SELECT id FROM studio_delivery WHERE owner_id=$1 AND project_id=$2 AND track_id=$3 AND required=true AND done=false LIMIT 1",
+        [owner, d.projectId, id],
+      );
+      if (missing.rows[0])
+        throw new ProductionInputError(
+          "Completa le verifiche obbligatorie del brano prima della consegna.",
+        );
+    }
     const next = version ? version + 1 : 1;
     if (version)
       await c.query(
@@ -93,6 +120,10 @@ export async function saveProduction(
     await c.query("COMMIT");
   } catch (e) {
     await c.query("ROLLBACK");
+    if (e instanceof Error && e.message === "ASSIGNEE_INVALID")
+      throw new ProductionInputError(
+        "Seleziona una persona abilitata del team.",
+      );
     throw e;
   } finally {
     c.release();

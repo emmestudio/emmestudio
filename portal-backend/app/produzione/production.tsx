@@ -1,4 +1,5 @@
 "use client";
+import AssigneeField from "../assignee-field";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import TrackWorkspace from "./track-workspace";
@@ -98,9 +99,13 @@ export default function Production() {
         : {
             ...emptyProduction(kind, project),
             trackId: null,
-            details: kind === "recording"
-              ? { ...emptyProduction(kind, project).details, phase: "Registrazione strumenti" }
-              : emptyProduction(kind, project).details,
+            details:
+              kind === "recording"
+                ? {
+                    ...emptyProduction(kind, project).details,
+                    phase: "Registrazione strumenti",
+                  }
+                : emptyProduction(kind, project).details,
           },
     );
     setId(item?.id ?? crypto.randomUUID());
@@ -138,8 +143,14 @@ export default function Production() {
       setBusy(false);
     }
   }
-  const selectedTrack = items.find((i) => i.kind === "track" && i.id === selectedTrackId) ?? null;
-  const unattached = items.filter((i) => (i.kind === "material" || i.kind === "revision") && !i.trackId && (!project || i.projectId === project));
+  const selectedTrack =
+    items.find((i) => i.kind === "track" && i.id === selectedTrackId) ?? null;
+  const unattached = items.filter(
+    (i) =>
+      (i.kind === "material" || i.kind === "revision") &&
+      !i.trackId &&
+      (!project || i.projectId === project),
+  );
   const closed = (i: ProductionItem) =>
     [
       "Consegnato",
@@ -175,9 +186,10 @@ export default function Production() {
     setDraft({
       ...newDraft,
       trackId: parent.id,
-      details: childKind === "recording"
-        ? { ...newDraft.details, phase: "Registrazione strumenti" }
-        : newDraft.details,
+      details:
+        childKind === "recording"
+          ? { ...newDraft.details, phase: "Registrazione strumenti" }
+          : newDraft.details,
     });
     setId(crypto.randomUUID());
     setFormError("");
@@ -186,15 +198,19 @@ export default function Production() {
     <section>
       <div className="agenda-heading">
         <p>
-          Ogni brano raccoglie sessioni, voci, mix, mastering, materiali e revisioni.
-          Le registrazioni indipendenti restano in una sezione separata.
+          Ogni brano raccoglie sessioni, voci, mix, mastering, materiali e
+          revisioni. Le registrazioni indipendenti restano in una sezione
+          separata.
         </p>
         <button
           className="button"
           disabled={!writable || loading || !!error}
           onClick={() => open()}
         >
-          + {kind === "recording" ? "Registrazione autonoma" : productionSpecs[kind].singular}
+          +{" "}
+          {kind === "recording"
+            ? "Registrazione autonoma"
+            : productionSpecs[kind].singular}
         </button>
       </div>
       <div
@@ -213,7 +229,10 @@ export default function Production() {
             <span>
               {
                 items.filter(
-                  (i) => i.kind === k && (!project || i.projectId === project) && (k !== "recording" || !i.trackId),
+                  (i) =>
+                    i.kind === k &&
+                    (!project || i.projectId === project) &&
+                    (k !== "recording" || !i.trackId),
                 ).length
               }
             </span>
@@ -223,10 +242,7 @@ export default function Production() {
       <div className="production-toolbar">
         <label>
           Progetto
-          <select
-            value={project}
-            onChange={(e) => setProject(e.target.value)}
-          >
+          <select value={project} onChange={(e) => setProject(e.target.value)}>
             <option value="">Tutti i progetti</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -295,7 +311,10 @@ export default function Production() {
             ) : null}
             {i.kind === "recording" ? (
               <p className="small">
-                {i.details.phase || "Registrazione strumenti"} · {i.details.instrument || i.details.musician || "Sessione autonoma"}
+                {i.details.phase || "Registrazione strumenti"} ·{" "}
+                {i.details.instrument ||
+                  i.details.musician ||
+                  "Sessione autonoma"}
                 {i.details.recordedOn
                   ? " · " +
                     new Date(
@@ -325,10 +344,21 @@ export default function Production() {
               </p>
             ) : null}
             {i.kind === "track" ? (
-              <div className="production-counts" aria-label="Lavorazioni collegate">
-                {(["recording", "material", "revision"] as ProductionKind[]).map((k) => (
+              <div
+                className="production-counts"
+                aria-label="Lavorazioni collegate"
+              >
+                {(
+                  ["recording", "material", "revision"] as ProductionKind[]
+                ).map((k) => (
                   <span key={k}>
-                    {k === "recording" ? "Sessioni" : productionSpecs[k].label} · {items.filter((child) => child.kind === k && child.trackId === i.id).length}
+                    {k === "recording" ? "Sessioni" : productionSpecs[k].label}{" "}
+                    ·{" "}
+                    {
+                      items.filter(
+                        (child) => child.kind === k && child.trackId === i.id,
+                      ).length
+                    }
                   </span>
                 ))}
               </div>
@@ -343,7 +373,12 @@ export default function Production() {
                     )
                   : ""}
               </span>
-              <button className="text-button" onClick={() => i.kind === "track" ? setSelectedTrackId(i.id) : open(i)}>
+              <button
+                className="text-button"
+                onClick={() =>
+                  i.kind === "track" ? setSelectedTrackId(i.id) : open(i)
+                }
+              >
                 {i.kind === "track" ? "Apri scheda brano ↗" : "Apri scheda ↗"}
               </button>
             </div>
@@ -376,15 +411,26 @@ export default function Production() {
         </div>
       ) : null}
       {unattached.length ? (
-        <section className="card" aria-label="Materiali e revisioni da collegare">
+        <section
+          className="card"
+          aria-label="Materiali e revisioni da collegare"
+        >
           <h2>Materiali e revisioni da assegnare</h2>
-          <p className="small">Queste schede precedenti non hanno un brano collegato: conservale e assegna il brano corretto senza perdere la cronologia.</p>
+          <p className="small">
+            Queste schede precedenti non hanno un brano collegato: conservale e
+            assegna il brano corretto senza perdere la cronologia.
+          </p>
           <div className="track-entry-list">
             {unattached.map((i) => (
               <div className="track-entry" key={i.id}>
-                <strong>{i.title}</strong> <span className="badge">{productionSpecs[i.kind].label}</span>
-                <p className="small">{projects.find((p) => p.id === i.projectId)?.title}</p>
-                <button className="text-button" onClick={() => open(i)}>Collega al brano ↗</button>
+                <strong>{i.title}</strong>{" "}
+                <span className="badge">{productionSpecs[i.kind].label}</span>
+                <p className="small">
+                  {projects.find((p) => p.id === i.projectId)?.title}
+                </p>
+                <button className="text-button" onClick={() => open(i)}>
+                  Collega al brano ↗
+                </button>
               </div>
             ))}
           </div>
@@ -416,7 +462,9 @@ export default function Production() {
         >
           <div className="dialog-heading">
             <h2 id="production-title">
-              {draft.kind === "recording" ? "Sessione di produzione" : productionSpecs[draft.kind].singular}
+              {draft.kind === "recording"
+                ? "Sessione di produzione"
+                : productionSpecs[draft.kind].singular}
             </h2>
             <button
               type="button"
@@ -456,7 +504,13 @@ export default function Production() {
               </select>
             </label>
             {draft.projectId ? (
-              <p className="small">Artista: <strong>{projects.find((p) => p.id === draft.projectId)?.artist || "Da definire"}</strong></p>
+              <p className="small">
+                Artista:{" "}
+                <strong>
+                  {projects.find((p) => p.id === draft.projectId)?.artist ||
+                    "Da definire"}
+                </strong>
+              </p>
             ) : null}
             <label>
               Titolo
@@ -482,16 +536,13 @@ export default function Production() {
                   ))}
                 </select>
               </label>
-              <label>
-                Responsabile
-                <input
-                  maxLength={200}
-                  value={draft.assignee}
-                  onChange={(e) =>
-                    setDraft({ ...draft, assignee: e.target.value })
-                  }
-                />
-              </label>
+              <AssigneeField
+                email={draft.assigneeEmail}
+                name={draft.assignee}
+                onChange={(assigneeEmail, assignee) =>
+                  setDraft({ ...draft, assigneeEmail, assignee })
+                }
+              />
             </div>
             <label>
               Scadenza operativa
@@ -507,7 +558,9 @@ export default function Production() {
               <label>
                 Brano collegato
                 <select
-                  required={draft.kind === "material" || draft.kind === "revision"}
+                  required={
+                    draft.kind === "material" || draft.kind === "revision"
+                  }
                   value={draft.trackId ?? ""}
                   onChange={(e) =>
                     setDraft({ ...draft, trackId: e.target.value || null })
@@ -538,10 +591,19 @@ export default function Production() {
                   <select
                     required
                     value={draft.details.phase || ""}
-                    onChange={(e) => setDraft({ ...draft, details: { ...draft.details, phase: e.target.value } })}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        details: { ...draft.details, phase: e.target.value },
+                      })
+                    }
                   >
                     <option value="">Seleziona fase</option>
-                    {sessionPhases.map((phase) => <option key={phase} value={phase}>{phase}</option>)}
+                    {sessionPhases.map((phase) => (
+                      <option key={phase} value={phase}>
+                        {phase}
+                      </option>
+                    ))}
                   </select>
                 ) : f.type === "textarea" ? (
                   <textarea
@@ -559,7 +621,14 @@ export default function Production() {
                 ) : (
                   <input
                     type={f.type ?? "text"}
-                    required={f.required || (draft.kind === "recording" && ["instrument", "musician"].includes(f.key) && !["Editing", "Mix", "Mastering", "Altro"].includes(draft.details.phase || "Registrazione strumenti"))}
+                    required={
+                      f.required ||
+                      (draft.kind === "recording" &&
+                        ["instrument", "musician"].includes(f.key) &&
+                        !["Editing", "Mix", "Mastering", "Altro"].includes(
+                          draft.details.phase || "Registrazione strumenti",
+                        ))
+                    }
                     maxLength={1000}
                     value={draft.details[f.key] ?? ""}
                     onChange={(e) =>
