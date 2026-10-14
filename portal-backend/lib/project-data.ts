@@ -1,3 +1,4 @@
+import { type Operations } from "./operations-data.ts";
 import { validDate } from "./event-data.ts";
 export const projectKinds = ["Singolo", "Album", "Live", "Percorso artistico"];
 export const projectStates = [
@@ -27,6 +28,8 @@ export type StudioProject = ProjectDraft & {
   version: number;
   createdAt: string;
   updatedAt: string;
+  operations?: Operations;
+  deletedAt?: string | null;
 };
 export class ProjectInputError extends Error {}
 export function validateProject(input: unknown): ProjectDraft {

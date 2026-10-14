@@ -28,11 +28,23 @@ export async function listWorkflow(owner: string) {
       'SELECT project_id AS "projectId",template,planned_minutes AS "plannedMinutes",version FROM studio_workflow WHERE owner_id=$1',
       [owner],
     );
+    const active = await c.query(
+      "SELECT id FROM studio_projects WHERE owner_id=$1 AND deleted_at IS NULL",
+      [owner],
+    );
+    const ids = new Set(active.rows.map((p) => p.id));
+    const tracks = await c.query(
+      "SELECT id FROM studio_production WHERE owner_id=$1 AND deleted_at IS NOT NULL",
+      [owner],
+    );
+    const removed = new Set(tracks.rows.map((t) => t.id));
     await c.query("COMMIT");
     return {
-      hours: h.rows as Hour[],
-      delivery: d.rows as Delivery[],
-      plans: p.rows,
+      hours: h.rows.filter((r) => ids.has(r.projectId)) as Hour[],
+      delivery: d.rows.filter(
+        (r) => ids.has(r.projectId) && !removed.has(r.trackId),
+      ) as Delivery[],
+      plans: p.rows.filter((r) => ids.has(r.projectId)),
     };
   } catch (e) {
     await c.query("ROLLBACK");
@@ -61,7 +73,7 @@ export async function saveWorkflow(
     if (!validId(b.projectId))
       throw new WorkInputError("Seleziona un progetto.");
     const p = await c.query(
-      "SELECT * FROM studio_projects WHERE owner_id=$1 AND id=$2 FOR UPDATE",
+      "SELECT * FROM studio_projects WHERE owner_id=$1 AND id=$2 AND deleted_at IS NULL FOR UPDATE",
       [owner, b.projectId],
     );
     if (!p.rows[0]) throw new WorkInputError("Progetto non disponibile.");
@@ -89,7 +101,7 @@ export async function saveWorkflow(
       if (old.rows[0]) person = old.rows[0].person_email;
       if (d.productionId) {
         const item = await c.query(
-          "SELECT id FROM studio_production WHERE owner_id=$1 AND project_id=$2 AND id=$3",
+          "SELECT id FROM studio_production WHERE owner_id=$1 AND project_id=$2 AND id=$3 AND deleted_at IS NULL",
           [owner, b.projectId, d.productionId],
         );
         if (!item.rows[0])
@@ -223,7 +235,7 @@ export async function saveWorkflow(
       let delivered = false;
       if (d.trackId) {
         const t = await c.query(
-          "SELECT data FROM studio_production WHERE owner_id=$1 AND project_id=$2 AND id=$3 AND kind='track'",
+          "SELECT data FROM studio_production WHERE owner_id=$1 AND project_id=$2 AND id=$3 AND kind='track' AND deleted_at IS NULL",
           [owner, b.projectId, d.trackId],
         );
         if (!t.rows[0]) throw new WorkInputError("Brano non disponibile.");

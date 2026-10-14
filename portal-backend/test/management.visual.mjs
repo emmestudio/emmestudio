@@ -61,6 +61,17 @@ export async function verifyVisual({
       const origin = `http://127.0.0.1:${server.address().port}`;
       const url = new URL(req.url, origin);
       if (url.pathname.startsWith("/api/")) {
+        if (url.pathname === "/api/calendar/events" && req.method === "GET") {
+          res.setHeader("Content-Type", "application/json");
+          res.end(
+            JSON.stringify({
+              events: [],
+              checkedAt: new Date().toISOString(),
+              canEdit: true,
+            }),
+          );
+          return;
+        }
         if (url.pathname === "/api/workspace") {
           res.setHeader("Content-Type", "application/json");
           res.end(
@@ -71,27 +82,29 @@ export async function verifyVisual({
           return;
         }
         const api =
-          url.pathname === "/api/backups"
-            ? svc.backupApi
-            : url.pathname === "/api/team"
-              ? svc.teamApi
-              : url.pathname === "/api/workflow"
-                ? svc.workflowApi
-                : url.pathname === "/api/tasks"
-                  ? svc.tasksApi
-                  : url.pathname === "/api/production"
-                    ? svc.productionApi
-                    : url.pathname === "/api/costs"
-                      ? svc.costApi
-                      : url.pathname === "/api/export"
-                        ? svc.exportApi
-                        : url.pathname === "/api/artists"
-                          ? svc.artistApi
-                          : url.pathname === "/api/projects"
-                            ? svc.projectApi
-                            : url.pathname === "/api/finance"
-                              ? svc.financeApi
-                              : null;
+          url.pathname === "/api/operations"
+            ? svc.operationsApi
+            : url.pathname === "/api/backups"
+              ? svc.backupApi
+              : url.pathname === "/api/team"
+                ? svc.teamApi
+                : url.pathname === "/api/workflow"
+                  ? svc.workflowApi
+                  : url.pathname === "/api/tasks"
+                    ? svc.tasksApi
+                    : url.pathname === "/api/production"
+                      ? svc.productionApi
+                      : url.pathname === "/api/costs"
+                        ? svc.costApi
+                        : url.pathname === "/api/export"
+                          ? svc.exportApi
+                          : url.pathname === "/api/artists"
+                            ? svc.artistApi
+                            : url.pathname === "/api/projects"
+                              ? svc.projectApi
+                              : url.pathname === "/api/finance"
+                                ? svc.financeApi
+                                : null;
         if (!api) {
           res.writeHead(404).end();
           return;
@@ -578,6 +591,105 @@ export async function verifyVisual({
       path: join(shots, "urgenze-mobile.png"),
       fullPage: true,
     });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto(base + "/progetti");
+    const opsProject = (await svc.listProjects("owner")).find(
+      (p) => p.title === "Progetto gestione e cestino",
+    );
+    const boardCard = page.locator("article.board-project").filter({
+      has: page.getByRole("button", { name: opsProject.title, exact: true }),
+    });
+    await boardCard
+      .getByRole("button", { name: "Apri progetto ↗", exact: true })
+      .click();
+    await page
+      .getByLabel("Referente del progetto")
+      .selectOption("owner@example.test");
+    await page
+      .getByLabel("Prossima azione")
+      .fill("Confermare le sessioni con il team");
+    await page
+      .getByRole("button", { name: "Salva organizzazione", exact: true })
+      .click();
+    await page.locator("dialog").waitFor({ state: "hidden" });
+    await page
+      .getByText("Confermare le sessioni con il team", { exact: true })
+      .waitFor();
+    await page.screenshot({
+      path: join(shots, "bacheca-progetti-desktop.png"),
+      fullPage: true,
+    });
+    await page.getByRole("button", { name: "Settimana", exact: true }).click();
+    await page
+      .getByRole("heading", { name: "Carico del team", exact: true })
+      .waitFor();
+    await page.screenshot({
+      path: join(shots, "settimana-desktop.png"),
+      fullPage: true,
+    });
+    await page.getByRole("button", { name: "Bacheca", exact: true }).click();
+    await boardCard
+      .getByRole("button", { name: "Apri progetto ↗", exact: true })
+      .click();
+    await page.getByText("Panoramica dei brani", { exact: true }).waitFor();
+    await page.screenshot({
+      path: join(shots, "progetto-regia-desktop.png"),
+      fullPage: true,
+    });
+    await page
+      .getByRole("button", { name: "Elimina progetto", exact: true })
+      .click();
+    await page
+      .getByLabel("Scrivi il titolo per confermare")
+      .fill(opsProject.title);
+    await page
+      .getByRole("button", { name: "Conferma eliminazione", exact: true })
+      .click();
+    await page.locator("dialog").waitFor({ state: "hidden" });
+    await page.getByRole("button", { name: "Cestino", exact: true }).click();
+    const trashRow = page
+      .locator(".ledger-row")
+      .filter({ hasText: opsProject.title });
+    await trashRow
+      .getByRole("button", { name: "Ripristina", exact: true })
+      .click();
+    await trashRow.waitFor({ state: "hidden" });
+    assert.ok(
+      (await svc.listProjects("owner")).some((p) => p.id === opsProject.id),
+    );
+    assert.ok(
+      (await svc.listLedger("owner")).quotes.some(
+        (q) => q.projectId === opsProject.id,
+      ),
+    );
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole("button", { name: "Bacheca", exact: true }).click();
+    await boardCard
+      .getByRole("button", { name: "Apri progetto ↗", exact: true })
+      .waitFor();
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+    );
+    await page.screenshot({
+      path: join(shots, "bacheca-progetti-mobile.png"),
+      fullPage: true,
+    });
+    await boardCard
+      .getByRole("button", { name: "Apri progetto ↗", exact: true })
+      .click();
+    await page.getByLabel("Referente del progetto").waitFor();
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+    );
+    await page.screenshot({
+      path: join(shots, "progetto-regia-mobile.png"),
+      fullPage: true,
+    });
+    await page.getByRole("button", { name: "Chiudi", exact: true }).click();
     globalThis.emmeTestSession = {
       workspaceOwnerId: "owner",
       role: "viewer",

@@ -5,6 +5,7 @@ export type TaskDraft = {
   projectId: string;
   title: string;
   assignee: string;
+  blockedBy?: string[];
   assigneeEmail?: string | null;
   status: string;
   priority: string;
@@ -62,7 +63,17 @@ export function validateTask(input: unknown): TaskDraft {
     (typeof data.assigneeEmail !== "string" || data.assigneeEmail.length > 254)
   )
     throw new TaskInputError("Responsabile non valido.");
+  if (
+    data.blockedBy !== undefined &&
+    (!Array.isArray(data.blockedBy) ||
+      data.blockedBy.length > 50 ||
+      data.blockedBy.some((id) => !validId(id)))
+  )
+    throw new TaskInputError("Dipendenze non valide.");
   return {
+    blockedBy: Array.isArray(data.blockedBy)
+      ? (data.blockedBy as string[])
+      : undefined,
     assigneeEmail: data.assigneeEmail as string | null | undefined,
     projectId: data.projectId,
     title: data.title.trim(),

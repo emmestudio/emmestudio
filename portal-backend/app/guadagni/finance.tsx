@@ -60,7 +60,7 @@ export default function Finance() {
     )
       .then(([l, p]) => {
         setLedger(l);
-        setProjects(p.projects);
+        setProjects(p.financialProjects ?? p.projects);
         setError("");
         if (!initial.current) {
           initial.current = true;

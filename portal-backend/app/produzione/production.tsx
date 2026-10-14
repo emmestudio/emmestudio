@@ -1,4 +1,5 @@
 "use client";
+import RemoveButton from "../remove-button";
 import AssigneeField from "../assignee-field";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -15,6 +16,7 @@ import {
 import type { StudioProject } from "@/lib/project-data";
 const kinds: ProductionKind[] = ["track", "recording", "live"];
 export default function Production() {
+  const [admin, setAdmin] = useState(false);
   const [items, setItems] = useState<ProductionItem[]>([]),
     [projects, setProjects] = useState<StudioProject[]>([]),
     [writable, setWritable] = useState(false),
@@ -47,6 +49,7 @@ export default function Production() {
       }),
     )
       .then(([a, p]) => {
+        setAdmin(Boolean(p.canManageFinance));
         setItems(a.items);
         setWritable(a.canEdit);
         setProjects(p.projects);
@@ -55,6 +58,7 @@ export default function Production() {
           initial.current = true;
           const q = new URLSearchParams(window.location.search);
           setProject(q.get("project") ?? "");
+          if (q.get("track")) setSelectedTrackId(q.get("track"));
           const tab = q.get("kind");
           if (kinds.includes(tab as ProductionKind))
             setKind(tab as ProductionKind);
@@ -673,6 +677,21 @@ export default function Production() {
             </Link>
           </div>
         </form>
+        {admin && editor && editor !== "new" ? (
+          <RemoveButton
+            key={editor.id}
+            kind="production"
+            id={editor.id}
+            version={editor.version}
+            title={editor.title}
+            onRemoved={() => {
+              dialog.current?.close();
+              setEditor(null);
+              setSelectedTrackId(null);
+              setRefresh((n) => n + 1);
+            }}
+          />
+        ) : null}
         {editor && editor !== "new" ? (
           <details className="history-panel">
             <summary>Cronologia · {history.length} versioni</summary>

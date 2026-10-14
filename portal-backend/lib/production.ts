@@ -9,7 +9,7 @@ import {
 } from "./production-data";
 export async function listProduction(owner: string): Promise<ProductionItem[]> {
   const r = await getDb().query(
-    "SELECT id,version,data,updated_at FROM studio_production WHERE owner_id=$1 ORDER BY updated_at DESC LIMIT 5001",
+    "SELECT r.id,r.version,r.data,r.updated_at FROM studio_production r JOIN studio_projects p ON p.id=r.project_id AND p.owner_id=r.owner_id WHERE r.owner_id=$1 AND r.deleted_at IS NULL AND p.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM studio_production t WHERE t.owner_id=r.owner_id AND t.id=NULLIF(r.data->>'trackId','')::uuid AND t.deleted_at IS NOT NULL) ORDER BY r.updated_at DESC LIMIT 5001",
     [owner],
   );
   if (r.rows.length > 5000) throw new Error("PRODUCTION_NEEDS_PAGINATION");
@@ -38,7 +38,7 @@ export async function saveProduction(
   try {
     await c.query("BEGIN");
     const p = await c.query(
-      "SELECT status FROM studio_projects WHERE owner_id=$1 AND id=$2 FOR UPDATE",
+      "SELECT status FROM studio_projects WHERE owner_id=$1 AND id=$2 AND deleted_at IS NULL FOR UPDATE",
       [owner, d.projectId],
     );
     if (!p.rows[0] || p.rows[0].status === "Archiviato")
@@ -49,6 +49,10 @@ export async function saveProduction(
       "SELECT * FROM studio_production WHERE owner_id=$1 AND id=$2 FOR UPDATE",
       [owner, id],
     );
+    if (old.rows[0]?.deleted_at)
+      throw new ProductionInputError(
+        "Ripristina la scheda dal cestino prima di modificarla.",
+      );
     const digest = createHash("sha256").update(JSON.stringify(d)).digest("hex");
     if (!version && old.rows[0]) {
       if (old.rows[0].request_digest !== digest)
@@ -66,9 +70,17 @@ export async function saveProduction(
       throw new ProductionInputError(
         "Scheda modificata. Aggiorna prima di riprovare.",
       );
+    if (old.rows[0]?.data.trackId) {
+      const parent = await c.query(
+        "SELECT id FROM studio_production WHERE owner_id=$1 AND id=$2 AND deleted_at IS NULL",
+        [owner, old.rows[0].data.trackId],
+      );
+      if (!parent.rows[0])
+        throw new ProductionInputError("Ripristina prima il brano collegato.");
+    }
     if (d.trackId) {
       const track = await c.query(
-        "SELECT id FROM studio_production WHERE owner_id=$1 AND project_id=$2 AND id=$3 AND kind='track'",
+        "SELECT id FROM studio_production WHERE owner_id=$1 AND project_id=$2 AND id=$3 AND kind='track' AND deleted_at IS NULL",
         [owner, d.projectId, d.trackId],
       );
       if (!track.rows[0])

@@ -16,8 +16,11 @@ type Row = ProjectDraft & {
   created_at: Date;
   updated_at: Date;
 };
+import { emptyOperations } from "./operations-data";
 export function projectView(row: Row): StudioProject {
   return {
+    operations: { ...emptyOperations(), ...(row as any).operations },
+    deletedAt: (row as any).deleted_at?.toISOString() ?? null,
     id: row.id,
     version: row.version,
     title: row.title,
@@ -36,10 +39,10 @@ export function projectView(row: Row): StudioProject {
     updatedAt: row.updated_at.toISOString(),
   };
 }
-export async function listProjects(ownerId: string) {
+export async function listProjects(ownerId: string, includeDeleted = false) {
   const r = await getDb().query(
-    "SELECT p.*, COALESCE(a.name,p.artist) AS artist FROM studio_projects p LEFT JOIN studio_artists a ON a.id=p.artist_id AND a.owner_id=p.owner_id WHERE p.owner_id=$1 ORDER BY p.updated_at DESC LIMIT 501",
-    [ownerId],
+    "SELECT p.*, COALESCE(a.name,p.artist) AS artist FROM studio_projects p LEFT JOIN studio_artists a ON a.id=p.artist_id AND a.owner_id=p.owner_id WHERE p.owner_id=$1 AND ($2 OR p.deleted_at IS NULL) ORDER BY p.updated_at DESC LIMIT 501",
+    [ownerId, includeDeleted],
   );
   if (r.rows.length > 500) throw new Error("PROJECT_LIST_NEEDS_PAGINATION");
   return r.rows.map(projectView);
@@ -66,6 +69,10 @@ export async function saveProject(
       "SELECT * FROM studio_projects WHERE owner_id=$1 AND id=$2 FOR UPDATE",
       [owner, id],
     );
+    if (existing.rows[0]?.deleted_at)
+      throw new ProjectInputError(
+        "Ripristina il progetto dal cestino prima di modificarlo.",
+      );
     if (!version && existing.rows[0]) {
       if (existing.rows[0].request_digest !== digest)
         throw new ProjectInputError(
@@ -83,7 +90,7 @@ export async function saveProject(
     }
     if (d.status === "Completato") {
       const missing = await c.query(
-        "SELECT id FROM studio_delivery WHERE owner_id=$1 AND project_id=$2 AND required=true AND done=false LIMIT 1",
+        "SELECT id FROM studio_delivery WHERE owner_id=$1 AND project_id=$2 AND required=true AND done=false AND (track_id IS NULL OR NOT EXISTS (SELECT 1 FROM studio_production t WHERE t.owner_id=$1 AND t.id=track_id AND t.deleted_at IS NOT NULL)) LIMIT 1",
         [owner, id],
       );
       if (missing.rows[0])
@@ -117,7 +124,7 @@ export async function saveProject(
         "Seleziona un artista oppure creane uno nuovo.",
       );
     const artist = await c.query(
-      "SELECT name FROM studio_artists WHERE owner_id=$1 AND id=$2",
+      "SELECT name FROM studio_artists WHERE owner_id=$1 AND id=$2 AND deleted_at IS NULL FOR UPDATE",
       [owner, artistId],
     );
     if (!artist.rows[0])
@@ -140,7 +147,7 @@ export async function saveProject(
     ];
     const r = version
       ? await c.query(
-          `UPDATE studio_projects SET title=$3,artist=$4,kind=$5,status=$6,deadline=$7,vision=$8,notes=$9,music=$10,live=$11,image=$12,artist_id=$13,service=$14,version=version+1,updated_at=now() WHERE id=$1 AND owner_id=$2 AND version=$15 RETURNING *`,
+          `UPDATE studio_projects SET operations=CASE WHEN kind=$5 THEN operations ELSE operations - 'phase' END,title=$3,artist=$4,kind=$5,status=$6,deadline=$7,vision=$8,notes=$9,music=$10,live=$11,image=$12,artist_id=$13,service=$14,version=version+1,updated_at=now() WHERE id=$1 AND owner_id=$2 AND version=$15 RETURNING *`,
           [...v, version],
         )
       : await c.query(

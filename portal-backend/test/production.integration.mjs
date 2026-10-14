@@ -198,6 +198,7 @@ export async function verifyProduction({ svc, db, root, projectId }) {
       "005-artists-finance.sql",
       "006-production-finance.sql",
       "007-workflow.sql",
+      "008-operations-trash.sql",
     ])
       await restored.exec(await readFile(join(root, "db", f), "utf8"));
     const client = { query: (q, v) => restored.query(q, v) };

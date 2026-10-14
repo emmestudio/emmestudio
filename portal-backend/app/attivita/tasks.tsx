@@ -1,4 +1,5 @@
 "use client";
+import RemoveButton from "../remove-button";
 import AssigneeField from "../assignee-field";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -26,6 +27,7 @@ const date = (value: string) =>
     timeZone: "Europe/Rome",
   }).format(new Date(value + "T12:00:00Z"));
 export default function Tasks() {
+  const [admin, setAdmin] = useState(false);
   const [writable, setWritable] = useState(false);
   const [tasks, setTasks] = useState<StudioTask[]>([]);
   const [projects, setProjects] = useState<StudioProject[]>([]);
@@ -56,6 +58,7 @@ export default function Tasks() {
     };
     Promise.all([read("/api/tasks"), read("/api/projects")])
       .then(([taskData, projectData]) => {
+        setAdmin(Boolean(projectData.canManageFinance));
         setTasks(taskData.tasks);
         setProjects(projectData.projects);
         setWritable(Boolean(taskData.canEdit));
@@ -384,6 +387,32 @@ export default function Tasks() {
                 }
               />
             </label>
+            <details>
+              <summary>Dipendenze · {(draft.blockedBy ?? []).length}</summary>
+              <p className="small">
+                Le attività selezionate devono essere completate prima di
+                avviare questa attività.
+              </p>
+              {tasks
+                .filter((t) => t.projectId === draft.projectId && t.id !== id)
+                .map((t) => (
+                  <label className="checkbox" key={t.id}>
+                    <input
+                      type="checkbox"
+                      checked={(draft.blockedBy ?? []).includes(t.id)}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          blockedBy: e.target.checked
+                            ? [...(draft.blockedBy ?? []), t.id]
+                            : (draft.blockedBy ?? []).filter((x) => x !== t.id),
+                        })
+                      }
+                    />
+                    {t.title} · {t.status}
+                  </label>
+                ))}
+            </details>
             <label>
               Note
               <textarea
@@ -407,6 +436,20 @@ export default function Tasks() {
                 : "Salva attività"}
           </button>
         </form>
+        {admin && editor && editor !== "new" ? (
+          <RemoveButton
+            key={editor.id}
+            kind="task"
+            id={editor.id}
+            version={editor.version}
+            title={editor.title}
+            onRemoved={() => {
+              dialog.current?.close();
+              setEditor(null);
+              setRefresh((n) => n + 1);
+            }}
+          />
+        ) : null}
       </dialog>
     </section>
   );

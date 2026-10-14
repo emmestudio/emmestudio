@@ -20,7 +20,7 @@ export default async function Page({
   const { id } = await params;
   if (!validId(id)) notFound();
   const [projects, ledger, history] = await Promise.all([
-    listProjects(s.workspaceOwnerId),
+    listProjects(s.workspaceOwnerId, true),
     listLedger(s.workspaceOwnerId),
     quoteHistory(s.workspaceOwnerId, id),
   ]);
@@ -30,80 +30,105 @@ export default async function Page({
   return (
     <main className="shell quote-document">
       <article className="quote-paper">
-      <header className="quote-masthead">
-        {/* Native image keeps the printable document independent of image optimization. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-white.png" alt="Emme Studio" width="150" height="75" />
-        <div><span>PROPOSTA DI LAVORO</span><strong>Preventivo</strong><small>Rif. {id.slice(0, 8).toUpperCase()} · v{q.version}</small></div>
-      </header>
-      <span className="eyebrow">IL TUO PROGETTO, CON EMME STUDIO</span>
-      <h1>{p.title}</h1>
-      <div className="quote-meta quote-info">
-        <p>
-          <strong>Artista:</strong> {p.artist}
-          <br />
-          <strong>Servizio:</strong> {p.service}
-          <br />
-          <strong>Stato:</strong> {q.status}
-        </p>
-        <p>
-          <strong>Riferimento:</strong> {id.slice(0, 8).toUpperCase()}
-          <br />
-          <strong>Versione:</strong> {q.version}
-          <br />
-          <strong>Conferma registrata:</strong>{" "}
-          {q.confirmedOn
-            ? new Date(q.confirmedOn + "T12:00:00Z").toLocaleDateString("it-IT")
-            : "Non registrata"}
-          <br />
-          {q.confirmationNote}
-        </p>
-      </div>
-      <div className="table-scroll">
-        <table className="quote-table">
-          <thead>
-            <tr>
-              <th>Descrizione</th>
-              <th>Quantità</th>
-              <th>Tariffa</th>
-              <th>Totale</th>
-            </tr>
-          </thead>
-          <tbody>
-            {q.items?.length ? (
-              q.items.map((l, i) => (
-                <tr key={i}>
-                  <td>{l.description}</td>
-                  <td>{(l.quantity / 100).toLocaleString("it-IT")}</td>
-                  <td>{euro(l.unitPrice)}</td>
-                  <td>{euro(lineTotal(l))}</td>
-                </tr>
-              ))
-            ) : (
+        <header className="quote-masthead">
+          {/* Native image keeps the printable document independent of image optimization. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-white.png"
+            alt="Emme Studio"
+            width="150"
+            height="75"
+          />
+          <div>
+            <span>PROPOSTA DI LAVORO</span>
+            <strong>Preventivo</strong>
+            <small>
+              Rif. {id.slice(0, 8).toUpperCase()} · v{q.version}
+            </small>
+          </div>
+        </header>
+        <span className="eyebrow">IL TUO PROGETTO, CON EMME STUDIO</span>
+        <h1>{p.title}</h1>
+        <div className="quote-meta quote-info">
+          <p>
+            <strong>Artista:</strong> {p.artist}
+            <br />
+            <strong>Servizio:</strong> {p.service}
+            <br />
+            <strong>Stato:</strong> {q.status}
+          </p>
+          <p>
+            <strong>Riferimento:</strong> {id.slice(0, 8).toUpperCase()}
+            <br />
+            <strong>Versione:</strong> {q.version}
+            <br />
+            <strong>Conferma registrata:</strong>{" "}
+            {q.confirmedOn
+              ? new Date(q.confirmedOn + "T12:00:00Z").toLocaleDateString(
+                  "it-IT",
+                )
+              : "Non registrata"}
+            <br />
+            {q.confirmationNote}
+          </p>
+        </div>
+        <div className="table-scroll">
+          <table className="quote-table">
+            <thead>
               <tr>
-                <td>{p.service}</td>
-                <td>1</td>
-                <td>{euro(q.amount)}</td>
+                <th>Descrizione</th>
+                <th>Quantità</th>
+                <th>Tariffa</th>
+                <th>Totale</th>
+              </tr>
+            </thead>
+            <tbody>
+              {q.items?.length ? (
+                q.items.map((l, i) => (
+                  <tr key={i}>
+                    <td>{l.description}</td>
+                    <td>{(l.quantity / 100).toLocaleString("it-IT")}</td>
+                    <td>{euro(l.unitPrice)}</td>
+                    <td>{euro(lineTotal(l))}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td>{p.service}</td>
+                  <td>1</td>
+                  <td>{euro(q.amount)}</td>
+                  <td>{euro(q.amount)}</td>
+                </tr>
+              )}
+            </tbody>
+            <tfoot className="quote-table-total">
+              <tr>
+                <th colSpan={3}>Totale preventivo</th>
                 <td>{euro(q.amount)}</td>
               </tr>
-            )}
-          </tbody>
-          <tfoot className="quote-table-total">
-            <tr>
-              <th colSpan={3}>Totale preventivo</th>
-              <td>{euro(q.amount)}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-      <div className="quote-total"><div><span>INVESTIMENTO COMPLESSIVO</span><p>Totale preventivo</p></div><strong>{euro(q.amount)}</strong></div>
-      <section className="quote-conditions">
-        <h2>Dettaglio e condizioni</h2>
-        <p className="preserve-lines">
-          {q.notes || "Condizioni da specificare."}
-        </p>
-      </section>
-      <footer className="quote-footer"><strong>EMME STUDIO</strong><span>Music Production · Live Show Production · Artist &amp; Project Management</span></footer>
+            </tfoot>
+          </table>
+        </div>
+        <div className="quote-total">
+          <div>
+            <span>INVESTIMENTO COMPLESSIVO</span>
+            <p>Totale preventivo</p>
+          </div>
+          <strong>{euro(q.amount)}</strong>
+        </div>
+        <section className="quote-conditions">
+          <h2>Dettaglio e condizioni</h2>
+          <p className="preserve-lines">
+            {q.notes || "Condizioni da specificare."}
+          </p>
+        </section>
+        <footer className="quote-footer">
+          <strong>EMME STUDIO</strong>
+          <span>
+            Music Production · Live Show Production · Artist &amp; Project
+            Management
+          </span>
+        </footer>
       </article>
       <div className="dialog-actions no-print">
         <PrintButton />

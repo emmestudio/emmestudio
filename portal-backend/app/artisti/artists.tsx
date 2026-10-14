@@ -1,4 +1,5 @@
 "use client";
+import RemoveButton from "../remove-button";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -10,6 +11,7 @@ import {
 import { projectProgress, type StudioProject } from "@/lib/project-data";
 import { type Ledger, projectBalance, euro } from "@/lib/finance-data";
 export default function Artists() {
+  const [admin, setAdmin] = useState(false);
   const [artists, setArtists] = useState<StudioArtist[]>([]),
     [projects, setProjects] = useState<StudioProject[]>([]),
     [ledger, setLedger] = useState<Ledger | null>(null);
@@ -38,6 +40,7 @@ export default function Artists() {
       }),
     )
       .then(([a, p]) => {
+        setAdmin(Boolean(p.canManageFinance));
         setArtists(a.artists);
         setWritable(a.canEdit);
         setProjects(p.projects);
@@ -458,6 +461,21 @@ export default function Artists() {
             {busy ? "Salvataggio…" : "Salva artista"}
           </button>
         </form>
+        {admin && editor && editor !== "new" ? (
+          <RemoveButton
+            key={editor.id}
+            kind="artist"
+            id={editor.id}
+            version={editor.version}
+            title={editor.name}
+            onRemoved={() => {
+              dialog.current?.close();
+              setEditor(null);
+              setSelected(null);
+              setRefresh((n) => n + 1);
+            }}
+          />
+        ) : null}
       </dialog>
     </section>
   );

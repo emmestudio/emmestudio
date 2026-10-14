@@ -33,7 +33,7 @@ export async function saveCost(
   try {
     await c.query("BEGIN");
     const p = await c.query(
-      "SELECT id FROM studio_projects WHERE owner_id=$1 AND id=$2 FOR UPDATE",
+      "SELECT id FROM studio_projects WHERE owner_id=$1 AND id=$2 AND deleted_at IS NULL FOR UPDATE",
       [owner, d.projectId],
     );
     if (!p.rows[0]) throw new CostInputError("Progetto non disponibile.");

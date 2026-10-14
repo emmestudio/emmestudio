@@ -70,7 +70,7 @@ export default function Costs() {
       }),
     )
       .then(([p, c, l]) => {
-        setProjects(p.projects);
+        setProjects(p.financialProjects ?? p.projects);
         setCosts(c.costs);
         setLedger(l);
         setError("");

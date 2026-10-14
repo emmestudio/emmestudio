@@ -15,14 +15,18 @@ export async function GET(request: Request) {
   try {
     const session = await workspaceSession(request.headers);
     if (!session) return reply({ error: "Accesso richiesto." }, 401);
+    const [projects, ledger] = await Promise.all([
+      listProjects(session.workspaceOwnerId, session.role === "admin"),
+      session.role === "admin"
+        ? listLedger(session.workspaceOwnerId)
+        : Promise.resolve(undefined),
+    ]);
     return reply({
-      projects: await listProjects(session.workspaceOwnerId),
+      projects: projects.filter((p) => !p.deletedAt),
+      financialProjects: session.role === "admin" ? projects : undefined,
       canEdit: canEdit(session.role),
       canManageFinance: session.role === "admin",
-      ledger:
-        session.role === "admin"
-          ? await listLedger(session.workspaceOwnerId)
-          : undefined,
+      ledger,
     });
   } catch {
     return reply(

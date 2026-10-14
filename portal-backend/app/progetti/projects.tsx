@@ -1,4 +1,8 @@
 "use client";
+import RemoveButton from "../remove-button";
+import OperationsPanel from "./operations-panel";
+import ProjectBoard from "./project-board";
+import Trash from "./trash";
 import QuoteFields from "./quote-fields";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -41,6 +45,9 @@ const date = (value: string) =>
     timeZone: "Europe/Rome",
   }).format(new Date(value + "T12:00:00Z"));
 export default function Projects() {
+  const [view, setView] = useState<
+    "Bacheca" | "Elenco" | "Settimana" | "Cestino"
+  >("Bacheca");
   const [artists, setArtists] = useState<StudioArtist[]>([]);
   const [financial, setFinancial] = useState(false),
     [ledger, setLedger] = useState<Ledger | null>(null);
@@ -208,9 +215,8 @@ export default function Projects() {
     <section aria-label="Archivio progetti">
       <div className="agenda-heading">
         <p>
-          Produzione musicale, live e immagine: raccogli obiettivi e avanzamento
-          di ogni progetto. I dati sono salvati nel database dedicato allo
-          studio.
+          Produzione musicale, live e immagine: organizza il lavoro del team, le
+          prossime azioni e le consegne di ogni progetto.
         </p>
         <button className="button" disabled={!writable} onClick={() => open()}>
           + Nuovo progetto
@@ -246,7 +252,36 @@ export default function Projects() {
         </button>
       </div>
       <p role="status">{error || message}</p>
-      <div className="project-grid">
+      <div className="production-tabs" aria-label="Viste progetti">
+        {[
+          "Bacheca",
+          "Elenco",
+          "Settimana",
+          ...(financial ? ["Cestino"] : []),
+        ].map((v) => (
+          <button
+            type="button"
+            className={view === v ? "selected" : ""}
+            aria-pressed={view === v}
+            key={v}
+            onClick={() => setView(v as typeof view)}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+      {view === "Bacheca" || view === "Settimana" ? (
+        <ProjectBoard
+          projects={shown}
+          view={view}
+          onOpen={open}
+          revision={refresh}
+        />
+      ) : null}
+      {view === "Cestino" && financial ? (
+        <Trash onRestored={() => setRefresh((n) => n + 1)} />
+      ) : null}
+      <div className="project-grid" hidden={view !== "Elenco"}>
         {shown.map((project) => (
           <article className="project-card" key={project.id}>
             <div className="list-heading">
@@ -355,6 +390,20 @@ export default function Projects() {
               ×
             </button>
           </div>
+          {editor && editor !== "new" ? (
+            <OperationsPanel
+              key={editor.id + editor.version}
+              project={editor}
+              writable={writable && !busy}
+              ledger={ledger}
+              onSaved={() => {
+                dialog.current?.close();
+                setEditor(null);
+                setMessage("Organizzazione aggiornata.");
+                setRefresh((n) => n + 1);
+              }}
+            />
+          ) : null}
           <fieldset disabled={busy || !writable}>
             <label>
               Titolo progetto
@@ -639,6 +688,21 @@ export default function Projects() {
             ) : null}
           </div>
         </form>
+        {financial && editor && editor !== "new" ? (
+          <RemoveButton
+            key={editor.id}
+            kind="project"
+            id={editor.id}
+            version={editor.version}
+            title={editor.title}
+            onRemoved={() => {
+              dialog.current?.close();
+              setEditor(null);
+              setMessage("Progetto spostato nel cestino.");
+              setRefresh((n) => n + 1);
+            }}
+          />
+        ) : null}
       </dialog>
     </section>
   );

@@ -34,7 +34,7 @@ globalThis.emmeTestSession = { workspaceOwnerId: "owner", role: "admin" };
 const root = resolve(".");
 await writeFile(
   join(scratch, "entry.ts"),
-  `export * from '${root}/lib/projects.ts'; export * from '${root}/lib/finance.ts'; export * from '${root}/lib/artists.ts'; export * as projectApi from '${root}/app/api/projects/route.ts'; export * as artistApi from '${root}/app/api/artists/route.ts'; export * as financeApi from '${root}/app/api/finance/route.ts'; export * from '${root}/lib/production.ts'; export * from '${root}/lib/production-data.ts'; export * from '${root}/lib/costs.ts'; export * from '${root}/lib/cost-data.ts'; export * from '${root}/lib/backup-data.ts'; export * as productionApi from '${root}/app/api/production/route.ts'; export * as costApi from '${root}/app/api/costs/route.ts'; export * as exportApi from '${root}/app/api/export/route.ts'; export * from '${root}/lib/workflow.ts'; export * from '${root}/lib/work-data.ts'; export * from '${root}/lib/tasks.ts'; export * as workflowApi from '${root}/app/api/workflow/route.ts'; export * as teamApi from '${root}/app/api/team/route.ts'; export * as tasksApi from '${root}/app/api/tasks/route.ts'; export * from '${root}/lib/backups.ts'; export * as backupApi from '${root}/app/api/backups/route.ts'; export {default as quotePage} from '${root}/app/preventivi/[id]/page.tsx';`,
+  `export * as calendarApi from '${root}/app/api/calendar/events/route.ts'; export * from '${root}/lib/operations.ts'; export * as operationsApi from '${root}/app/api/operations/route.ts'; export * from '${root}/lib/projects.ts'; export * from '${root}/lib/finance.ts'; export * from '${root}/lib/artists.ts'; export * as projectApi from '${root}/app/api/projects/route.ts'; export * as artistApi from '${root}/app/api/artists/route.ts'; export * as financeApi from '${root}/app/api/finance/route.ts'; export * from '${root}/lib/production.ts'; export * from '${root}/lib/production-data.ts'; export * from '${root}/lib/costs.ts'; export * from '${root}/lib/cost-data.ts'; export * from '${root}/lib/backup-data.ts'; export * as productionApi from '${root}/app/api/production/route.ts'; export * as costApi from '${root}/app/api/costs/route.ts'; export * as exportApi from '${root}/app/api/export/route.ts'; export * from '${root}/lib/workflow.ts'; export * from '${root}/lib/work-data.ts'; export * from '${root}/lib/tasks.ts'; export * as workflowApi from '${root}/app/api/workflow/route.ts'; export * as teamApi from '${root}/app/api/team/route.ts'; export * as tasksApi from '${root}/app/api/tasks/route.ts'; export * from '${root}/lib/backups.ts'; export * as backupApi from '${root}/app/api/backups/route.ts'; export {default as quotePage} from '${root}/app/preventivi/[id]/page.tsx';`,
 );
 try {
   await build({
@@ -65,6 +65,10 @@ try {
             path: "server-only",
             namespace: "test",
           }));
+          b.onResolve({ filter: /calendar-context$/ }, () => ({
+            path: "calendar-context",
+            namespace: "test",
+          }));
           b.onResolve({ filter: /workspace-session$/ }, () => ({
             path: "workspace-session",
             namespace: "test",
@@ -76,19 +80,21 @@ try {
           b.onLoad({ filter: /.*/, namespace: "test" }, (a) => ({
             resolveDir: root,
             contents:
-              a.path === "blob-test"
-                ? "export const put=(...a)=>globalThis.emmeTestBlob.put(...a);export const get=(...a)=>globalThis.emmeTestBlob.get(...a);export const list=(...a)=>globalThis.emmeTestBlob.list(...a);export const del=(...a)=>globalThis.emmeTestBlob.del(...a);"
-                : a.path === "next/link"
-                  ? "import React from 'react';export default function Link(props){return React.createElement('a',props,props.children);}"
-                  : a.path === "next/headers"
-                    ? "export const headers=async()=>new Headers();"
-                    : a.path === "next/navigation"
-                      ? 'export const redirect=(p)=>{throw new Error("REDIRECT "+p)};export const notFound=()=>{throw new Error("NOT_FOUND")};'
-                      : a.path === "db"
-                        ? "export const getDb=()=>globalThis.emmeTestDb;"
-                        : a.path === "workspace-session"
-                          ? "export const workspaceSession=async()=>globalThis.emmeTestSession;"
-                          : "",
+              a.path === "calendar-context"
+                ? "export const calendarContext=async()=>({workspaceOwnerId:globalThis.emmeTestSession.workspaceOwnerId,events:globalThis.emmeTestCalendar,canEdit:true,canOpenGoogle:false});"
+                : a.path === "blob-test"
+                  ? "export const put=(...a)=>globalThis.emmeTestBlob.put(...a);export const get=(...a)=>globalThis.emmeTestBlob.get(...a);export const list=(...a)=>globalThis.emmeTestBlob.list(...a);export const del=(...a)=>globalThis.emmeTestBlob.del(...a);"
+                  : a.path === "next/link"
+                    ? "import React from 'react';export default function Link(props){return React.createElement('a',props,props.children);}"
+                    : a.path === "next/headers"
+                      ? "export const headers=async()=>new Headers();"
+                      : a.path === "next/navigation"
+                        ? 'export const redirect=(p)=>{throw new Error("REDIRECT "+p)};export const notFound=()=>{throw new Error("NOT_FOUND")};'
+                        : a.path === "db"
+                          ? "export const getDb=()=>globalThis.emmeTestDb;"
+                          : a.path === "workspace-session"
+                            ? "export const workspaceSession=async()=>globalThis.emmeTestSession;"
+                            : "",
             loader: "js",
           }));
         },
@@ -106,6 +112,7 @@ try {
     "005-artists-finance.sql",
     "006-production-finance.sql",
     "007-workflow.sql",
+    "008-operations-trash.sql",
   ])
     await db.exec(await readFile(join(root, "db", file), "utf8"));
   const artistId = randomUUID(),
@@ -309,6 +316,8 @@ try {
   await verifyProduction({ svc, db, root, projectId });
   const { verifyWorkflow } = await import("./workflow.integration.mjs");
   await verifyWorkflow({ svc, db, root, projectId, artistId });
+  const { verifyOperations } = await import("./operations.integration.mjs");
+  await verifyOperations({ svc, db, artistId });
   if (process.argv.includes("--visual")) {
     const { verifyVisual } = await import("./management.visual.mjs");
     await verifyVisual({ root, scratch, svc, projectId, artistId });
