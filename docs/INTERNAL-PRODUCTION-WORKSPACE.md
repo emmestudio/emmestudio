@@ -16,6 +16,19 @@ Ogni scheda conserva titolo, responsabile, scadenza, note e cronologia con autor
 
 Responsabili e musicisti sono campi organizzativi, non autorizzazioni o destinatari di notifiche. Scadenze, sessioni e prove registrate nelle schede non creano appuntamenti: gli appuntamenti reali si gestiscono nel Calendario Google già collegato.
 
+## Workspace dei singoli brani (ottobre 2026)
+
+La sezione **Produzione** espone tre aree principali: **Brani**, **Registrazioni** (autonome) e **Show live**. La scheda di ciascun brano si apre con `Apri scheda brano` e contiene:
+
+- **Panoramica**: progetto e artista assegnato al progetto, stato e scadenza, BPM, tonalità, durata, genere, arrangiamento, crediti, testo, significato, reference e note.
+- **Sessioni**: schede separate per registrazione strumenti, voce, editing, mix, mastering e altro. Ogni sessione conserva titolo, stato, responsabile, tecnico/studio, data effettiva, link, take e resoconto; il collegamento al brano è automatico.
+- **Materiali e versioni** e **Revisioni**: le nuove schede sono create nel contesto del brano, con collegamento obbligatorio e cronologia individuale. I materiali e le revisioni precedenti senza associazione restano leggibili in una sezione di recupero per essere collegati al brano corretto.
+- **Registrazioni autonome**: nella tab Registrazioni le nuove sessioni possono essere associate a un progetto anche senza essere associate a un brano, per servizi di recording, editing, mix e mastering indipendenti. Il progetto è ancora obbligatorio e ne identifica l'artista; la scheda del brano è facoltativa.
+
+Le relazioni sono protette lato server: un elemento collegato a un brano deve appartenere al medesimo progetto. Non si eseguono cancellazioni o spostamenti automatici dei documenti già registrati e non sono richieste nuove migrazioni SQL. Le schede passate rimangono compatibili anche quando non contengono i campi introdotti ora.
+
+Verifiche aggiuntive: 27 test unitari, test di integrazione sul database locale con sessioni autonome e materiali collegati, build TypeScript/Next.js, flussi browser Playwright desktop e mobile con controllo dei dialog e dell'assenza di overflow.
+
 ## Preventivi
 
 Importo libero oppure voci con descrizione, quantità (anche ore decimali) e tariffa. Quantità memorizzate in centesimi di unità e prezzi in centesimi di euro; totale per voce arrotondato al centesimo, somma controllata sul server. Il totale delle voci deve coincidere con il preventivo.
