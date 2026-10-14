@@ -38,6 +38,32 @@ test("production restricts states, links, project and required recording/approva
   assert.throws(() =>
     validateProduction({ ...emptyProduction("recording", id), title: "Voce" }),
   );
+  const autonomous = {
+    ...emptyProduction("recording", id),
+    title: "Mix autonomo",
+    details: { ...emptyProduction("recording", id).details, phase: "Mix", engineer: "Studio" },
+  };
+  assert.equal(validateProduction(autonomous).trackId, null);
+  assert.equal(validateProduction(autonomous).details.phase, "Mix");
+  assert.throws(() => validateProduction({
+    ...autonomous, details: { ...autonomous.details, phase: "Fase non prevista" },
+  }), /Fase/);
+  const voice = {
+    ...emptyProduction("recording", id),
+    title: "Voce",
+    details: { ...emptyProduction("recording", id).details, phase: "Registrazione voce", instrument: "Voce", musician: "Cantante" },
+  };
+  assert.equal(validateProduction(voice).details.instrument, "Voce");
+  const song = { ...emptyProduction("track", id), title: "Vecchio brano", details: {
+    bpm: "120", key: "Do", credits: "", lyrics: "", meaning: "", reference: "",
+  } };
+  assert.equal(validateProduction(song).details.duration, "");
+  const orphan = { ...emptyProduction("material", id), title: "Vecchia versione",
+    details: { ...emptyProduction("material", id).details, category: "Mix", versionLabel: "v1", url: "https://drive.google.com/example" },
+  };
+  assert.throws(() => validateProduction(orphan), /collegati a un brano/);
+  assert.equal(validateProduction({ ...orphan, trackId: id }).trackId, id);
+
 });
 test("quotes use fractional quantities in hundredths, integer cents and consistent totals", () => {
   const items = [
