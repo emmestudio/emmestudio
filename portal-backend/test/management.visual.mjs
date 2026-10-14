@@ -291,14 +291,25 @@ export async function verifyVisual({
       path: join(shots, "produzione-desktop.png"),
       fullPage: true,
     });
-    await page.getByRole("group", { name: "Aree produzione" }).getByRole("button", { name: /^Materiali e versioni/ }).click();
-    await page
-      .getByRole("button", { name: "+ Materiale", exact: true })
-      .click();
+
+    const songCard = page.locator("article.project-card").filter({
+      has: page.getByRole("heading", { name: "Brano dal modulo", exact: true }),
+    });
+    await songCard.getByRole("button", { name: /Apri scheda brano/ }).click();
+    const workspace = page.getByRole("dialog", { name: "Brano dal modulo" });
+    await workspace.getByText("Identità e lavorazione").waitFor();
+    assert.ok(await workspace.getByText("120", { exact: true }).count());
+    await workspace.getByRole("button", { name: /^Sessioni/ }).click();
+    await workspace.getByRole("button", { name: "+ Nuova sessione" }).click();
+    await page.getByLabel("Titolo", { exact: true }).fill("Voci demo");
+    await page.getByLabel("Fase di produzione").selectOption("Registrazione voce");
+    await page.getByLabel("Strumento / parte").fill("Voce");
+    await page.getByLabel("Musicista / voce / referente").fill("Cantante");
+    await page.getByRole("button", { name: "Salva scheda", exact: true }).click();
+    await workspace.getByRole("heading", { name: "Voci demo" }).waitFor();
+    await workspace.getByRole("button", { name: /^Materiali e versioni/ }).click();
+    await workspace.getByRole("button", { name: "+ Nuovo materiale" }).click();
     await page.getByLabel("Titolo", { exact: true }).fill("Mix dimostrativo");
-    await page
-      .getByLabel("Brano collegato")
-      .selectOption({ label: "Brano dal modulo" });
     await page
       .getByLabel("Tipo materiale (mix, master, sessione, artwork…)")
       .fill("Mix");
@@ -306,37 +317,35 @@ export async function verifyVisual({
     await page
       .getByLabel("Link file / cartella Drive")
       .fill("https://drive.google.com/file/example");
-    await page
-      .getByRole("button", { name: "Salva scheda", exact: true })
-      .click();
-    await page
-      .getByRole("heading", { name: "Mix dimostrativo", exact: true })
-      .waitFor();
-    await page.getByRole("group", { name: "Aree produzione" }).getByRole("button", { name: /^Revisioni/ }).click();
-    await page
-      .getByRole("button", { name: "+ Revisione", exact: true })
-      .click();
-    await page
-      .getByLabel("Titolo", { exact: true })
-      .fill("Revisione dimostrativa");
-    await page
-      .getByLabel("Brano collegato")
-      .selectOption({ label: "Brano dal modulo" });
+    await page.getByRole("button", { name: "Salva scheda", exact: true }).click();
+    await workspace.getByRole("heading", { name: "Mix dimostrativo", exact: true }).waitFor();
+    await workspace.getByRole("button", { name: /^Revisioni/ }).click();
+    await workspace.getByRole("button", { name: "+ Nuova revisione" }).click();
+    await page.getByLabel("Titolo", { exact: true }).fill("Revisione dimostrativa");
     await page.getByLabel("Versione oggetto della revisione").fill("Mix v01");
     await page
       .getByLabel("Feedback ricevuto e modifiche richieste")
       .fill("Ridurre il livello della voce");
-    await page.locator("dialog").getByRole("combobox", {name:/^Stato/}).selectOption("Approvata");
+    await page.locator("dialog.production-dialog").getByRole("combobox", {name:/^Stato/}).selectOption("Approvata");
     await page
       .getByLabel("Approvazione ricevuta da / tramite")
       .fill("Artista, via email");
     await page.getByLabel("Data approvazione").fill("2026-01-02");
-    await page
-      .getByRole("button", { name: "Salva scheda", exact: true })
-      .click();
-    await page
-      .getByRole("heading", { name: "Revisione dimostrativa", exact: true })
-      .waitFor();
+    await page.getByRole("button", { name: "Salva scheda", exact: true }).click();
+    await workspace.getByRole("heading", { name: "Revisione dimostrativa", exact: true }).waitFor();
+    await workspace.screenshot({ path: join(shots, "brano-workspace-desktop.png") });
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.ok(await workspace.evaluate((el) => el.getBoundingClientRect().right <= innerWidth + 2), "song workspace mobile overflow");
+    await workspace.screenshot({ path: join(shots, "brano-workspace-mobile.png") });
+    await workspace.getByRole("button", { name: "Chiudi scheda brano" }).click();
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.getByRole("group", { name: "Aree produzione" }).getByRole("button", { name: /^Registrazioni/ }).click();
+    await page.getByRole("button", { name: "+ Registrazione autonoma" }).click();
+    await page.getByLabel("Titolo", { exact: true }).fill("Mix autonomo");
+    await page.getByLabel("Fase di produzione").selectOption("Mix");
+    await page.getByRole("button", { name: "Salva scheda", exact: true }).click();
+    await page.getByRole("heading", { name: "Mix autonomo", exact: true }).waitFor();
+    assert.equal((await svc.listProduction("owner")).find((i) => i.title === "Mix autonomo")?.trackId, null);
     await page.getByRole("button", { name: /^Show live/ }).click();
     await page
       .getByRole("button", { name: "+ Show live", exact: true })
