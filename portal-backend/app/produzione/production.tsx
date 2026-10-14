@@ -97,8 +97,7 @@ export default function Production() {
         ? { ...item }
         : {
             ...emptyProduction(kind, project),
-            trackId:
-              kind !== "track" && kind !== "live" && track ? track : null,
+            trackId: null,
           },
     );
     setId(item?.id ?? crypto.randomUUID());
@@ -136,9 +135,8 @@ export default function Production() {
       setBusy(false);
     }
   }
-  const tracks = items.filter(
-    (i) => i.kind === "track" && (!project || i.projectId === project),
-  );
+  const selectedTrack = items.find((i) => i.kind === "track" && i.id === selectedTrackId) ?? null;
+  const unattached = items.filter((i) => (i.kind === "material" || i.kind === "revision") && !i.trackId && (!project || i.projectId === project));
   const closed = (i: ProductionItem) =>
     [
       "Consegnato",
@@ -153,7 +151,7 @@ export default function Production() {
     (i) =>
       i.kind === kind &&
       (!project || i.projectId === project) &&
-      (!track || i.id === track || i.trackId === track) &&
+      (kind !== "recording" || !i.trackId) &&
       (!onlyOpen || !closed(i)) &&
       (
         i.title +
@@ -168,19 +166,32 @@ export default function Production() {
   const canWrite =
     writable &&
     projects.find((p) => p.id === draft.projectId)?.status !== "Archiviato";
+  function openChild(childKind: ProductionKind, parent: ProductionItem) {
+    setEditor("new");
+    const newDraft = emptyProduction(childKind, parent.projectId);
+    setDraft({
+      ...newDraft,
+      trackId: parent.id,
+      details: childKind === "recording"
+        ? { ...newDraft.details, phase: "Registrazione strumenti" }
+        : newDraft.details,
+    });
+    setId(crypto.randomUUID());
+    setFormError("");
+  }
   return (
     <section>
       <div className="agenda-heading">
         <p>
-          Brani, sessioni, file e produzione live in un unico spazio di lavoro.
-          Le revisioni e le approvazioni esterne vengono registrate dal team.
+          Ogni brano raccoglie sessioni, voci, mix, mastering, materiali e revisioni.
+          Le registrazioni indipendenti restano in una sezione separata.
         </p>
         <button
           className="button"
           disabled={!writable || loading || !!error}
           onClick={() => open()}
         >
-          + {productionSpecs[kind].singular}
+          + {kind === "recording" ? "Registrazione autonoma" : productionSpecs[kind].singular}
         </button>
       </div>
       <div
