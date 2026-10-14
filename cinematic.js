@@ -96,3 +96,44 @@ window.addEventListener('scroll', scheduleScrollState, {passive:true});
 window.addEventListener('resize', scheduleScrollState, {passive:true});
 window.addEventListener('load', scheduleScrollState, {once:true});
 updateScrollState();
+
+// Explicit scene controls: no autoplay video or sound, no animation timers.
+const experienceHero = document.querySelector('.hero-experience');
+const sceneButtons = [...document.querySelectorAll('[data-scene]')];
+sceneButtons.forEach(button => button.addEventListener('click', () => {
+  experienceHero?.classList.toggle('is-live', button.dataset.scene === 'live');
+  sceneButtons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+}));
+// Progressive enhancement: all five chapters remain readable without JS.
+const journey = document.querySelector('.artist-journey');
+if (journey) {
+  const steps = [...journey.querySelectorAll('.journey-step')];
+  const panels = [...journey.querySelectorAll('.journey-panel')];
+  journey.classList.add('journey-enhanced');
+  journey.querySelector('.journey-steps').setAttribute('role', 'tablist');
+  function selectStep(index, focus = false) {
+    steps.forEach((step, i) => {
+      step.setAttribute('aria-selected', String(i === index));
+      step.tabIndex = i === index ? 0 : -1;
+      panels[i].hidden = i !== index;
+    });
+    if (focus) { steps[index].focus({preventScroll:true}); steps[index].scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'}); }
+  }
+  steps.forEach((step, index) => {
+    step.setAttribute('role', 'tab');
+    step.setAttribute('aria-controls', panels[index].id);
+    panels[index].setAttribute('role', 'tabpanel');
+    panels[index].setAttribute('aria-labelledby', step.id);
+    panels[index].tabIndex = 0;
+    step.addEventListener('click', event => {event.preventDefault();selectStep(index);});
+    step.addEventListener('keydown', event => {
+      const keys = ['ArrowRight','ArrowLeft','ArrowDown','ArrowUp','Home','End',' '];
+      if (!keys.includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? steps.length - 1 : event.key === ' ' ? index : (index + (['ArrowRight','ArrowDown'].includes(event.key) ? 1 : -1) + steps.length) % steps.length;
+      selectStep(next, true);
+    });
+  });
+  const deepLink = panels.findIndex(panel => '#' + panel.id === window.location.hash);
+  selectStep(deepLink < 0 ? 0 : deepLink);
+}
