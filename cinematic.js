@@ -23,7 +23,7 @@ if (menu && navigation) {
     if (!navigation.contains(event.target) && !menu.contains(event.target)) setOpen(false);
   });
   // Reset on desktop so returning to mobile never unexpectedly opens the menu.
-  const desktop = window.matchMedia('(min-width: 901px)');
+  const desktop = window.matchMedia('(min-width: 1301px)');
   desktop.addEventListener('change', () => setOpen(false));
 }
 
