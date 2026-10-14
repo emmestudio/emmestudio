@@ -63,6 +63,43 @@ export async function verifyProduction({ svc, db, root, projectId }) {
     ),
     /brano/,
   );
+  const standaloneId = randomUUID();
+  const autonomous = {
+    ...svc.emptyProduction("recording", projectId),
+    title: "Mix indipendente",
+    details: {
+      ...svc.emptyProduction("recording", projectId).details,
+      phase: "Mix",
+      engineer: "Team studio",
+    },
+  };
+  await svc.saveProduction(
+    "owner",
+    standaloneId,
+    undefined,
+    svc.validateProduction(autonomous),
+    "Tecnico",
+  );
+  assert.equal(
+    (await svc.listProduction("owner")).find((i) => i.id === standaloneId)?.trackId,
+    null,
+  );
+  const materialId = randomUUID();
+  const material = {
+    ...svc.emptyProduction("material", projectId),
+    title: "Mix v02",
+    trackId,
+    details: {
+      category: "Mix",
+      versionLabel: "v02",
+      url: "https://drive.google.com/example",
+    },
+  };
+  await svc.saveProduction("owner", materialId, undefined, svc.validateProduction(material), "Tecnico");
+  assert.equal(
+    (await svc.listProduction("owner")).find((i) => i.id === materialId)?.trackId,
+    trackId,
+  );
   const q = (await svc.listLedger("owner")).quotes[0];
   const p = (await svc.listProjects("owner")).find((p) => p.id === projectId);
   const items = [
