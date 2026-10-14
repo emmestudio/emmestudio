@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import TrackWorkspace from "./track-workspace";
 import {
   productionSpecs,
+  sessionPhases,
   emptyProduction,
   type ProductionKind,
   type ProductionDraft,
@@ -10,7 +12,7 @@ import {
   type ProductionHistory,
 } from "@/lib/production-data";
 import type { StudioProject } from "@/lib/project-data";
-const kinds = Object.keys(productionSpecs) as ProductionKind[];
+const kinds: ProductionKind[] = ["track", "recording", "live"];
 export default function Production() {
   const [items, setItems] = useState<ProductionItem[]>([]),
     [projects, setProjects] = useState<StudioProject[]>([]),
@@ -21,8 +23,8 @@ export default function Production() {
   const [project, setProject] = useState(""),
     [kind, setKind] = useState<ProductionKind>("track"),
     [search, setSearch] = useState(""),
-    [track, setTrack] = useState(""),
     [onlyOpen, setOnlyOpen] = useState(false);
+  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [editor, setEditor] = useState<ProductionItem | "new" | null>(null),
     [draft, setDraft] = useState<ProductionDraft>(emptyProduction("track")),
     [id, setId] = useState(""),
