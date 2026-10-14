@@ -1,4 +1,5 @@
 "use client";
+import QuoteFields from "./quote-fields";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -533,41 +534,12 @@ export default function Projects() {
             {financial ? (
               <div className="inline-panel">
                 <h3>Preventivo · riservato</h3>
-                <div className="form-grid">
-                  <label>
-                    Importo totale (€)
-                    <input
-                      required
-                      inputMode="decimal"
-                      placeholder="1500,00"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                    />
-                  </label>
-                  <label>
-                    Stato preventivo
-                    <select
-                      value={quote.status}
-                      onChange={(e) =>
-                        setQuote({ ...quote, status: e.target.value })
-                      }
-                    >
-                      {quoteStates.map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <label>
-                  Dettaglio e condizioni
-                  <textarea
-                    maxLength={5000}
-                    value={quote.notes}
-                    onChange={(e) =>
-                      setQuote({ ...quote, notes: e.target.value })
-                    }
-                  />
-                </label>
+                <QuoteFields
+                  quote={quote}
+                  setQuote={setQuote}
+                  amount={amount}
+                  setAmount={setAmount}
+                />
                 <p className="small">
                   Solo i preventivi confermati alimentano gli importi da
                   incassare. Rate e incassi si gestiscono in Guadagni.
@@ -641,6 +613,14 @@ export default function Projects() {
                   ? "Salvataggio…"
                   : "Salva progetto"}
             </button>
+            {editor && editor !== "new" ? (
+              <Link
+                className="text-button"
+                href={"/produzione?project=" + editor.id}
+              >
+                Brani, materiali e show ↗
+              </Link>
+            ) : null}
             {editor && editor !== "new" ? (
               <Link
                 className="text-button"

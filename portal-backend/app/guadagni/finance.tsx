@@ -181,6 +181,14 @@ export default function Finance() {
   );
   return (
     <section>
+      <div className="dialog-actions">
+        <Link className="secondary" href="/costi">
+          Costi e margini ↗
+        </Link>
+        <a className="secondary" href="/api/export">
+          Esporta dati dello studio
+        </a>
+      </div>
       <p>
         Preventivi, pagamenti parziali e scadenze dei progetti. Gli incassi sono
         somme ricevute, prima di costi e imposte; il registro non sostituisce la
@@ -364,6 +372,11 @@ export default function Finance() {
             <Link className="text-button" href={"/progetti?project=" + b.p.id}>
               Modifica servizio e preventivo ↗
             </Link>
+            {b.quote ? (
+              <Link className="text-button" href={"/preventivi/" + b.p.id}>
+                Preventivo · PDF e cronologia ↗
+              </Link>
+            ) : null}
           </article>
         ))}
       </div>

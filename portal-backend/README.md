@@ -2,7 +2,7 @@
 
 Applicazione Next.js separata dal sito GitHub Pages, accesso Google riservato al proprietario verificato e ai collaboratori abilitati, token OAuth cifrati nel database e pagine escluse dall'indicizzazione.
 
-Dashboard e archivio persistente dei progetti; calendario dedicato con lettura e scrittura dirette su Google. Lo scope Calendar è autorizzato separatamente dall'identità. Accessi del team con ruoli Consultazione e Modifica, abilitati dall’amministratore. Gli account artista limitati a singoli progetti non sono ancora disponibili. Specifiche e limiti: `../docs/CALENDAR-APPOINTMENTS.md` e `../docs/PROJECT-MANAGEMENT.md`.
+Dashboard e archivio persistente dei progetti; calendario dedicato con lettura e scrittura dirette su Google. Lo scope Calendar è autorizzato separatamente dall'identità. Accessi del team con ruoli Consultazione e Modifica, abilitati dall’amministratore. Il portale è esclusivamente interno: gli artisti sono profili organizzativi, senza accesso. Specifiche e limiti: `../docs/CALENDAR-APPOINTMENTS.md` e `../docs/PROJECT-MANAGEMENT.md`.
 
 ## Configurazione
 Progetto Vercel dedicato, root directory `portal-backend`. Non cambiare il progetto Accademia né il branch main.
@@ -21,8 +21,12 @@ Solo dopo configurazione e migrazione: avviare e verificare OAuth, rifiuto accou
 La tabella progetti è descritta in `db/002-projects.sql`; `scripts/migrate-projects.mjs` è un comando esplicito di configurazione sul progetto Emme Studio. Il build ordinario resta `npm run build`, senza seed, test su eventi esterni o migrazioni automatiche.
 
 ## Fasi successive
-Permessi per artisti e singoli progetti, brani/versioni, revisioni e archivio file. Il calendario usa Google come unico archivio degli eventi: non occorre un outbox o un mirror nel database in questa prima versione. Un eventuale mirror con webhook richiederà una fase separata.
+Gestione operativa interna del team, brani/registrazioni, revisioni, materiali collegati e show live. Il calendario usa Google come unico archivio degli eventi: non occorre un outbox o un mirror nel database in questa prima versione. Un eventuale mirror con webhook richiederà una fase separata.
 
 ## Artisti e controllo economico
 
 Profili artista collegati ai progetti, direzione artistica e panoramica dei lavori. I progetti includono servizio e preventivo; il registro Guadagni gestisce rate, incassi parziali e storni, con accesso riservato all’amministratore. Dettagli operativi, migrazione e verifiche: [ARTISTS-AND-FINANCE](../docs/ARTISTS-AND-FINANCE.md).
+
+## Produzione interna, preventivi e costi
+
+Il portale serve esclusivamente al team. Brani, registrazioni, materiali/versioni, revisioni e schede show live si gestiscono in Produzione. Preventivi dettagliati e pagina stampabile PDF, costi/margini ed esportazione protetta sono riservati all’amministratore. Flussi, limiti e verifiche: [INTERNAL-PRODUCTION-WORKSPACE](../docs/INTERNAL-PRODUCTION-WORKSPACE.md).

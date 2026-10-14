@@ -34,7 +34,7 @@ globalThis.emmeTestSession = { workspaceOwnerId: "owner", role: "admin" };
 const root = resolve(".");
 await writeFile(
   join(scratch, "entry.ts"),
-  `export * from '${root}/lib/projects.ts'; export * from '${root}/lib/finance.ts'; export * from '${root}/lib/artists.ts'; export * as projectApi from '${root}/app/api/projects/route.ts'; export * as artistApi from '${root}/app/api/artists/route.ts'; export * as financeApi from '${root}/app/api/finance/route.ts';`,
+  `export * from '${root}/lib/projects.ts'; export * from '${root}/lib/finance.ts'; export * from '${root}/lib/artists.ts'; export * as projectApi from '${root}/app/api/projects/route.ts'; export * as artistApi from '${root}/app/api/artists/route.ts'; export * as financeApi from '${root}/app/api/finance/route.ts'; export * from '${root}/lib/production.ts'; export * from '${root}/lib/production-data.ts'; export * from '${root}/lib/costs.ts'; export * from '${root}/lib/cost-data.ts'; export * from '${root}/lib/backup-data.ts'; export * as productionApi from '${root}/app/api/production/route.ts'; export * as costApi from '${root}/app/api/costs/route.ts'; export * as exportApi from '${root}/app/api/export/route.ts'; export {default as quotePage} from '${root}/app/preventivi/[id]/page.tsx';`,
 );
 try {
   await build({
@@ -43,11 +43,20 @@ try {
     bundle: true,
     platform: "node",
     format: "esm",
+    jsx: "automatic",
+    nodePaths: [
+      join(root, "node_modules"),
+      process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES,
+    ].filter(Boolean),
     tsconfig: join(root, "tsconfig.json"),
     plugins: [
       {
         name: "isolated-db",
         setup(b) {
+          b.onResolve({ filter: /^next\/(link|headers|navigation)$/ }, (a) => ({
+            path: a.path,
+            namespace: "test",
+          }));
           b.onResolve({ filter: /^server-only$/ }, () => ({
             path: "server-only",
             namespace: "test",
@@ -61,12 +70,19 @@ try {
             namespace: "test",
           }));
           b.onLoad({ filter: /.*/, namespace: "test" }, (a) => ({
+            resolveDir: root,
             contents:
-              a.path === "db"
-                ? "export const getDb=()=>globalThis.emmeTestDb;"
-                : a.path === "workspace-session"
-                  ? "export const workspaceSession=async()=>globalThis.emmeTestSession;"
-                  : "",
+              a.path === "next/link"
+                ? "import React from 'react';export default function Link(props){return React.createElement('a',props,props.children);}"
+                : a.path === "next/headers"
+                  ? "export const headers=async()=>new Headers();"
+                  : a.path === "next/navigation"
+                    ? 'export const redirect=(p)=>{throw new Error("REDIRECT "+p)};export const notFound=()=>{throw new Error("NOT_FOUND")};'
+                    : a.path === "db"
+                      ? "export const getDb=()=>globalThis.emmeTestDb;"
+                      : a.path === "workspace-session"
+                        ? "export const workspaceSession=async()=>globalThis.emmeTestSession;"
+                        : "",
             loader: "js",
           }));
         },
@@ -80,7 +96,9 @@ try {
   for (const file of [
     "002-projects.sql",
     "003-tasks.sql",
+    "004-members.sql",
     "005-artists-finance.sql",
+    "006-production-finance.sql",
   ])
     await db.exec(await readFile(join(root, "db", file), "utf8"));
   const artistId = randomUUID(),
@@ -280,6 +298,8 @@ try {
   console.log(
     "PASS additive legacy migration reruns without duplicating profiles or changing receipts",
   );
+  const { verifyProduction } = await import("./production.integration.mjs");
+  await verifyProduction({ svc, db, root, projectId });
   if (process.argv.includes("--visual")) {
     const { verifyVisual } = await import("./management.visual.mjs");
     await verifyVisual({ root, scratch, svc, projectId, artistId });

@@ -1,7 +1,23 @@
 import { validDate } from "./event-data.ts";
 export const quoteStates = ["Bozza", "Inviato", "Confermato", "Rifiutato"];
 export const paymentMethods = ["Bonifico", "Contanti", "Carta", "Altro"];
-export type QuoteDraft = { amount: number; status: string; notes: string };
+export type QuoteLine = {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+};
+export type QuoteDraft = {
+  amount: number;
+  status: string;
+  notes: string;
+  items?: QuoteLine[];
+  confirmedOn?: string | null;
+  confirmationNote?: string;
+};
+export const lineTotal = (line: QuoteLine) =>
+  Math.round((line.quantity * line.unitPrice) / 100);
+export const quoteTotal = (items: QuoteLine[]) =>
+  items.reduce((sum, line) => sum + lineTotal(line), 0);
 export type Quote = QuoteDraft & { projectId: string; version: number };
 export type Installment = {
   id: string;
@@ -56,7 +72,64 @@ export function validateQuote(input: unknown): QuoteDraft {
     throw new FinanceInputError(
       "Un preventivo confermato deve avere un importo maggiore di zero.",
     );
-  return { amount: Number(d.amount), status: d.status, notes: d.notes.trim() };
+  let items: QuoteLine[] | undefined;
+  if (d.items !== undefined) {
+    if (!Array.isArray(d.items) || d.items.length > 100)
+      throw new FinanceInputError("Massimo 100 voci per preventivo.");
+    items = d.items.map((raw: unknown) => {
+      const l = raw as Record<string, unknown> | null;
+      if (
+        !l ||
+        typeof l.description !== "string" ||
+        !l.description.trim() ||
+        l.description.length > 300 ||
+        !Number.isSafeInteger(l.quantity) ||
+        Number(l.quantity) < 1 ||
+        Number(l.quantity) > 1000000 ||
+        !Number.isSafeInteger(l.unitPrice) ||
+        Number(l.unitPrice) < 0 ||
+        Number(l.unitPrice) > 999999999
+      )
+        throw new FinanceInputError(
+          "Controlla descrizione, quantità e tariffa delle voci.",
+        );
+      return {
+        description: l.description.trim(),
+        quantity: Number(l.quantity),
+        unitPrice: Number(l.unitPrice),
+      };
+    });
+    if (
+      items.length &&
+      (quoteTotal(items) !== d.amount || quoteTotal(items) > 999999999)
+    )
+      throw new FinanceInputError(
+        "Il totale deve corrispondere alle voci del preventivo.",
+      );
+  }
+  if (
+    d.confirmedOn !== undefined &&
+    d.confirmedOn !== null &&
+    (typeof d.confirmedOn !== "string" || !validDate(d.confirmedOn))
+  )
+    throw new FinanceInputError("Data conferma non valida.");
+  if (
+    d.confirmationNote !== undefined &&
+    (typeof d.confirmationNote !== "string" || d.confirmationNote.length > 2000)
+  )
+    throw new FinanceInputError("Riferimento conferma non valido.");
+  return {
+    amount: Number(d.amount),
+    status: d.status,
+    notes: d.notes.trim(),
+    ...(items !== undefined ? { items } : {}),
+    ...(d.confirmedOn !== undefined
+      ? { confirmedOn: d.confirmedOn as string | null }
+      : {}),
+    ...(d.confirmationNote !== undefined
+      ? { confirmationNote: (d.confirmationNote as string).trim() }
+      : {}),
+  };
 }
 export function validateMovement(d: Record<string, unknown>, payment: boolean) {
   if (

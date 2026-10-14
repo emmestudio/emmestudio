@@ -29,6 +29,7 @@ export default function Navigation() {
         ["/dashboard", "Panoramica"],
         ["/artisti", "Artisti"],
         ["/progetti", "Progetti"],
+        ["/produzione", "Produzione"],
         ["/attivita", "Attività"],
         ["/calendario", "Calendario"],
         ...(admin

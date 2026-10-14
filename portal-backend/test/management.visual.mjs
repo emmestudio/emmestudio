@@ -15,8 +15,8 @@ export async function verifyVisual({
   const playwright = runtime
     ? await import(pathToFileURL(join(runtime, "playwright/index.js")).href)
     : await import("playwright");
-  const {chromium}=playwright.default ?? playwright;
-  const source = `import React from 'react'; import {createRoot} from 'react-dom/client'; import Artists from '${root}/app/artisti/artists.tsx'; import Projects from '${root}/app/progetti/projects.tsx'; import Finance from '${root}/app/guadagni/finance.tsx'; import Navigation from '${root}/app/navigation.tsx'; const path=location.pathname;const titles=path==='/artisti'?['Ogni artista.','Un percorso da costruire.']:path==='/guadagni'?['Il valore del lavoro.','Ogni cifra sotto controllo.']:['Una visione.','Un progetto concreto.'];createRoot(document.getElementById('app')).render(<><header className="brand"><img src="/logo-white.png" alt="Emme Studio" width="150" height="75"/><Navigation/></header><main className="shell"><span className="eyebrow">EMME STUDIO · PORTALE</span><h1>{titles[0]}<br/><em>{titles[1]}</em></h1>{path==='/artisti'?<Artists/>:path==='/guadagni'?<Finance/>:<Projects/>}</main></>);`;
+  const { chromium } = playwright.default ?? playwright;
+  const source = `import React from 'react'; import {createRoot} from 'react-dom/client'; import Artists from '${root}/app/artisti/artists.tsx'; import Projects from '${root}/app/progetti/projects.tsx'; import Finance from '${root}/app/guadagni/finance.tsx'; import Production from '${root}/app/produzione/production.tsx'; import Costs from '${root}/app/costi/costs.tsx'; import Navigation from '${root}/app/navigation.tsx'; const path=location.pathname;const titles=path==='/produzione'?['Dalla prima idea.','Alla consegna finale.']:path==='/costi'?['Costi chiari.','Decisioni più consapevoli.']:path==='/artisti'?['Ogni artista.','Un percorso da costruire.']:path==='/guadagni'?['Il valore del lavoro.','Ogni cifra sotto controllo.']:['Una visione.','Un progetto concreto.'];createRoot(document.getElementById('app')).render(<><header className="brand"><img src="/logo-white.png" alt="Emme Studio" width="150" height="75"/><Navigation/></header><main className={path==='/produzione'||path==='/costi'?'shell dashboard':'shell'}><span className="eyebrow">EMME STUDIO · PORTALE</span><h1>{titles[0]}<br/><em>{titles[1]}</em></h1>{path==='/produzione'?<Production/>:path==='/costi'?<Costs/>:path==='/artisti'?<Artists/>:path==='/guadagni'?<Finance/>:<Projects/>}</main></>);`;
   await writeFile(join(scratch, "ui.tsx"), source);
   await build({
     entryPoints: [join(scratch, "ui.tsx")],
@@ -59,17 +59,27 @@ export async function verifyVisual({
       if (url.pathname.startsWith("/api/")) {
         if (url.pathname === "/api/workspace") {
           res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ canManageAccess: globalThis.emmeTestSession?.role === "admin" }));
+          res.end(
+            JSON.stringify({
+              canManageAccess: globalThis.emmeTestSession?.role === "admin",
+            }),
+          );
           return;
         }
         const api =
-          url.pathname === "/api/artists"
-            ? svc.artistApi
-            : url.pathname === "/api/projects"
-              ? svc.projectApi
-              : url.pathname === "/api/finance"
-                ? svc.financeApi
-                : null;
+          url.pathname === "/api/production"
+            ? svc.productionApi
+            : url.pathname === "/api/costs"
+              ? svc.costApi
+              : url.pathname === "/api/export"
+                ? svc.exportApi
+                : url.pathname === "/api/artists"
+                  ? svc.artistApi
+                  : url.pathname === "/api/projects"
+                    ? svc.projectApi
+                    : url.pathname === "/api/finance"
+                      ? svc.financeApi
+                      : null;
         if (!api) {
           res.writeHead(404).end();
           return;
@@ -101,9 +111,26 @@ export async function verifyVisual({
         res.end(await readFile(join(root, "public/logo-white.png")));
         return;
       }
-      res.setHeader("Content-Type", "text/html");
+      if (url.pathname.startsWith("/preventivi/")) {
+        const { createRequire } = await import("node:module");
+        const require = createRequire(import.meta.url);
+        const { renderToStaticMarkup } = require("react-dom/server");
+        const markup = renderToStaticMarkup(
+          await svc.quotePage({
+            params: Promise.resolve({ id: url.pathname.split("/")[2] }),
+          }),
+        );
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.end(
+          '<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body><header class="brand"><img src="/logo-white.png" alt="Emme Studio" width="150" height="75"></header>' +
+            markup +
+            "</body></html>",
+        );
+        return;
+      }
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.end(
-        '<!doctype html><html lang="it"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body><div id="app"></div><script src="/ui.js"></script></body></html>',
+        '<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body><div id="app"></div><script src="/ui.js"></script></body></html>',
       );
     } catch (e) {
       res.writeHead(500).end(String(e.message));
@@ -115,11 +142,14 @@ export async function verifyVisual({
   const browser = await chromium.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-dev-shm-usage"],
-    ...(process.env.VISUAL_CHROMIUM_EXECUTABLE ? {executablePath:process.env.VISUAL_CHROMIUM_EXECUTABLE} : {}),
+    ...(process.env.VISUAL_CHROMIUM_EXECUTABLE
+      ? { executablePath: process.env.VISUAL_CHROMIUM_EXECUTABLE }
+      : {}),
   });
   const page = await browser.newPage({
     viewport: { width: 1440, height: 1000 },
   });
+  page.setDefaultTimeout(10000);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   const shots = join(root, "../docs/portal-management-preview");
@@ -241,13 +271,183 @@ export async function verifyVisual({
       path: join(shots, "incasso-mobile.png"),
       fullPage: true,
     });
-    globalThis.emmeTestSession={workspaceOwnerId:'owner',role:'viewer'};
-    await page.goto(base+'/progetti?project='+projectId);
-    await page.getByLabel('Titolo progetto').waitFor();
-    assert.equal(await page.getByLabel('Titolo progetto').isDisabled(),true);
-    assert.equal(await page.getByLabel('Importo totale (€)').count(),0);
-    assert.equal(await page.getByRole('link',{name:'Guadagni',exact:true}).count(),0);
 
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto(base + "/produzione?project=" + projectId);
+    await page
+      .getByRole("heading", { name: "Brano completo", exact: true })
+      .waitFor();
+    await page.getByRole("button", { name: "+ Brano", exact: true }).click();
+    await page.getByLabel("Titolo", { exact: true }).fill("Brano dal modulo");
+    await page.getByLabel("Responsabile", { exact: true }).fill("Team studio");
+    await page.getByLabel("BPM", { exact: true }).fill("120");
+    await page
+      .getByRole("button", { name: "Salva scheda", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Brano dal modulo", exact: true })
+      .waitFor();
+    await page.screenshot({
+      path: join(shots, "produzione-desktop.png"),
+      fullPage: true,
+    });
+    await page.getByRole("group", { name: "Aree produzione" }).getByRole("button", { name: /^Materiali e versioni/ }).click();
+    await page
+      .getByRole("button", { name: "+ Materiale", exact: true })
+      .click();
+    await page.getByLabel("Titolo", { exact: true }).fill("Mix dimostrativo");
+    await page
+      .getByLabel("Brano collegato")
+      .selectOption({ label: "Brano dal modulo" });
+    await page
+      .getByLabel("Tipo materiale (mix, master, sessione, artwork…)")
+      .fill("Mix");
+    await page.getByLabel("Versione (es. Mix v03)").fill("Mix v01");
+    await page
+      .getByLabel("Link file / cartella Drive")
+      .fill("https://drive.google.com/file/example");
+    await page
+      .getByRole("button", { name: "Salva scheda", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Mix dimostrativo", exact: true })
+      .waitFor();
+    await page.getByRole("group", { name: "Aree produzione" }).getByRole("button", { name: /^Revisioni/ }).click();
+    await page
+      .getByRole("button", { name: "+ Revisione", exact: true })
+      .click();
+    await page
+      .getByLabel("Titolo", { exact: true })
+      .fill("Revisione dimostrativa");
+    await page
+      .getByLabel("Brano collegato")
+      .selectOption({ label: "Brano dal modulo" });
+    await page.getByLabel("Versione oggetto della revisione").fill("Mix v01");
+    await page
+      .getByLabel("Feedback ricevuto e modifiche richieste")
+      .fill("Ridurre il livello della voce");
+    await page.locator("dialog").getByRole("combobox", {name:/^Stato/}).selectOption("Approvata");
+    await page
+      .getByLabel("Approvazione ricevuta da / tramite")
+      .fill("Artista, via email");
+    await page.getByLabel("Data approvazione").fill("2026-01-02");
+    await page
+      .getByRole("button", { name: "Salva scheda", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Revisione dimostrativa", exact: true })
+      .waitFor();
+    await page.getByRole("button", { name: /^Show live/ }).click();
+    await page
+      .getByRole("button", { name: "+ Show live", exact: true })
+      .click();
+    await page.getByLabel("Titolo", { exact: true }).fill("Show dimostrativo");
+    await page.getByLabel("Luogo / venue").fill("Teatro");
+    await page
+      .getByLabel("LTC / MTC e sincronizzazioni")
+      .fill("LTC verso regia luci");
+    await page
+      .getByLabel("Piano backup e verifica tecnica")
+      .fill("PC master e copia di sicurezza");
+    await page
+      .getByRole("button", { name: "Salva scheda", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Show dimostrativo", exact: true })
+      .waitFor();
+    await page.screenshot({
+      path: join(shots, "live-desktop.png"),
+      fullPage: true,
+    });
+    await page.goto(base + "/costi?project=" + projectId);
+    await page
+      .getByRole("heading", { name: "Registrazioni esterne", exact: true })
+      .waitFor();
+    await page
+      .getByRole("button", { name: "+ Nuovo costo", exact: true })
+      .click();
+    await page
+      .getByLabel("Descrizione", { exact: true })
+      .fill("Musicista dimostrativo");
+    await page.getByLabel("Importo (€)", { exact: true }).fill("150,00");
+    await page
+      .getByRole("button", { name: "Salva costo", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Musicista dimostrativo", exact: true })
+      .waitFor();
+    await page.screenshot({
+      path: join(shots, "costi-desktop.png"),
+      fullPage: true,
+    });
+    const detailed = (await svc.listProjects("owner")).find(
+      (p) => p.title === "Progetto creato dal modulo",
+    );
+    await page.goto(base + "/progetti?project=" + detailed.id);
+    await page.getByLabel("Titolo progetto").waitFor();
+    await page.getByRole("button", { name: "+ Voce", exact: true }).click();
+    await page
+      .getByLabel("Descrizione", { exact: true })
+      .fill("Produzione completa");
+    await page
+      .getByRole("button", { name: "Salva progetto", exact: true })
+      .click();
+    await page.locator("dialog").waitFor({ state: "hidden" });
+    assert.equal(
+      (await svc.listLedger("owner")).quotes.find(
+        (q) => q.projectId === detailed.id,
+      ).items.length,
+      1,
+    );
+    await page.goto(base + "/preventivi/" + detailed.id);
+    await page
+      .getByRole("heading", { name: "Progetto creato dal modulo", exact: true })
+      .waitFor();
+    await page.screenshot({
+      path: join(shots, "preventivo-desktop.png"),
+      fullPage: true,
+    });
+    await page.emulateMedia({ media: "print" });
+    await page.pdf({
+      path: join(shots, "preventivo-demo.pdf"),
+      format: "A4",
+      margin: { top: "15mm", bottom: "15mm", left: "12mm", right: "12mm" },
+    });
+    await page.emulateMedia({ media: "screen" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const route of [
+      "produzione?project=" + projectId,
+      "costi?project=" + projectId,
+    ]) {
+      await page.goto(base + "/" + route);
+      await page
+        .getByRole("heading", {
+          name: route.startsWith("produzione")
+            ? "Brano dal modulo"
+            : "Musicista dimostrativo",
+          exact: true,
+        })
+        .waitFor();
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth + 1,
+        ),
+        "horizontal overflow " + route,
+      );
+      await page.screenshot({
+        path: join(shots, route.split("?")[0] + "-mobile.png"),
+        fullPage: true,
+      });
+    }
+    globalThis.emmeTestSession = { workspaceOwnerId: "owner", role: "viewer" };
+    await page.goto(base + "/progetti?project=" + projectId);
+    await page.getByLabel("Titolo progetto").waitFor();
+    assert.equal(await page.getByLabel("Titolo progetto").isDisabled(), true);
+    assert.equal(await page.getByLabel("Importo totale (€)").count(), 0);
+    assert.equal(
+      await page.getByRole("link", { name: "Guadagni", exact: true }).count(),
+      0,
+    );
   } finally {
     await browser.close();
     await new Promise((resolve) => server.close(resolve));

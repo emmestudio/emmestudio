@@ -7,13 +7,14 @@ import {
   type Ledger,
   type QuoteDraft,
   validateMovement,
+  quoteTotal,
 } from "./finance-data";
 export async function listLedger(owner: string): Promise<Ledger> {
   const c = await getDb().connect();
   try {
     await c.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
     const q = await c.query(
-      'SELECT project_id AS "projectId",amount,status,notes,version FROM studio_quotes WHERE owner_id=$1',
+      'SELECT project_id AS "projectId",amount,status,notes,version,items,confirmed_on AS "confirmedOn",confirmation_note AS "confirmationNote" FROM studio_quotes WHERE owner_id=$1',
       [owner],
     );
     const i = await c.query(
@@ -42,7 +43,7 @@ export async function writeQuote(
   expected: number,
 ) {
   const existing = await c.query(
-    "SELECT version FROM studio_quotes WHERE owner_id=$1 AND project_id=$2 FOR UPDATE",
+    "SELECT * FROM studio_quotes WHERE owner_id=$1 AND project_id=$2 FOR UPDATE",
     [owner, project],
   );
   if ((existing.rows[0]?.version ?? 0) !== expected)
@@ -58,9 +59,73 @@ export async function writeQuote(
     Number(totals.rows[0].received),
     Number(totals.rows[0].scheduled),
   );
+  const prior = existing.rows[0];
+  const items = d.items ?? prior?.items ?? [];
+  if (items.length && quoteTotal(items) !== d.amount)
+    throw new FinanceInputError(
+      "Aggiorna le voci del preventivo per modificare il totale.",
+    );
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const confirmedOn =
+    d.status === "Confermato"
+      ? (d.confirmedOn ??
+        (prior?.status === "Confermato" ? prior.confirmed_on : today))
+      : null;
+  if (confirmedOn && confirmedOn > today)
+    throw new FinanceInputError(
+      "La conferma non può essere datata nel futuro.",
+    );
+  const confirmationNote = d.confirmationNote ?? prior?.confirmation_note ?? "";
+  if (prior)
+    await c.query(
+      `INSERT INTO studio_quote_history(project_id,owner_id,revision,snapshot) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
+      [
+        project,
+        owner,
+        prior.version,
+        JSON.stringify({
+          amount: prior.amount,
+          status: prior.status,
+          notes: prior.notes,
+          items: prior.items,
+          confirmedOn: prior.confirmed_on,
+          confirmationNote: prior.confirmation_note,
+        }),
+      ],
+    );
+  const result = await c.query(
+    `INSERT INTO studio_quotes(project_id,owner_id,amount,status,notes,items,confirmed_on,confirmation_note) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(project_id) DO UPDATE SET amount=$3,status=$4,notes=$5,items=$6,confirmed_on=$7,confirmation_note=$8,version=studio_quotes.version+1,updated_at=now() RETURNING version`,
+    [
+      project,
+      owner,
+      d.amount,
+      d.status,
+      d.notes,
+      JSON.stringify(items),
+      confirmedOn,
+      confirmationNote,
+    ],
+  );
   await c.query(
-    `INSERT INTO studio_quotes(project_id,owner_id,amount,status,notes) VALUES($1,$2,$3,$4,$5) ON CONFLICT(project_id) DO UPDATE SET amount=$3,status=$4,notes=$5,version=studio_quotes.version+1,updated_at=now()`,
-    [project, owner, d.amount, d.status, d.notes],
+    `INSERT INTO studio_quote_history(project_id,owner_id,revision,snapshot) VALUES($1,$2,$3,$4)`,
+    [
+      project,
+      owner,
+      result.rows[0].version,
+      JSON.stringify({
+        amount: d.amount,
+        status: d.status,
+        notes: d.notes,
+        items,
+        confirmedOn,
+        confirmationNote,
+      }),
+    ],
   );
 }
 export async function saveMovement(owner: string, b: Record<string, unknown>) {
