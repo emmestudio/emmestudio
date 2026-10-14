@@ -416,7 +416,7 @@ export default function Production() {
         >
           <div className="dialog-heading">
             <h2 id="production-title">
-              {productionSpecs[draft.kind].singular}
+              {draft.kind === "recording" ? "Sessione di produzione" : productionSpecs[draft.kind].singular}
             </h2>
             <button
               type="button"
@@ -455,6 +455,9 @@ export default function Production() {
                 ))}
               </select>
             </label>
+            {draft.projectId ? (
+              <p className="small">Artista: <strong>{projects.find((p) => p.id === draft.projectId)?.artist || "Da definire"}</strong></p>
+            ) : null}
             <label>
               Titolo
               <input
@@ -504,7 +507,7 @@ export default function Production() {
               <label>
                 Brano collegato
                 <select
-                  required={draft.kind === "recording"}
+                  required={draft.kind === "material" || draft.kind === "revision"}
                   value={draft.trackId ?? ""}
                   onChange={(e) =>
                     setDraft({ ...draft, trackId: e.target.value || null })
@@ -512,8 +515,8 @@ export default function Production() {
                 >
                   <option value="">
                     {draft.kind === "recording"
-                      ? "Seleziona brano"
-                      : "Materiale / revisione del progetto"}
+                      ? "Sessione autonoma, senza brano collegato"
+                      : "Seleziona il brano da documentare"}
                   </option>
                   {items
                     .filter(
@@ -531,7 +534,16 @@ export default function Production() {
             {productionSpecs[draft.kind].fields.map((f) => (
               <label key={f.key}>
                 {f.label}
-                {f.type === "textarea" ? (
+                {f.key === "phase" ? (
+                  <select
+                    required
+                    value={draft.details.phase || ""}
+                    onChange={(e) => setDraft({ ...draft, details: { ...draft.details, phase: e.target.value } })}
+                  >
+                    <option value="">Seleziona fase</option>
+                    {sessionPhases.map((phase) => <option key={phase} value={phase}>{phase}</option>)}
+                  </select>
+                ) : f.type === "textarea" ? (
                   <textarea
                     rows={4}
                     required={f.required}
@@ -547,7 +559,7 @@ export default function Production() {
                 ) : (
                   <input
                     type={f.type ?? "text"}
-                    required={f.required}
+                    required={f.required || (draft.kind === "recording" && ["instrument", "musician"].includes(f.key) && !["Editing", "Mix", "Mastering", "Altro"].includes(draft.details.phase || "Registrazione strumenti"))}
                     maxLength={1000}
                     value={draft.details[f.key] ?? ""}
                     onChange={(e) =>
