@@ -98,6 +98,9 @@ export default function Production() {
         : {
             ...emptyProduction(kind, project),
             trackId: null,
+            details: kind === "recording"
+              ? { ...emptyProduction(kind, project).details, phase: "Registrazione strumenti" }
+              : emptyProduction(kind, project).details,
           },
     );
     setId(item?.id ?? crypto.randomUUID());
@@ -210,7 +213,7 @@ export default function Production() {
             <span>
               {
                 items.filter(
-                  (i) => i.kind === k && (!project || i.projectId === project),
+                  (i) => i.kind === k && (!project || i.projectId === project) && (k !== "recording" || !i.trackId),
                 ).length
               }
             </span>
@@ -222,26 +225,12 @@ export default function Production() {
           Progetto
           <select
             value={project}
-            onChange={(e) => {
-              setProject(e.target.value);
-              setTrack("");
-            }}
+            onChange={(e) => setProject(e.target.value)}
           >
             <option value="">Tutti i progetti</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.title} · {p.artist}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Brano
-          <select value={track} onChange={(e) => setTrack(e.target.value)}>
-            <option value="">Tutti i brani</option>
-            {tracks.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.title}
               </option>
             ))}
           </select>
@@ -306,7 +295,7 @@ export default function Production() {
             ) : null}
             {i.kind === "recording" ? (
               <p className="small">
-                {i.details.instrument} · {i.details.musician}
+                {i.details.phase || "Registrazione strumenti"} · {i.details.instrument || i.details.musician || "Sessione autonoma"}
                 {i.details.recordedOn
                   ? " · " +
                     new Date(
@@ -336,26 +325,11 @@ export default function Production() {
               </p>
             ) : null}
             {i.kind === "track" ? (
-              <div className="production-counts">
-                {(
-                  ["recording", "material", "revision"] as ProductionKind[]
-                ).map((k) => (
-                  <button
-                    key={k}
-                    className="text-button"
-                    onClick={() => {
-                      setProject(i.projectId);
-                      setTrack(i.id);
-                      setKind(k);
-                    }}
-                  >
-                    {productionSpecs[k].label} ·{" "}
-                    {
-                      items.filter(
-                        (child) => child.kind === k && child.trackId === i.id,
-                      ).length
-                    }
-                  </button>
+              <div className="production-counts" aria-label="Lavorazioni collegate">
+                {(["recording", "material", "revision"] as ProductionKind[]).map((k) => (
+                  <span key={k}>
+                    {k === "recording" ? "Sessioni" : productionSpecs[k].label} · {items.filter((child) => child.kind === k && child.trackId === i.id).length}
+                  </span>
                 ))}
               </div>
             ) : null}
@@ -369,8 +343,8 @@ export default function Production() {
                     )
                   : ""}
               </span>
-              <button className="text-button" onClick={() => open(i)}>
-                Apri scheda ↗
+              <button className="text-button" onClick={() => i.kind === "track" ? setSelectedTrackId(i.id) : open(i)}>
+                {i.kind === "track" ? "Apri scheda brano ↗" : "Apri scheda ↗"}
               </button>
             </div>
             {i.details.url ? (
@@ -401,6 +375,30 @@ export default function Production() {
           </p>
         </div>
       ) : null}
+      {unattached.length ? (
+        <section className="card" aria-label="Materiali e revisioni da collegare">
+          <h2>Materiali e revisioni da assegnare</h2>
+          <p className="small">Queste schede precedenti non hanno un brano collegato: conservale e assegna il brano corretto senza perdere la cronologia.</p>
+          <div className="track-entry-list">
+            {unattached.map((i) => (
+              <div className="track-entry" key={i.id}>
+                <strong>{i.title}</strong> <span className="badge">{productionSpecs[i.kind].label}</span>
+                <p className="small">{projects.find((p) => p.id === i.projectId)?.title}</p>
+                <button className="text-button" onClick={() => open(i)}>Collega al brano ↗</button>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+      <TrackWorkspace
+        track={selectedTrack}
+        project={projects.find((p) => p.id === selectedTrack?.projectId)}
+        items={items}
+        writable={writable}
+        onClose={() => setSelectedTrackId(null)}
+        onEdit={(item) => open(item)}
+        onAdd={openChild}
+      />
       <dialog
         ref={dialog}
         className="event-dialog production-dialog"
