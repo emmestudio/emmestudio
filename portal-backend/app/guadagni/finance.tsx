@@ -169,6 +169,7 @@ export default function Finance() {
     .reduce((s, d) => s + d.remaining, 0);
   const shown = balances.filter(
     (b) =>
+      !b.p.deletedAt &&
       (b.p.title + " " + b.p.artist + " " + b.p.service)
         .toLocaleLowerCase("it")
         .includes(search.toLocaleLowerCase("it")) &&

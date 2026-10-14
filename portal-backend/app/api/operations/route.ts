@@ -5,6 +5,7 @@ import {
   listTrash,
   saveOperations,
   trashResource,
+  purgeProject,
   OperationsError,
   type ResourceKind,
 } from "@/lib/operations";
@@ -46,6 +47,10 @@ export async function POST(r: Request) {
         b.draft,
         s.user.email,
       );
+    } else if (b.action === "purge") {
+      if (s.role !== "admin") return reply({error:"Eliminazione definitiva riservata agli amministratori."},403);
+      if (b.kind !== "project") return reply({error:"Eliminazione definitiva disponibile solo per i progetti."},400);
+      await purgeProject(s.workspaceOwnerId,b.id,b.version,b.confirmation);
     } else if (["delete", "restore"].includes(b.action)) {
       if (s.role !== "admin")
         return reply(

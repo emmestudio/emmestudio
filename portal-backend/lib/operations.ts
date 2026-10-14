@@ -11,6 +11,34 @@ const resources = {
   artist: { table: "studio_artists", title: "name" },
 } as const;
 export type ResourceKind = keyof typeof resources;
+export async function purgeProject(owner: string, id: string, version: number, confirmation: string) {
+  if (!validId(id)) throw new OperationsError("Identificativo non valido.");
+  const c = await getDb().connect();
+  try {
+    await c.query("BEGIN");
+    await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1,2))", [owner]);
+    const r = await c.query("SELECT title,version,deleted_at FROM studio_projects WHERE owner_id=$1 AND id=$2 FOR UPDATE", [owner,id]);
+    const p = r.rows[0];
+    if (!p || !p.deleted_at) throw new OperationsError("Puoi eliminare definitivamente solo un progetto nel cestino.");
+    if (p.version !== version) throw new OperationsError("Progetto modificato. Aggiorna e riprova.");
+    if (confirmation !== p.title) throw new OperationsError("Scrivi il titolo esatto per confermare l’eliminazione definitiva.");
+    // Remove resource histories before their parents; every query is workspace scoped.
+    await c.query(`DELETE FROM studio_work_history WHERE owner_id=$1 AND resource_id IN (
+      SELECT id FROM studio_projects WHERE owner_id=$1 AND id=$2
+      UNION SELECT id FROM studio_tasks WHERE owner_id=$1 AND project_id=$2
+      UNION SELECT id FROM studio_production WHERE owner_id=$1 AND project_id=$2
+      UNION SELECT id FROM studio_hours WHERE owner_id=$1 AND project_id=$2
+      UNION SELECT id FROM studio_delivery WHERE owner_id=$1 AND project_id=$2
+      UNION SELECT id FROM studio_costs WHERE owner_id=$1 AND project_id=$2)`,[owner,id]);
+    await c.query("DELETE FROM studio_cost_history WHERE cost_id IN (SELECT id FROM studio_costs WHERE owner_id=$1 AND project_id=$2)",[owner,id]);
+    await c.query("DELETE FROM studio_production_history WHERE owner_id=$1 AND item_id IN (SELECT id FROM studio_production WHERE owner_id=$1 AND project_id=$2)",[owner,id]);
+    for (const table of ["studio_payments","studio_installments","studio_quote_history","studio_quotes","studio_costs","studio_hours","studio_delivery","studio_workflow","studio_tasks","studio_production"])
+      await c.query(`DELETE FROM ${table} WHERE owner_id=$1 AND project_id=$2`,[owner,id]);
+    await c.query("DELETE FROM studio_projects WHERE owner_id=$1 AND id=$2",[owner,id]);
+    await c.query("COMMIT");
+  } catch(e) { await c.query("ROLLBACK"); throw e; }
+  finally { c.release(); }
+}
 export async function saveOperations(
   owner: string,
   id: string,

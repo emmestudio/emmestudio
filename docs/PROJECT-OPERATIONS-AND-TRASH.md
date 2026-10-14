@@ -28,3 +28,10 @@ I controlli di accesso, appartenenza allo studio, versione e origine sono esegui
 
 Verifiche: TypeScript e build Next; test unitari; servizi/API reali su PostgreSQL WASM isolato; assegnazioni, conflitti, dipendenze/cicli, eliminazione/ripristino, contabilità preservata, export/ripristino, permessi e origine. Test browser desktop e mobile con salvataggio organizzazione, eliminazione e ripristino, controlli di overflow e screenshot.
 I test Google usano un provider simulato: nessun appuntamento operativo è creato o cancellato per il collaudo. Login Google e sessione reali del team non sono simulabili come prova end-to-end di produzione. Il backup reale e il cron rimangono disattivati in attesa dell'autorizzazione specifica già richiesta.
+
+## Eliminazione definitiva dei progetti
+Dal Cestino, solo l’amministratore può eliminare definitivamente un progetto già cestinato, digitandone il titolo esatto. La API controlla origine, ruolo, workspace e versione; una transazione elimina tutti i dati operativi, economici e relativi storici collegati, nell’ordine imposto dalle chiavi esterne. Il profilo artista resta conservato. File esterni ed eventi Google Calendar non vengono rimossi. Non è disponibile un’eliminazione massiva.
+
+Situazione dei progetti in Guadagni esclude le schede cestinate. I riepiloghi economici continuano a conservare gli importi dei progetti nel cestino finché questi non vengono eliminati definitivamente.
+
+Verifica mirata: `node test/purge-project.integration.mjs`, su PGlite isolato: pulizia completa dei collegamenti, conservazione artista e altro workspace, titolo/versione/stato, rollback su errore intermedio. Build Next.js/TypeScript e conferma UI verificati su desktop e mobile senza dati reali.

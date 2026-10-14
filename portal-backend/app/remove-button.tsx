@@ -6,12 +6,14 @@ export default function RemoveButton({
   version,
   title,
   onRemoved,
+  permanent = false,
 }: {
   kind: string;
   id: string;
   version: number;
   title: string;
   onRemoved: () => void;
+  permanent?: boolean;
 }) {
   const [confirm, setConfirm] = useState(false),
     [text, setText] = useState(""),
@@ -25,7 +27,7 @@ export default function RemoveButton({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "delete",
+          action: permanent ? "purge" : "delete",
           kind,
           id,
           version,
@@ -49,7 +51,7 @@ export default function RemoveButton({
           className="text-button danger"
           onClick={() => setConfirm(true)}
         >
-          Elimina{" "}
+          {permanent ? "Elimina definitivamente" : "Elimina"}{" "}
           {kind === "project"
             ? "progetto"
             : kind === "production"
@@ -60,13 +62,15 @@ export default function RemoveButton({
         </button>
       ) : (
         <div className="delete-confirm">
-          <strong>Spostare «{title}» nel cestino?</strong>
+          <strong>{permanent ? `Eliminare definitivamente «${title}»?` : `Spostare «${title}» nel cestino?`}</strong>
           <p>
+            {permanent ? "Questa azione non è reversibile: elimina progetto, brani, registrazioni, materiali, revisioni, live, attività, ore, verifiche, preventivi, incassi, rate, costi e storico collegati. Il profilo artista resta conservato. File esterni ed eventi Google Calendar restano disponibili nei rispettivi servizi." : <>
             {kind === "project"
               ? "Anche i suoi brani e attività saranno nascosti dalle viste operative. "
               : ""}
             I dati economici e lo storico restano conservati. Puoi ripristinare
             dal Cestino.
+            </>}
           </p>
           <label>
             Scrivi il titolo per confermare
@@ -82,7 +86,7 @@ export default function RemoveButton({
             disabled={busy || text !== title}
             onClick={() => void remove()}
           >
-            {busy ? "Eliminazione…" : "Conferma eliminazione"}
+            {busy ? "Eliminazione…" : permanent ? "Elimina definitivamente" : "Conferma eliminazione"}
           </button>{" "}
           <button
             type="button"
