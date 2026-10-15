@@ -39,6 +39,7 @@ export async function GET(request:Request){
     if(saved.rowCount)removed++;
    }catch{failed++;}
   }
+  console.info("[artist-preview-retention] run",JSON.stringify({examined:due.rowCount,removed,failed,completedAt:new Date().toISOString()}));
   return reply({examined:due.rowCount,removed,failed});
- }catch{return reply({error:"Pulizia non completata"},503);}
+ }catch(e){console.error("[artist-preview-retention] failure",e instanceof Error?e.message:"unknown");return reply({error:"Pulizia non completata"},503);}
 }
