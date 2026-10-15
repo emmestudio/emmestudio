@@ -130,3 +130,16 @@
 .artist-preview-status-control>select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .artist-preview-status-control>select:disabled{opacity:.6;cursor:wait}
 @media(max-width:650px){.artist-preview-status-control{width:100%;min-width:0}}
+
+
+/* Artist listening library — grouped by song and version. */
+.artist-track-group{margin:20px 0 26px;padding:18px;border:1px solid #d4b27c35;border-radius:14px;background:linear-gradient(130deg,#d4b27c0c,#ffffff03)}
+.artist-track-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.artist-track-heading h3{font-size:19px;font-weight:550;margin:0;color:#f0e6d5}
+.artist-track-heading span{font-size:11px;color:var(--gold);border:1px solid #d4b27c50;border-radius:999px;padding:6px 10px}
+.artist-version-row{padding:16px 0;border-top:1px solid #ffffff1a;display:flex;flex-direction:column;gap:12px}
+.artist-version-row audio{width:100%;max-width:660px;min-height:45px}
+.artist-version-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.artist-version-heading strong{color:#f4efe7;font-size:14px}
+.artist-version-heading .small{margin:4px 0 0}
+@media(max-width:600px){.artist-track-group{padding:13px}.artist-track-heading h3{font-size:17px}.artist-version-heading{align-items:flex-start}}
