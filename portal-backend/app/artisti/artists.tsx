@@ -1,5 +1,5 @@
-import ArtistAccess from "./artist-access";
 "use client";
+import ArtistAccess from "./artist-access";
 import type {FinanceTarget} from "@/lib/finance-targets";
 import {productionSpecs, type ProductionItem} from "@/lib/production-data";
 import DriveFolders from "../drive-folders";
