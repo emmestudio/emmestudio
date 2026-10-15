@@ -160,7 +160,7 @@ export default function TrackWorkspace({
               <div className="track-panel-heading">
                 <div>
                   <h3>
-                    {tab === "recording" ? "Sessioni di produzione" : productionSpecs[tab].label}
+                    {tab === "recording" ? "Sessioni di produzione" : productionSpecs[tab as "recording" | "material" | "revision"].label}
                   </h3>
                   <p>
                     {tab === "recording"
@@ -170,7 +170,7 @@ export default function TrackWorkspace({
                         : "Feedback, interventi e approvazioni registrate dal team per ogni versione."}
                   </p>
                 </div>
-                <button type="button" className="button" disabled={!canWrite} onClick={() => onAdd(tab, track)}>
+                <button type="button" className="button" disabled={!canWrite} onClick={() => onAdd(tab as "recording" | "material" | "revision", track)}>
                   + {tab === "recording" ? "Nuova sessione" : tab === "material" ? "Nuovo materiale" : "Nuova revisione"}
                 </button>
               </div>
