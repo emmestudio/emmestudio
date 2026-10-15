@@ -31,7 +31,7 @@ export async function GET(request:Request,context:{params:Promise<{id:string}>})
  const size=Number(m.size);
  if(m.trashed||!Number.isSafeInteger(size)||size<=0||size>100*1024*1024||m.mimeType?.startsWith("application/vnd.google-apps."))return fail(415);
  const response=await fetch(`https://www.googleapis.com/drive/v3/files/${idEncoded}?alt=media`,{headers,cache:"no-store",signal:AbortSignal.timeout(30000)});
- if(!response.ok||!response.body)return fail(502);
+ if(!response.ok||!response.body||response.headers.get("content-length")!==String(size))return fail(502);
  const safeName=String(item.file_name).replace(/[\r\n"\\]/g,"_").slice(0,255);
  return new Response(response.body,{headers:{...cache,"Content-Type":"application/octet-stream","Content-Disposition":`attachment; filename="${safeName}"`,"Content-Length":String(size)}});
  }catch{return fail(503);}
