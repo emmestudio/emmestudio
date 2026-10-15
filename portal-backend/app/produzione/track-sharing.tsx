@@ -50,7 +50,13 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
    {["draft","ready","approved","revision_requested","withdrawn"].map(x=><option key={x} value={x}>{x}</option>)}
   </select></div>)}
   <h4>Consegne definitive</h4>
-  {deliveries.map(d=><div key={d.id} className="ledger-row"><div><strong>{d.title}</strong><p>{d.fileName}</p></div><label><input role="switch" type="checkbox" checked={d.enabled} disabled={busy} onChange={e=>void request("/api/artist-deliveries","PATCH",{id:d.id,enabled:e.target.checked})}/> {d.enabled?"Download abilitato":"Download bloccato"}</label></div>)}
+  {deliveries.map(d=><div key={d.id} className="artist-permission-row">
+   <div className="artist-permission-details"><strong>{d.title}</strong><span className="artist-permission-file">{d.fileName}</span></div>
+   <div className="artist-permission-control">
+    <span className={"artist-permission-state "+(d.enabled?"is-active":"is-inactive")}>{d.enabled?"Download attivo":"Download non consentito"}</span>
+    <label className="artist-permission-switch"><input type="checkbox" role="switch" aria-label={"Abilita download per "+d.title} checked={d.enabled} disabled={busy} onChange={e=>void request("/api/artist-deliveries","PATCH",{id:d.id,enabled:e.target.checked})}/><span className="artist-permission-slider" aria-hidden="true"/><span className="artist-permission-label">Abilita download</span></label>
+   </div>
+  </div>)}
   {error?<p role="alert">{error}</p>:null}
  </div>;
 }
