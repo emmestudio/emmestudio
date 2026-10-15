@@ -27,7 +27,7 @@ export default function ArtistAccess({artistId}:{artistId:string}){
   <p className="small">Account Google verificato. L'artista accede solo ai propri materiali pubblicati, mai al gestionale del team.</p>
   <label>Email autorizzata<input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="artista@example.com" maxLength={254}/></label>
   <div className="dialog-actions">
-   <label><input type="checkbox" role="switch" checked={enabled} disabled={busy} onChange={e=>void save(e.target.checked)}/> Accesso {enabled?"abilitato":"disabilitato"}</label>
+   <div className="artist-permission-control"><span className={"artist-permission-state "+(enabled?"is-active":"is-inactive")}>{enabled?"Accesso attivo":"Accesso disabilitato"}</span><label className="artist-permission-switch"><input type="checkbox" role="switch" aria-label="Abilita accesso artista" checked={enabled} disabled={busy} onChange={e=>void save(e.target.checked)}/><span className="artist-permission-slider" aria-hidden="true"/><span className="artist-permission-label">Abilita accesso artista</span></label></div>
    <button className="secondary" disabled={busy||!email.trim()} onClick={()=>void save(enabled)}>Salva email</button>
   </div>
   {message?<p role="status">{message}</p>:null}
