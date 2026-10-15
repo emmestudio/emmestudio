@@ -1,3 +1,4 @@
+import ArtistNotifications from "./notifications";
 import Feedback from "./feedback";
 import TrackMessages from "./track-messages";
 import {headers} from "next/headers";
@@ -27,6 +28,7 @@ export default async function ArtistPage(){
  return <main className="shell dashboard">
   <span className="eyebrow">EMME STUDIO · AREA ARTISTA</span>
   <h1>Benvenuto, <em>{session.artistName}.</em></h1>
+  <ArtistNotifications/>
   <p>Qui trovi le anteprime che lo studio ha reso disponibili per l’ascolto, le richieste di revisione e le consegne autorizzate.</p>
   <section className="card"><h2>Le tue produzioni</h2>
    {groups.size?Array.from(groups.entries()).map(([track,versions])=>
