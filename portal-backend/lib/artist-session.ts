@@ -12,7 +12,7 @@ export async function artistSession(headers:Headers) {
    FROM studio_artist_access x
    JOIN "user" u ON u.id=x.owner_id
    JOIN studio_artists a ON a.id=x.artist_id AND a.owner_id=x.owner_id
-   WHERE lower(x.email)=$1 AND x.enabled=true AND a.deleted_at IS NULL
+   WHERE lower(trim(x.email))=$1 AND x.enabled=true AND a.deleted_at IS NULL
    AND lower(u.email)=lower($2) AND u."emailVerified"=true LIMIT 1`,
    [normalizedArtistEmail(session.user.email),process.env.PORTAL_OWNER_EMAIL]);
  const access=r.rows[0];
