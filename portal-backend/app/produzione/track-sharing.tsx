@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useState} from "react";
+import TrackMessages from "../area-artista/track-messages";
 const previewStates=[
  {value:"draft",label:"Bozza · Non visibile",description:"Solo lo studio può vedere questa versione."},
  {value:"ready",label:"Disponibile per l’ascolto",description:"L’artista può ascoltare questa versione."},
@@ -86,6 +87,7 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
   <section className="artist-history"><h4>Cronologia delle versioni</h4><p className="small">Pubblicazioni, approvazioni, revisioni e ritiri registrati da oggi. Le operazioni precedenti all’attivazione dello storico non vengono ricostruite.</p>
    {history.length? <ol className="artist-history-list">{history.map(e=><li key={e.id}><div><strong>{e.versionLabel} · {({published:"Pubblicata per l’ascolto",approved:"Approvata",revision_requested:"Revisione richiesta",withdrawn:"Ritirata"} as Record<string,string>)[e.eventType]??e.eventType}</strong><span>{new Date(e.occurredAt).toLocaleString("it-IT")}</span></div><p>{e.title}</p>{e.notes&&e.eventType==="revision_requested"?<p className="small">Nota: {e.notes}</p>:null}</li>)}</ol>:<p className="small">Nessun evento ancora registrato per questo brano.</p>}
   </section>
+  <TrackMessages trackId={trackId} artistId={artistId}/>
   <h4>Consegne definitive</h4>
   {deliveries.map(d=><div key={d.id} className="artist-permission-row">
    <div className="artist-permission-details"><strong>{d.title}</strong><span className="artist-permission-file">{d.fileName}</span></div>
