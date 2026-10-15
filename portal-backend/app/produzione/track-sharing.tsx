@@ -21,9 +21,30 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
    const d=await r.json();if(!r.ok)throw Error(d.error||"Operazione fallita");await load();return true;
   }catch(e){setError(e instanceof Error?e.message:"Operazione non riuscita");return false;}finally{setBusy(false);}
  }
+ const [uploadKind,setUploadKind]=useState<"preview"|"delivery">("preview");
+ const [uploadFile,setUploadFile]=useState<File|null>(null);
+ async function upload(event:React.FormEvent<HTMLFormElement>){
+  event.preventDefault();if(!uploadFile)return;
+  setBusy(true);setError("");
+  try{
+   const form=new FormData();form.set("artistId",artistId);form.set("trackId",trackId);form.set("kind",uploadKind);form.set("file",uploadFile);
+   const r=await fetch("/api/artist-upload",{method:"POST",body:form});
+   const d=await r.json();if(!r.ok)throw Error(d.error||"Caricamento non riuscito");
+   setUploadFile(null);const input=document.getElementById("track-file-upload") as HTMLInputElement|null;if(input)input.value="";
+   await load();
+  }catch(e){setError(e instanceof Error?e.message:"Caricamento fallito");}finally{setBusy(false);}
+ }
  return <div className="track-panel">
   <h3>Area Artista · Condivisioni</h3>
   <p>Le anteprime sono copie MP3. I file definitivi rimangono bloccati finché non li autorizzi.</p>
+  <form onSubmit={upload}>
+   <h4>Carica direttamente su Google Drive</h4>
+   <p>Il file viene salvato nell’archivio privato dell’artista e associato a questo brano. La condivisione parte sempre disattivata. Limite attuale: 4 MB.</p>
+   <label>Tipo materiale<select value={uploadKind} disabled={busy} onChange={e=>{setUploadKind(e.target.value as "preview"|"delivery");setUploadFile(null);}}><option value="preview">Anteprima MP3</option><option value="delivery">Consegna definitiva</option></select></label>
+   <label>Seleziona file<input key={uploadKind} id="track-file-upload" type="file" required accept={uploadKind==="preview"?".mp3,audio/mpeg":".mp3,.wav,.zip,.pdf"} disabled={busy} onChange={e=>setUploadFile(e.target.files?.[0]??null)}/></label>
+   <button className="button" disabled={busy||!uploadFile||uploadFile.size>4*1024*1024} type="submit">{busy?"Caricamento…":"Carica e associa automaticamente"}</button>
+   {uploadFile&&uploadFile.size>4*1024*1024?<p role="alert">Il file supera 4 MB: usa temporaneamente l’ID Drive o prepara una copia MP3 più piccola.</p>:null}
+  </form>
   <h4>Anteprime per ascolto</h4>
   {previews.map(p=><div key={p.id} className="ledger-row"><div><strong>{p.title} · {p.versionLabel}</strong><p>{p.status}</p>{p.feedback?<p>Feedback: {p.feedback}</p>:null}</div><select aria-label={"Stato "+p.title} value={p.status} disabled={busy} onChange={e=>void request("/api/artist-previews","PATCH",{id:p.id,status:e.target.value})}>
    {["draft","ready","approved","revision_requested","withdrawn"].map(x=><option key={x} value={x}>{x}</option>)}
