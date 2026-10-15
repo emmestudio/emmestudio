@@ -478,6 +478,7 @@ export default function Production({liveOnly=false}:{liveOnly?:boolean}) {
         project={projects.find((p) => p.id === selectedTrack?.projectId)}
         items={items}
         writable={writable}
+        admin={admin}
         onClose={() => setSelectedTrackId(null)}
         onEdit={(item) => open(item)}
         onAdd={openChild}
