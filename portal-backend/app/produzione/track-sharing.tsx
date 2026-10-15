@@ -8,6 +8,7 @@ const previewStates=[
  {value:"withdrawn",label:"Ritirata · Non visibile",description:"Questa versione non è più ascoltabile dall’artista."}
 ] as const;
 export default function TrackSharing({trackId,artistId}:{trackId:string;artistId:string}){
+ const [history,setHistory]=useState<{id:string;eventType:string;occurredAt:string;notes:string;title:string;versionLabel:string}[]>([]);
  const [previews,setPreviews]=useState<{id:string;title:string;status:string;versionLabel:string;feedback:string}[]>([]);
  const [deliveries,setDeliveries]=useState<{id:string;title:string;enabled:boolean;fileName:string;trackId:string}[]>([]);
  const [title,setTitle]=useState(""),[version,setVersion]=useState("Mix v01"),[previewFile,setPreviewFile]=useState("");
@@ -30,6 +31,8 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
   if(!a.ok||!b.ok)throw Error(x.error||y.error||"Materiali non disponibili");
   setPreviews(x.items.filter((i:{trackId:string})=>i.trackId===trackId));
   setDeliveries(y.items.filter((i:{trackId:string})=>i.trackId===trackId));
+  const h=await fetch("/api/artist-version-history?artistId="+encodeURIComponent(artistId)+"&trackId="+encodeURIComponent(trackId),{cache:"no-store"});
+  if(h.ok){const data=await h.json();setHistory(data.items??[]);}
  }
  useEffect(()=>{load().catch(e=>setError(e.message));},[trackId,artistId]);
  async function request(url:string,method:string,data:unknown){
@@ -80,6 +83,9 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
     {previewStates.map(x=><option key={x.value} value={x.value}>{x.label}</option>)}
    </select><button type="button" className="secondary" disabled={busy} onClick={()=>void removeMaterial("preview",p.id,p.title)}>Elimina anteprima</button></div>
   </div>)}
+  <section className="artist-history"><h4>Cronologia delle versioni</h4><p className="small">Pubblicazioni, approvazioni, revisioni e ritiri registrati da oggi. Le operazioni precedenti all’attivazione dello storico non vengono ricostruite.</p>
+   {history.length? <ol className="artist-history-list">{history.map(e=><li key={e.id}><div><strong>{e.versionLabel} · {({published:"Pubblicata per l’ascolto",approved:"Approvata",revision_requested:"Revisione richiesta",withdrawn:"Ritirata"} as Record<string,string>)[e.eventType]??e.eventType}</strong><span>{new Date(e.occurredAt).toLocaleString("it-IT")}</span></div><p>{e.title}</p>{e.notes&&e.eventType==="revision_requested"?<p className="small">Nota: {e.notes}</p>:null}</li>)}</ol>:<p className="small">Nessun evento ancora registrato per questo brano.</p>}
+  </section>
   <h4>Consegne definitive</h4>
   {deliveries.map(d=><div key={d.id} className="artist-permission-row">
    <div className="artist-permission-details"><strong>{d.title}</strong><span className="artist-permission-file">{d.fileName}</span></div>
