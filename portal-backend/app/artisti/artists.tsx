@@ -1,4 +1,5 @@
 "use client";
+import {productionSpecs, type ProductionItem} from "@/lib/production-data";
 import RemoveButton from "../remove-button";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -11,6 +12,7 @@ import {
 import { projectProgress, type StudioProject } from "@/lib/project-data";
 import { type Ledger, projectBalance, euro } from "@/lib/finance-data";
 export default function Artists() {
+  const [production,setProduction] = useState<ProductionItem[]>([]);
   const [admin, setAdmin] = useState(false);
   const [artists, setArtists] = useState<StudioArtist[]>([]),
     [projects, setProjects] = useState<StudioProject[]>([]),
@@ -32,14 +34,15 @@ export default function Artists() {
     const c = new AbortController();
     setLoading(true);
     Promise.all(
-      ["/api/artists", "/api/projects"].map(async (url) => {
+      ["/api/artists", "/api/projects", "/api/production"].map(async (url) => {
         const r = await fetch(url, { cache: "no-store", signal: c.signal });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error);
         return d;
       }),
     )
-      .then(([a, p]) => {
+      .then(([a, p, pr]) => {
+        setProduction(pr.items);
         setAdmin(Boolean(p.canManageFinance));
         setArtists(a.artists);
         setWritable(a.canEdit);
@@ -224,18 +227,24 @@ export default function Artists() {
                     + Progetto per l’artista
                   </Link>
                 ) : null}
+                {writable ? <><Link className="button" href={"/produzione?artist="+selected.id+"&kind=track&new=1"}>+ Brano singolo</Link><Link className="secondary" href={"/produzione?artist="+selected.id+"&kind=recording&new=1"}>+ Registrazione</Link><Link className="secondary" href={"/produzione?artist="+selected.id+"&kind=service&new=1"}>+ Servizio singolo</Link></> : null}
               </div>
             </section>
             <div className="artist-counts">
               {["Da realizzare", "In realizzazione", "Realizzati"].map((g) => (
                 <div key={g}>
                   <strong>
-                    {works.filter((p) => workGroup(p.status) === g).length}
+                    {works.filter((p) => workGroup(p.status) === g).length + production.filter(i=>i.artistId===selected.id && !i.projectId && !i.trackId && ( ["Consegnato","Completato","Registrata","Completata","Realizzato","Archiviato","Archiviata"].includes(i.status) ? "Realizzati" : ["Preproduzione","Pianificata","Da pianificare"].includes(i.status) ? "Da realizzare" : "In realizzazione") === g).length}
                   </strong>
                   <span>{g}</span>
                 </div>
               ))}
             </div>
+            <section className="card">
+              <h3>Brani e servizi singoli</h3><p className="small">Lavori direttamente collegati all’artista, senza progetto.</p>
+              {production.filter(i=>i.artistId===selected.id && !i.projectId && !i.trackId).map(i=><div className="ledger-row" key={i.id}><div><strong>{i.title}</strong><p className="small">{productionSpecs[i.kind].singular} · {i.status}</p></div><Link className="text-button" href={"/produzione?artist="+selected.id+"&kind="+i.kind+(i.kind==="track"?"&track="+i.id:"")}>Apri ↗</Link></div>)}
+              {!production.some(i=>i.artistId===selected.id && !i.projectId && !i.trackId) ? <p>Nessun lavoro singolo presente.</p> : null}
+            </section>
             {ledger ? (
               <section className="card">
                 <h3>Situazione economica · riservata</h3>
@@ -283,7 +292,7 @@ export default function Artists() {
                 <div className="list-heading">
                   <h3>{g}</h3>
                   <span className="status-pill">
-                    {works.filter((p) => workGroup(p.status) === g).length}
+                    {works.filter((p) => workGroup(p.status) === g).length + production.filter(i=>i.artistId===selected.id && !i.projectId && !i.trackId && ( ["Consegnato","Completato","Registrata","Completata","Realizzato","Archiviato","Archiviata"].includes(i.status) ? "Realizzati" : ["Preproduzione","Pianificata","Da pianificare"].includes(i.status) ? "Da realizzare" : "In realizzazione") === g).length}
                   </span>
                 </div>
                 {works

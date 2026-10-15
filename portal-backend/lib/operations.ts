@@ -138,6 +138,10 @@ export async function trashResource(
       if (parent.rows[0]?.deleted_at)
         throw new OperationsError("Ripristina prima il progetto collegato.");
     }
+    if (kind === "production" && !p.project_id && p.artist_id) {
+      const artist = await c.query("SELECT deleted_at FROM studio_artists WHERE owner_id=$1 AND id=$2 FOR UPDATE",[owner,p.artist_id]);
+      if (!artist.rows[0] || artist.rows[0].deleted_at) throw new OperationsError("Ripristina prima l’artista collegato.");
+    }
     r = await c.query(
       `SELECT *,${spec.title} AS label FROM ${spec.table} WHERE owner_id=$1 AND id=$2 FOR UPDATE`,
       [owner, id],
@@ -158,6 +162,10 @@ export async function trashResource(
         throw new OperationsError(
           "Elimina o riassegna prima i progetti attivi di questo artista.",
         );
+    }
+    if (kind === "artist" && !restore) {
+      const direct = await c.query("SELECT r.id FROM studio_production r WHERE r.owner_id=$1 AND r.artist_id=$2 AND r.project_id IS NULL AND r.deleted_at IS NULL AND NOT EXISTS(SELECT 1 FROM studio_production t WHERE t.owner_id=r.owner_id AND t.id::text=r.data->>'trackId' AND t.deleted_at IS NOT NULL) LIMIT 1",[owner,id]);
+      if (direct.rows[0]) throw new OperationsError("Sposta prima nel cestino i brani e servizi singoli di questo artista.");
     }
     if (kind === "project" && restore && p.artist_id) {
       const a = await c.query(

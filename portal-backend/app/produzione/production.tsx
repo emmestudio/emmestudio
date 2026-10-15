@@ -13,9 +13,12 @@ import {
   type ProductionItem,
   type ProductionHistory,
 } from "@/lib/production-data";
+import type { StudioArtist } from "@/lib/artist-data";
 import type { StudioProject } from "@/lib/project-data";
-const kinds: ProductionKind[] = ["track", "recording", "live"];
+const kinds: ProductionKind[] = ["track", "recording", "live", "service"];
 export default function Production() {
+  const [artists, setArtists] = useState<StudioArtist[]>([]);
+  const [artist, setArtist] = useState("");
   const [admin, setAdmin] = useState(false);
   const [items, setItems] = useState<ProductionItem[]>([]),
     [projects, setProjects] = useState<StudioProject[]>([]),
@@ -41,14 +44,15 @@ export default function Production() {
     const c = new AbortController();
     setLoading(true);
     Promise.all(
-      ["/api/production", "/api/projects"].map(async (url) => {
+      ["/api/production", "/api/projects", "/api/artists"].map(async (url) => {
         const r = await fetch(url, { cache: "no-store", signal: c.signal });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error);
         return d;
       }),
     )
-      .then(([a, p]) => {
+      .then(([a, p, ar]) => {
+        setArtists(ar.artists);
         setAdmin(Boolean(p.canManageFinance));
         setItems(a.items);
         setWritable(a.canEdit);
@@ -58,10 +62,18 @@ export default function Production() {
           initial.current = true;
           const q = new URLSearchParams(window.location.search);
           setProject(q.get("project") ?? "");
+          setArtist(q.get("artist") ?? "");
           if (q.get("track")) setSelectedTrackId(q.get("track"));
           const tab = q.get("kind");
           if (kinds.includes(tab as ProductionKind))
             setKind(tab as ProductionKind);
+          if (q.get("new") === "1" && a.canEdit && kinds.includes(tab as ProductionKind)) {
+            const created = emptyProduction(tab as ProductionKind, q.get("project") || "");
+            created.artistId = q.get("artist") || null;
+            if (created.kind === "recording") created.details.phase = "Registrazione strumenti";
+            setDraft(created);setEditor("new");setId(crypto.randomUUID());
+          }
+
         }
       })
       .catch((e) => {
@@ -102,6 +114,7 @@ export default function Production() {
         ? { ...item }
         : {
             ...emptyProduction(kind, project),
+            artistId: projects.find(p=>p.id===project)?.artistId || artist || null,
             trackId: null,
             details:
               kind === "recording"
@@ -164,10 +177,13 @@ export default function Production() {
       "Archiviato",
       "Archiviata",
       "Registrata",
+      "Completato",
+      "Completata",
     ].includes(i.status);
   const shown = items.filter(
     (i) =>
       i.kind === kind &&
+      (!artist || i.artistId === artist || projects.find(p=>p.id===i.projectId)?.artistId===artist) &&
       (!project || i.projectId === project) &&
       (kind !== "recording" || !i.trackId) &&
       (!onlyOpen || !closed(i)) &&
@@ -176,7 +192,7 @@ export default function Production() {
         " " +
         i.assignee +
         " " +
-        (projects.find((p) => p.id === i.projectId)?.artist ?? "")
+        (artists.find(a=>a.id===i.artistId)?.name ?? projects.find((p) => p.id === i.projectId)?.artist ?? "")
       )
         .toLocaleLowerCase("it")
         .includes(search.toLocaleLowerCase("it")),
@@ -189,6 +205,7 @@ export default function Production() {
     const newDraft = emptyProduction(childKind, parent.projectId);
     setDraft({
       ...newDraft,
+      artistId: parent.artistId,
       trackId: parent.id,
       details:
         childKind === "recording"
@@ -204,7 +221,7 @@ export default function Production() {
         <p>
           Ogni brano raccoglie sessioni, voci, mix, mastering, materiali e
           revisioni. Le registrazioni indipendenti restano in una sezione
-          separata.
+          separata. Collega ogni lavoro direttamente all’artista, oppure raggruppalo in un progetto o album.
         </p>
         <button
           className="button"
@@ -235,6 +252,7 @@ export default function Production() {
                 items.filter(
                   (i) =>
                     i.kind === k &&
+                    (!artist || i.artistId === artist) &&
                     (!project || i.projectId === project) &&
                     (k !== "recording" || !i.trackId),
                 ).length
@@ -244,11 +262,12 @@ export default function Production() {
         ))}
       </div>
       <div className="production-toolbar">
+        <label>Artista<select value={artist} onChange={e=>{setArtist(e.target.value);setProject("");}}><option value="">Tutti gli artisti</option>{artists.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
         <label>
           Progetto
           <select value={project} onChange={(e) => setProject(e.target.value)}>
-            <option value="">Tutti i progetti</option>
-            {projects.map((p) => (
+            <option value="">Tutti i lavori, anche senza progetto</option>
+            {projects.filter(p=>!artist || p.artistId===artist).map((p) => (
               <option key={p.id} value={p.id}>
                 {p.title} · {p.artist}
               </option>
@@ -289,15 +308,15 @@ export default function Production() {
             <div className="list-heading">
               <Link
                 className="task-project"
-                href={"/progetti?project=" + i.projectId}
+                href={i.projectId ? "/progetti?project=" + i.projectId : "/artisti?artist=" + i.artistId}
               >
-                {projects.find((p) => p.id === i.projectId)?.title}
+                {projects.find((p) => p.id === i.projectId)?.title || "Lavoro singolo · senza progetto"}
               </Link>
               <span className="status-pill">{i.status}</span>
             </div>
             <h2>{i.title}</h2>
             <p className="project-artist">
-              {projects.find((p) => p.id === i.projectId)?.artist}
+              {artists.find(a=>a.id===i.artistId)?.name || projects.find((p) => p.id === i.projectId)?.artist}
               {i.trackId
                 ? " · " + items.find((t) => t.id === i.trackId)?.title
                 : ""}
@@ -409,7 +428,7 @@ export default function Production() {
                 : "Il prossimo passo prende forma qui."}
           </h2>
           <p>
-            Seleziona il progetto e aggiungi una scheda. I materiali restano nei
+            Seleziona un artista e aggiungi un lavoro singolo, oppure collegalo a un progetto. I materiali restano nei
             servizi collegati tramite link.
           </p>
         </div>
@@ -430,7 +449,7 @@ export default function Production() {
                 <strong>{i.title}</strong>{" "}
                 <span className="badge">{productionSpecs[i.kind].label}</span>
                 <p className="small">
-                  {projects.find((p) => p.id === i.projectId)?.title}
+                  {projects.find((p) => p.id === i.projectId)?.title || "Lavoro singolo · senza progetto"}
                 </p>
                 <button className="text-button" onClick={() => open(i)}>
                   Collega al brano ↗
@@ -442,6 +461,7 @@ export default function Production() {
       ) : null}
       <TrackWorkspace
         track={selectedTrack}
+        artistName={artists.find(a=>a.id===selectedTrack?.artistId)?.name}
         project={projects.find((p) => p.id === selectedTrack?.projectId)}
         items={items}
         writable={writable}
@@ -482,40 +502,20 @@ export default function Production() {
           </div>
           <fieldset disabled={busy || !canWrite}>
             <label>
-              Progetto
-              <select
-                required
-                disabled={editor !== "new"}
-                value={draft.projectId}
-                onChange={(e) =>
-                  setDraft({
-                    ...draft,
-                    projectId: e.target.value,
-                    trackId: null,
-                  })
-                }
-              >
-                <option value="">Seleziona progetto</option>
-                {projects.map((p) => (
-                  <option
-                    key={p.id}
-                    value={p.id}
-                    disabled={p.status === "Archiviato"}
-                  >
-                    {p.title} · {p.artist}
-                  </option>
-                ))}
+              Artista
+              <select required disabled={Boolean(draft.trackId)} value={draft.artistId || projects.find(p=>p.id===draft.projectId)?.artistId || ""} onChange={e=>setDraft({...draft,artistId:e.target.value,projectId:"",trackId:null})}>
+                <option value="">Seleziona artista</option>
+                {artists.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </label>
-            {draft.projectId ? (
-              <p className="small">
-                Artista:{" "}
-                <strong>
-                  {projects.find((p) => p.id === draft.projectId)?.artist ||
-                    "Da definire"}
-                </strong>
-              </p>
-            ) : null}
+            <label>
+              Progetto / album (facoltativo)
+              <select disabled={Boolean(draft.trackId)} value={draft.projectId} onChange={e=>setDraft({...draft,projectId:e.target.value,artistId:projects.find(p=>p.id===e.target.value)?.artistId || draft.artistId,trackId:null})}>
+                <option value="">Lavoro singolo, direttamente all’artista</option>
+                {projects.filter(p=>!draft.artistId || p.artistId===draft.artistId).map(p=><option key={p.id} value={p.id} disabled={p.status==="Archiviato"}>{p.title} · {p.artist}</option>)}
+              </select>
+            </label>
+            <p className="small">Il progetto serve solo per raggruppare più lavori. Sessioni, materiali e revisioni di un brano ne seguono automaticamente artista e progetto.</p>
             <label>
               Titolo
               <input
@@ -558,7 +558,7 @@ export default function Production() {
                 }
               />
             </label>
-            {draft.kind !== "track" && draft.kind !== "live" ? (
+            {draft.kind !== "track" && draft.kind !== "live" && draft.kind !== "service" ? (
               <label>
                 Brano collegato
                 <select
@@ -578,7 +578,7 @@ export default function Production() {
                   {items
                     .filter(
                       (t) =>
-                        t.kind === "track" && t.projectId === draft.projectId,
+                        t.kind === "track" && t.projectId === draft.projectId && t.artistId === draft.artistId,
                     )
                     .map((t) => (
                       <option key={t.id} value={t.id}>
@@ -669,12 +669,12 @@ export default function Production() {
                   ? "Salva scheda"
                   : "Solo consultazione"}
             </button>
-            <Link
+            {draft.projectId ? <Link
               className="text-button"
               href={"/attivita?project=" + draft.projectId}
             >
               Attività del progetto ↗
-            </Link>
+            </Link> : <Link className="text-button" href={"/artisti?artist="+draft.artistId}>Scheda artista ↗</Link>}
           </div>
         </form>
         {admin && editor && editor !== "new" ? (

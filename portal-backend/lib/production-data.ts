@@ -9,7 +9,7 @@ export const sessionPhases = [
   "Altro",
 ] as const;
 export type ProductionKind =
-  "track" | "recording" | "material" | "revision" | "live";
+  "track" | "recording" | "material" | "revision" | "live" | "service";
 export type Field = {
   key: string;
   label: string;
@@ -20,6 +20,7 @@ export const productionSpecs: Record<
   ProductionKind,
   { label: string; singular: string; states: string[]; fields: Field[] }
 > = {
+  service: {label: "Servizi singoli", singular: "Servizio", states: ["Da pianificare", "In lavorazione", "Completato", "Archiviato"], fields: [{key:"service",label:"Tipo di servizio",required:true},{key:"scope",label:"Attività concordate e consegne",type:"textarea"},{key:"url",label:"Cartella di lavoro",type:"url"}]},
   track: {
     label: "Brani",
     singular: "Brano",
@@ -177,6 +178,7 @@ export const productionSpecs: Record<
 };
 export type ProductionDraft = {
   projectId: string;
+  artistId?: string | null;
   kind: ProductionKind;
   title: string;
   status: string;
@@ -231,11 +233,12 @@ export function validateProduction(input: unknown): ProductionDraft {
     throw new ProductionInputError("Scheda non valida.");
   const d = input as Record<string, unknown>;
   if (
-    !validId(d.projectId) ||
+    (!validId(d.projectId) && !((d.projectId === "" || d.projectId === null || d.projectId === undefined) && validId(d.artistId))) ||
+    (d.artistId != null && d.artistId !== "" && !validId(d.artistId)) ||
     typeof d.kind !== "string" ||
     !Object.hasOwn(productionSpecs, d.kind)
   )
-    throw new ProductionInputError("Seleziona progetto e tipo scheda.");
+    throw new ProductionInputError("Seleziona un artista o un progetto e il tipo di scheda.");
   const kind = d.kind as ProductionKind;
   const spec = productionSpecs[kind];
   const text = (k: string, max: number, required = false) => {
@@ -258,7 +261,8 @@ export function validateProduction(input: unknown): ProductionDraft {
     throw new ProductionInputError("Brano non valido.");
   if (
     (kind === "track" && d.trackId !== null) ||
-    (kind === "live" && d.trackId !== null)
+    (kind === "live" && d.trackId !== null) ||
+    (kind === "service" && d.trackId !== null)
   )
     throw new ProductionInputError("Collegamento al brano non valido.");
   if (!d.details || typeof d.details !== "object" || Array.isArray(d.details))
@@ -347,7 +351,8 @@ export function validateProduction(input: unknown): ProductionDraft {
     );
   return {
     assigneeEmail: d.assigneeEmail as string | null | undefined,
-    projectId: d.projectId,
+    projectId: typeof d.projectId === "string" ? d.projectId : "",
+    artistId: typeof d.artistId === "string" && d.artistId ? d.artistId : null,
     kind,
     title: text("title", 300, true),
     status: d.status,

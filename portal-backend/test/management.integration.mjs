@@ -113,6 +113,7 @@ try {
     "006-production-finance.sql",
     "007-workflow.sql",
     "008-operations-trash.sql",
+    "009-direct-artist-production.sql",
   ])
     await db.exec(await readFile(join(root, "db", file), "utf8"));
   const artistId = randomUUID(),

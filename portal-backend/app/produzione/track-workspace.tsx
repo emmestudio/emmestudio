@@ -13,6 +13,7 @@ import type { StudioProject } from "@/lib/project-data";
 type Tab = "overview" | "recording" | "material" | "revision";
 type Props = {
   track: ProductionItem | null;
+  artistName?: string;
   project: StudioProject | undefined;
   items: ProductionItem[];
   writable: boolean;
@@ -33,6 +34,7 @@ const views: { key: Tab; label: string }[] = [
 ];
 export default function TrackWorkspace({
   track,
+  artistName,
   project,
   items,
   writable,
@@ -50,7 +52,7 @@ export default function TrackWorkspace({
   const children = items.filter((item) => item.trackId === track?.id);
   const counts = (kind: ProductionKind) =>
     children.filter((item) => item.kind === kind).length;
-  const canWrite = writable && !!project && project.status !== "Archiviato";
+  const canWrite = writable && (!track?.projectId || (!!project && project.status !== "Archiviato"));
   const details = track?.details ?? {};
   return (
     <dialog
@@ -69,11 +71,11 @@ export default function TrackWorkspace({
             <div>
               <span className="eyebrow">EMME STUDIO · SCHEDA BRANO</span>
               <p className="track-breadcrumb">
-                <Link href={"/progetti?project=" + track.projectId}>
-                  {project?.title ?? "Progetto"}
+                <Link href={track.projectId ? "/progetti?project=" + track.projectId : "/artisti?artist=" + track.artistId}>
+                  {project?.title ?? "Brano singolo"}
                 </Link>
                 <span aria-hidden="true"> / </span>
-                {project?.artist || "Artista da definire"}
+                {artistName || project?.artist || "Artista da definire"}
               </p>
               <h2 id="track-workspace-title">{track.title}</h2>
               <span className="status-pill">{track.status}</span>
@@ -83,7 +85,7 @@ export default function TrackWorkspace({
             </button>
           </div>
           <div className="track-summary" aria-label="Riepilogo brano">
-            <div><span>Artista</span><strong>{project?.artist || "Da definire"}</strong></div>
+            <div><span>Artista</span><strong>{artistName || project?.artist || "Da definire"}</strong></div>
             <div><span>BPM</span><strong>{details.bpm || "—"}</strong></div>
             <div><span>Tonalità</span><strong>{details.key || "—"}</strong></div>
             <div><span>Durata</span><strong>{details.duration || "—"}</strong></div>
@@ -145,9 +147,9 @@ export default function TrackWorkspace({
                   Apri reference ↗
                 </a>
               ) : null}
-              <Link className="text-button" href={"/attivita?project=" + track.projectId}>
+              {track.projectId ? <Link className="text-button" href={"/attivita?project=" + track.projectId}>
                 Vai alle attività del progetto ↗
-              </Link>
+              </Link> : null}
             </section>
           ) : (
             <section className="track-panel" aria-label={views.find((v) => v.key === tab)?.label}>
