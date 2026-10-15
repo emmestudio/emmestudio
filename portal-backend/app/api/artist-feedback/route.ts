@@ -1,3 +1,4 @@
+import {notifyArtistEvent} from "@/lib/artist-notifications";
 import {artistSession} from "@/lib/artist-session";
 import {getDb} from "@/lib/db";
 import {validId} from "@/lib/task-data";
@@ -24,6 +25,7 @@ export async function POST(request:Request){
    AND x.status IN ('ready','revision_requested')
    RETURNING x.id`,
    [body.previewId,session.ownerId,session.artistId,body.action==="approve"?"approved":"revision_requested",feedback]);
+  if(result.rowCount){const t=await getDb().query("SELECT track_id FROM studio_artist_previews WHERE owner_id=$1 AND id=$2",[session.ownerId,body.previewId]);if(t.rows[0])await notifyArtistEvent(session.ownerId,session.artistId,t.rows[0].track_id,"studio",body.action==="approve"?"approval":"revision",body.action==="approve"?"Versione approvata dall’artista":"Nuova richiesta di revisione");}
   return result.rowCount?reply({saved:true}):reply({error:"Anteprima non disponibile o già approvata."},409);
  }catch{return reply({error:"Feedback non salvato."},503);}
 }
