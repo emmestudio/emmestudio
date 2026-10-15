@@ -1,4 +1,6 @@
 "use client";
+import ArtistAccess from "./artist-access";
+import SharedMaterials from "./shared-materials";
 import type {FinanceTarget} from "@/lib/finance-targets";
 import {productionSpecs, type ProductionItem} from "@/lib/production-data";
 import DriveFolders from "../drive-folders";
@@ -235,6 +237,7 @@ export default function Artists() {
                 {writable ? <><Link className="button" href={"/produzione?artist="+selected.id+"&kind=track&new=1"}>+ Brano singolo</Link><Link className="secondary" href={"/produzione?artist="+selected.id+"&kind=recording&new=1"}>+ Registrazione</Link><Link className="secondary" href={"/produzione?artist="+selected.id+"&kind=service&new=1"}>+ Servizio singolo</Link><Link className="secondary" href={"/live?artist="+selected.id+"&kind=live&new=1"}>+ Produzione live</Link></> : null}
               </div>
             </section>
+            {admin?<><ArtistAccess key={selected.id} artistId={selected.id}/><SharedMaterials key={"materials-"+selected.id} artistId={selected.id}/></>:null}
             <DriveFolders key={selected.id+":"+refresh} kind="artist" id={selected.id}/>
             <div className="artist-counts">
               {["Da realizzare", "In realizzazione", "Realizzati"].map((g) => (

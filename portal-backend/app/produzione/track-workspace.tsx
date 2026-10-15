@@ -1,4 +1,5 @@
 "use client";
+import TrackSharing from "./track-sharing";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -10,13 +11,14 @@ import {
 } from "@/lib/production-data";
 import type { StudioProject } from "@/lib/project-data";
 
-type Tab = "overview" | "recording" | "material" | "revision";
+type Tab = "overview" | "recording" | "material" | "revision" | "sharing";
 type Props = {
   track: ProductionItem | null;
   artistName?: string;
   project: StudioProject | undefined;
   items: ProductionItem[];
   writable: boolean;
+  admin: boolean;
   onClose: () => void;
   onEdit: (item: ProductionItem) => void;
   onAdd: (kind: ProductionKind, track: ProductionItem) => void;
@@ -31,6 +33,7 @@ const views: { key: Tab; label: string }[] = [
   { key: "recording", label: "Sessioni" },
   { key: "material", label: "Materiali e versioni" },
   { key: "revision", label: "Revisioni" },
+  { key: "sharing", label: "Area Artista" },
 ];
 export default function TrackWorkspace({
   track,
@@ -38,6 +41,7 @@ export default function TrackWorkspace({
   project,
   items,
   writable,
+  admin,
   onClose,
   onEdit,
   onAdd,
@@ -102,7 +106,7 @@ export default function TrackWorkspace({
               ))}
           </div>
           <div className="track-nav" role="group" aria-label="Sezioni della scheda brano">
-            {views.map((view) => (
+            {views.filter(view=>view.key!=="sharing"||admin).map((view) => (
               <button
                 type="button"
                 key={view.key}
@@ -111,11 +115,11 @@ export default function TrackWorkspace({
                 onClick={() => setTab(view.key)}
               >
                 {view.label}
-                {view.key !== "overview" ? <span>{counts(view.key)}</span> : null}
+                {view.key !== "overview" && view.key !== "sharing" ? <span>{counts(view.key)}</span> : null}
               </button>
             ))}
           </div>
-          {tab === "overview" ? (
+          {tab === "sharing" && admin ? (track.artistId || project?.artistId) ? <TrackSharing key={track.id} trackId={track.id} artistId={(project?.artistId || track.artistId)!}/> : <p>Assegna prima un artista al brano.</p> : tab === "overview" ? (
             <section className="track-panel" aria-label="Informazioni brano">
               <div className="track-panel-heading">
                 <div>
@@ -156,7 +160,7 @@ export default function TrackWorkspace({
               <div className="track-panel-heading">
                 <div>
                   <h3>
-                    {tab === "recording" ? "Sessioni di produzione" : productionSpecs[tab].label}
+                    {tab === "recording" ? "Sessioni di produzione" : productionSpecs[tab as "recording" | "material" | "revision"].label}
                   </h3>
                   <p>
                     {tab === "recording"
@@ -166,7 +170,7 @@ export default function TrackWorkspace({
                         : "Feedback, interventi e approvazioni registrate dal team per ogni versione."}
                   </p>
                 </div>
-                <button type="button" className="button" disabled={!canWrite} onClick={() => onAdd(tab, track)}>
+                <button type="button" className="button" disabled={!canWrite} onClick={() => onAdd(tab as "recording" | "material" | "revision", track)}>
                   + {tab === "recording" ? "Nuova sessione" : tab === "material" ? "Nuovo materiale" : "Nuova revisione"}
                 </button>
               </div>
