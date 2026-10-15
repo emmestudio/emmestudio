@@ -11,10 +11,12 @@ Il menu Servizi singoli contiene: Riarrangiamento Cover, Servizio Mix, Servizio 
 ## Dati e compatibilità
 La migrazione 010 introduce `studio_finance_targets`, con riferimento esclusivo a un vero progetto o a una vera scheda produzione. Non crea progetti nascosti. Le tabelle economiche mantengono i loro campi e i dati precedenti; il campo tecnico project_id dei preventivi e movimenti identifica ora il soggetto economico. Le nuove FK assicurano l’isolamento del workspace. Un trigger registra i nuovi progetti anche per compatibilità con il codice precedente. I dati economici sono conservati durante lo spostamento nel cestino; l’eliminazione definitiva di un progetto rimuove anche i preventivi dei suoi lavori, lasciando intatti quelli autonomi dell’artista.
 
-Gli export locali usano la versione 3, includendo i riferimenti economici. Il ripristino supporta anche le versioni 1 e 2 e richiede uno schema fino a 010, su un database locale vuoto. Il ripristino è verificato solo con dati sintetici. Backup automatici e trasferimenti verso Blob restano disabilitati.
+Gli export locali usano la versione 3, includendo i riferimenti economici. Il ripristino supporta anche le versioni 1 e 2 e richiede uno schema fino a 011, su un database locale vuoto. Il ripristino è verificato solo con dati sintetici. Backup automatici e trasferimenti verso Blob restano disabilitati.
 
 ## Verifiche mirate
 - `node test/production-finance.integration.mjs`: quote per tutti e quattro i tipi, calcoli in centesimi, incassi/rate, rollback scheda+preventivo, versioni, isolamento, permessi editor/viewer, contenuto del PDF, servizi/Altro, preventivi di progetto, export/ripristino isolato e cancellazione definitiva del progetto.
 - `node test/direct-artist.integration.mjs`: regressione dei lavori senza progetto e loro collegamenti.
 - `node test/production-finance.visual.mjs`: componenti reali, HTTP simulato, creazione desktop/mobile e campi Altro/preventivo.
 - Build Next.js e TypeScript. Nessun test crea incassi, eventi Calendar o file sui servizi reali.
+
+Nome e cognome personali sono separati dal nome artista/gruppo (migrazione 011). I nomi preesistenti rimangono invariati, senza suddivisione automatica; nome e cognome sono facoltativi. I client precedenti che omettono i nuovi campi non li cancellano durante gli aggiornamenti. Le proposte stampate mostrano i dati personali solo quando compilati. Verifica mirata: `node test/artist-names.integration.mjs`.

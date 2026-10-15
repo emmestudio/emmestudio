@@ -444,8 +444,9 @@ export default function Projects() {
             {newArtist ? (
               <div className="inline-panel">
                 <h3>Nuovo profilo artista</h3>
+                <div className="form-grid"><label>Nome<input maxLength={200} value={artistDraft.firstName ?? ""} onChange={e=>setArtistDraft({...artistDraft,firstName:e.target.value})}/></label><label>Cognome<input maxLength={200} value={artistDraft.lastName ?? ""} onChange={e=>setArtistDraft({...artistDraft,lastName:e.target.value})}/></label></div>
                 <label>
-                  Nome artista
+                  Nome artista / gruppo
                   <input
                     required
                     maxLength={200}

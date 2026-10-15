@@ -105,7 +105,7 @@ export async function saveProject(
       const a = extras.newArtist.draft;
       artistId = extras.newArtist.id;
       await c.query(
-        "INSERT INTO studio_artists(id,owner_id,name,email,phone,genre,links,notes,direction,director,objectives) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
+        "INSERT INTO studio_artists(id,owner_id,name,email,phone,genre,links,notes,direction,director,objectives,first_name,last_name) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)",
         [
           artistId,
           owner,
@@ -118,6 +118,8 @@ export async function saveProject(
           a.direction,
           a.director,
           a.objectives,
+          a.firstName ?? "",
+          a.lastName ?? "",
         ],
       );
     }

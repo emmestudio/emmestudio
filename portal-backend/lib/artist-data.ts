@@ -1,5 +1,7 @@
 export type ArtistDraft = {
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   phone: string;
   genre: string;
@@ -13,6 +15,8 @@ export type StudioArtist = ArtistDraft & { id: string; version: number };
 export class ArtistInputError extends Error {}
 export const emptyArtist = (): ArtistDraft => ({
   name: "",
+  firstName: "",
+  lastName: "",
   email: "",
   phone: "",
   genre: "",
@@ -44,6 +48,11 @@ export function validateArtist(input: unknown): ArtistDraft {
     )
       throw new ArtistInputError("Controlla i dati del profilo.");
     result[key] = (d[key] as string).trim();
+  }
+  for(const key of ["firstName","lastName"] as const){
+    if(d[key] === undefined){delete result[key];continue;}
+    if(typeof d[key] !== "string" || d[key].length>200)throw new ArtistInputError("Controlla nome e cognome.");
+    result[key]=d[key].trim();
   }
   if (
     !result.name ||

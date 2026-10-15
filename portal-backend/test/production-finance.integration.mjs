@@ -19,8 +19,10 @@ const legacyDraft={...svc.emptyProduction('track',project),title:'Esistente'};
 await db.query("INSERT INTO studio_production(id,owner_id,project_id,kind,data,request_digest) VALUES($1,'owner',$2,'track',$3,'x')",[legacy,project,JSON.stringify(legacyDraft)]);
 await db.exec(await readFile('db/009-direct-artist-production.sql','utf8'));
 await db.exec(await readFile('db/010-production-finance.sql','utf8'));
+await db.exec(await readFile('db/011-artist-personal-names.sql','utf8'));
 await db.exec(await readFile('db/009-direct-artist-production.sql','utf8'));
 await db.exec(await readFile('db/010-production-finance.sql','utf8'));
+await db.exec(await readFile('db/011-artist-personal-names.sql','utf8'));
 assert.equal((await svc.listProduction('owner')).find(i=>i.id===legacy).artistId,artist);
 
 const quote={amount:40000,status:'Confermato',notes:'Condizioni demo',items:[{description:'Lavoro',quantity:100,unitPrice:40000}]};
@@ -62,7 +64,7 @@ assert.equal((await svc.listLedger('owner')).quotes.find(q=>q.projectId===projec
 const exported=await svc.exportWorkspace('owner');assert.equal(exported.version,3);
 const restored=new PGlite();try{
  await restored.exec('CREATE TABLE "user"(id text PRIMARY KEY);INSERT INTO "user" VALUES(\'restored-owner\');');
- for(const f of ['002-projects.sql','003-tasks.sql','004-members.sql','005-artists-finance.sql','006-production-finance.sql','007-workflow.sql','008-operations-trash.sql','009-direct-artist-production.sql','010-production-finance.sql'])await restored.exec(await readFile('db/'+f,'utf8'));
+ for(const f of ['002-projects.sql','003-tasks.sql','004-members.sql','005-artists-finance.sql','006-production-finance.sql','007-workflow.sql','008-operations-trash.sql','009-direct-artist-production.sql','010-production-finance.sql','011-artist-personal-names.sql'])await restored.exec(await readFile('db/'+f,'utf8'));
  await svc.restoreBusinessExport({query:(q,v)=>restored.query(q,v)},'restored-owner',exported);
  assert.equal((await restored.query('SELECT count(*) AS n FROM studio_quotes')).rows[0].n,5);
  assert.equal((await restored.query('SELECT sum(amount) AS n FROM studio_payments')).rows[0].n,10000);

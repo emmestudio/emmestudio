@@ -113,7 +113,7 @@ export default function Artists() {
   const shown = artists.filter(
     (a) =>
       (filter !== "Direzione artistica" || a.direction) &&
-      (a.name + " " + a.genre)
+      (a.name + " " + (a.firstName || "") + " " + (a.lastName || "") + " " + a.genre)
         .toLocaleLowerCase("it")
         .includes(search.toLocaleLowerCase("it")),
   );
@@ -202,6 +202,7 @@ export default function Artists() {
                 {selected.direction ? "DIREZIONE ARTISTICA" : "PROFILO ARTISTA"}
               </span>
               <h2>{selected.name}</h2>
+              {selected.firstName || selected.lastName ? <p>{[selected.firstName,selected.lastName].filter(Boolean).join(" ")}</p> : null}
               <p>{selected.genre || "Genere e identità da definire"}</p>
               <div className="contact-chips">
                 {selected.email ? (
@@ -377,6 +378,10 @@ export default function Artists() {
             </button>
           </div>
           <fieldset disabled={busy || !writable}>
+            <div className="form-grid">
+              <label>Nome<input maxLength={200} autoComplete="given-name" value={draft.firstName ?? ""} onChange={e=>setDraft({...draft,firstName:e.target.value})}/></label>
+              <label>Cognome<input maxLength={200} autoComplete="family-name" value={draft.lastName ?? ""} onChange={e=>setDraft({...draft,lastName:e.target.value})}/></label>
+            </div>
             <label>
               Nome artista / gruppo
               <input

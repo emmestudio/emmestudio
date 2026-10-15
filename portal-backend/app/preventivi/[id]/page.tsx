@@ -51,7 +51,8 @@ export default async function Page({
         <h1>{p.title}</h1>
         <div className="quote-meta quote-info">
           <p>
-            <strong>Artista:</strong> {p.artist}
+            <strong>Artista / gruppo:</strong> {p.artist}
+            {p.contactName ? <><br/><strong>Nome e cognome:</strong> {p.contactName}</> : null}
             <br />
             <strong>Servizio:</strong> {p.service}
             <br />
