@@ -1,5 +1,5 @@
-import TrackSharing from "./track-sharing";
 "use client";
+import TrackSharing from "./track-sharing";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
