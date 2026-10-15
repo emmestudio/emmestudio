@@ -1,3 +1,4 @@
+import {notifyArtistEvent} from "@/lib/artist-notifications";
 import {workspaceSession} from "@/lib/workspace-session";
 import {artistSession} from "@/lib/artist-session";
 import {sameOrigin} from "@/lib/calendar-policy";
@@ -49,6 +50,7 @@ export async function POST(request:Request){
   }
   const result=await getDb().query(`INSERT INTO studio_artist_track_messages(owner_id,artist_id,track_id,sender_role,body)
     VALUES($1,$2,$3,$4,$5) RETURNING id`,[auth.owner,artistId,b.trackId,auth.role,b.body.trim()]);
+  await notifyArtistEvent(auth.owner,artistId,b.trackId,auth.role==="studio"?"artist":"studio","message","Nuovo messaggio sul brano");
   return response({created:true,id:result.rows[0].id},201);
  }catch{return response({error:"Messaggio non inviato"},503);}
 }
