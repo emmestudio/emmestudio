@@ -1,5 +1,12 @@
 "use client";
 import {useEffect,useState} from "react";
+const previewStates=[
+ {value:"draft",label:"Bozza · Non visibile",description:"Solo lo studio può vedere questa versione."},
+ {value:"ready",label:"Disponibile per l’ascolto",description:"L’artista può ascoltare questa versione."},
+ {value:"approved",label:"Approvata dall’artista",description:"Versione approvata; l’ascolto resta disponibile."},
+ {value:"revision_requested",label:"Revisione richiesta",description:"L’artista ha richiesto modifiche; l’ascolto resta disponibile."},
+ {value:"withdrawn",label:"Ritirata · Non visibile",description:"Questa versione non è più ascoltabile dall’artista."}
+] as const;
 export default function TrackSharing({trackId,artistId}:{trackId:string;artistId:string}){
  const [previews,setPreviews]=useState<{id:string;title:string;status:string;versionLabel:string;feedback:string}[]>([]);
  const [deliveries,setDeliveries]=useState<{id:string;title:string;enabled:boolean;fileName:string;trackId:string}[]>([]);
@@ -56,9 +63,12 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
    {uploadFile&&(uploadFile.size>1024*1024*1024||(uploadKind==="preview"&&uploadFile.size>20*1024*1024))?<p role="alert">File troppo grande per questa tipologia.</p>:null}
   </form>
   <h4>Anteprime per ascolto</h4>
-  {previews.map(p=><div key={p.id} className="ledger-row"><div><strong>{p.title} · {p.versionLabel}</strong><p>{p.status}</p>{p.feedback?<p>Feedback: {p.feedback}</p>:null}</div><select aria-label={"Stato "+p.title} value={p.status} disabled={busy} onChange={e=>void request("/api/artist-previews","PATCH",{id:p.id,status:e.target.value})}>
-   {["draft","ready","approved","revision_requested","withdrawn"].map(x=><option key={x} value={x}>{x}</option>)}
-  </select></div>)}
+  {previews.map(p=><div key={p.id} className="artist-permission-row">
+   <div className="artist-permission-details"><strong>{p.title} · {p.versionLabel}</strong><span className="artist-permission-file">{previewStates.find(x=>x.value===p.status)?.description??p.status}</span>{p.feedback?<span className="artist-permission-file">Feedback: {p.feedback}</span>:null}</div>
+   <div className="artist-preview-status-control"><label htmlFor={"preview-status-"+p.id}>Visibilità e stato dell’anteprima</label><select id={"preview-status-"+p.id} aria-label={"Stato anteprima "+p.title} value={p.status} disabled={busy} onChange={e=>void request("/api/artist-previews","PATCH",{id:p.id,status:e.target.value})}>
+    {previewStates.map(x=><option key={x.value} value={x.value}>{x.label}</option>)}
+   </select></div>
+  </div>)}
   <h4>Consegne definitive</h4>
   {deliveries.map(d=><div key={d.id} className="artist-permission-row">
    <div className="artist-permission-details"><strong>{d.title}</strong><span className="artist-permission-file">{d.fileName}</span></div>
