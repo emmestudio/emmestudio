@@ -178,3 +178,23 @@
 .artist-notification small{font-size:11px;color:var(--muted)}
 .artist-notification p{margin:8px 0 10px;font-size:13px;white-space:pre-wrap}
 .artist-notification button{color:var(--gold);background:none;border:0;padding:0;cursor:pointer;font-size:12px}
+
+
+/* Unified owner mailbox draft */
+.mail-workspace{display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;margin:24px 0}
+.mail-sidebar,.mail-content{border:1px solid #d4b27c30;border-radius:15px;background:linear-gradient(135deg,#ffffff06,#d4b27c06);padding:20px}
+.mail-sidebar nav{display:flex;flex-direction:column;gap:5px;margin:24px 0}
+.mail-sidebar nav button{width:100%;text-align:left;border:0;border-radius:8px;padding:12px;color:#ddd1bf;background:transparent;cursor:pointer;font-size:13px}
+.mail-sidebar nav button.active,.mail-sidebar nav button:hover{background:#d4b27c23;color:#f3d8a8}
+.mail-account-filter{display:flex;flex-direction:column;gap:13px}.mail-account-filter strong{font-size:12px;color:var(--gold)}.mail-account-filter label{display:flex;align-items:center;gap:8px;font-size:12px;color:#e8dfd3}
+.mail-accounts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.mail-account-card{padding:15px;border:1px solid #d4b27c40;border-radius:11px;background:#141419;display:flex;flex-direction:column;gap:9px}
+.mail-account-card strong{color:#f3e2c5;font-size:14px}.mail-account-card span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.mail-account-card small{color:#d5af75}
+.mail-empty{margin-top:20px;padding:30px 18px;text-align:center;border:1px dashed #ffffff2e;border-radius:12px}
+.mail-empty h2,.mail-compose h2{font-size:21px}.mail-empty p{font-size:13px;color:var(--muted)}
+.mail-compose{margin-top:20px;display:flex;flex-direction:column;gap:13px}
+.mail-compose label{display:flex;flex-direction:column;gap:7px;font-size:13px}
+.mail-compose input,.mail-compose select,.mail-compose textarea{background:#101116;border:1px solid #ffffff33;color:#f0e9dd;border-radius:9px;padding:12px;width:100%}
+.mail-compose-footer{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.mail-compose-footer button{padding:10px 15px;border-radius:8px}
+.mail-setup-note{padding:12px;border:1px solid #d4b27c66;border-radius:9px;color:#efd3a8}
+@media(max-width:720px){.mail-workspace{grid-template-columns:1fr}.mail-sidebar nav{display:grid;grid-template-columns:repeat(2,1fr);margin:15px 0}}
