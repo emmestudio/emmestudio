@@ -18,9 +18,9 @@ export default async function ArtistPage(){
   <p>Questo spazio contiene esclusivamente le anteprime approvate per la consultazione del tuo progetto.</p>
   <section className="card"><h2>Le tue produzioni</h2>
    {r.rows.length? r.rows.map((x:{id:string;title:string;versionLabel:string;status:string;trackTitle:string})=>
-    <div className="ledger-row" key={x.id}><div><strong>{x.trackTitle}</strong><p className="small">{x.title} · {x.versionLabel}</p></div><span>{x.status==="approved"?"Approvata":"In ascolto"}</span></div>
+    <div className="ledger-row" key={x.id}><div><strong>{x.trackTitle}</strong><p className="small">{x.title} · {x.versionLabel}</p></div><div><audio controls preload="none" controlsList="nodownload noremoteplayback" src={"/api/artist-audio/"+x.id} aria-label={"Ascolta "+x.title}/><span>{x.status==="approved"?"Approvata":"In ascolto"}</span></div></div>
    ):<p>Nessuna anteprima disponibile al momento.</p>}
   </section>
-  <p className="small">Il player audio e le revisioni saranno disponibili solo dopo l'attivazione del servizio streaming protetto.</p>
+  <p className="small">Le anteprime sono riservate all’ascolto. Le revisioni e le consegne saranno abilitate separatamente.</p>
  </main>;
 }
