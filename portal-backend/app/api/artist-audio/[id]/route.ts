@@ -48,7 +48,7 @@ export async function GET(request:Request,context:{params:Promise<{id:string}>})
   const media=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`,{
    headers:{...auth,Range:`bytes=${start}-${end}`},cache:"no-store",signal:AbortSignal.timeout(15000)
   });
-  if(media.status!==206||!media.body)return fail(502);
+  if(media.status!==206||!media.body||media.headers.get("content-range")!==`bytes ${start}-${end}/${total}`)return fail(502);
   return new Response(media.body,{status:206,headers:{...noStore,"Content-Type":"audio/mpeg","Accept-Ranges":"bytes","Content-Range":`bytes ${start}-${end}/${total}`,"Content-Length":String(end-start+1),"Content-Disposition":"inline"}});
  }catch{return fail(503);}
 }
