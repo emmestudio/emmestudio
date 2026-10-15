@@ -1,3 +1,4 @@
+import ArtistLogin from "./artist-login";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { workspaceSession } from "@/lib/workspace-session";
@@ -11,44 +12,21 @@ export default async function Page({
 }) {
   if (await workspaceSession(await headers())) redirect("/dashboard");
   const params = await searchParams;
-  return (
-    <main className="shell portal-login">
-      <a href="https://emmestudioproduction.it/" className="eyebrow">
-        ← TORNA A EMME STUDIO
-      </a>
-      <div className="login-intro">
-        <span className="badge">AREA RISERVATA AL TEAM</span>
-        <h1>
-          La prossima sessione.
-          <br />
-          <em>Il prossimo passo.</em>
-        </h1>
-        <p>Accedi allo spazio di lavoro condiviso dello studio.</p>
-      </div>
-      <section className="card login-card">
-        <h2>Benvenuto nel team.</h2>
-        <p>
-          Continua con il tuo account Google abilitato. Troverai i progetti e
-          gli strumenti previsti dal tuo ruolo.
-        </p>
-        {params.error ? (
-          <p className="login-error" role="alert">
-            Accesso non completato. Scegli l’account abilitato; se il problema
-            persiste, chiedi all’amministratore di verificare l’accesso.
-          </p>
-        ) : null}
-        {configurationReady() ? (
-          <Login />
-        ) : (
-          <p role="status">
-            Accesso momentaneamente non disponibile. Riprova più tardi.
-          </p>
-        )}
-        <p className="small">
-          Il portale è riservato allo studio e ai suoi collaboratori. I profili
-          artista vengono gestiti dal team.
-        </p>
+  return <main className="shell portal-login">
+    <span className="eyebrow">EMME STUDIO · ACCESSO RISERVATO</span>
+    <h1>Il tuo spazio. <em>La tua musica.</em></h1>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(270px,1fr))",gap:20,marginTop:30}}>
+      <section className="card"><span className="eyebrow">AREA ARTISTI</span>
+        <h2>Le tue produzioni.</h2>
+        <p>Accedi con l'account Google associato all'email abilitata dallo studio. Visualizza i materiali autorizzati per il tuo progetto.</p>
+        <ArtistLogin/>
       </section>
-    </main>
-  );
+      <section className="card"><span className="eyebrow">AREA TEAM</span>
+        <h2>Il lavoro dello studio.</h2>
+        <p>Accesso riservato ad amministratore e collaboratori autorizzati.</p>
+        {configurationReady()?<Login/>:<p>Accesso temporaneamente non disponibile.</p>}
+      </section>
+    </div>
+    {params.error?<p role="alert">Accesso non completato. Verifica che il tuo account sia abilitato.</p>:null}
+  </main>;
 }
