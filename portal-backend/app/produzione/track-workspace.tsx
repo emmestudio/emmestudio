@@ -1,3 +1,4 @@
+import TrackSharing from "./track-sharing";
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -10,7 +11,7 @@ import {
 } from "@/lib/production-data";
 import type { StudioProject } from "@/lib/project-data";
 
-type Tab = "overview" | "recording" | "material" | "revision";
+type Tab = "overview" | "recording" | "material" | "revision" | "sharing";
 type Props = {
   track: ProductionItem | null;
   artistName?: string;
@@ -31,6 +32,7 @@ const views: { key: Tab; label: string }[] = [
   { key: "recording", label: "Sessioni" },
   { key: "material", label: "Materiali e versioni" },
   { key: "revision", label: "Revisioni" },
+  { key: "sharing", label: "Area Artista" },
 ];
 export default function TrackWorkspace({
   track,
@@ -111,11 +113,11 @@ export default function TrackWorkspace({
                 onClick={() => setTab(view.key)}
               >
                 {view.label}
-                {view.key !== "overview" ? <span>{counts(view.key)}</span> : null}
+                {view.key !== "overview" && view.key !== "sharing" ? <span>{counts(view.key)}</span> : null}
               </button>
             ))}
           </div>
-          {tab === "overview" ? (
+          {tab === "sharing" ? (track.artistId || project?.artistId) ? <TrackSharing key={track.id} trackId={track.id} artistId={(project?.artistId || track.artistId)!}/> : <p>Assegna prima un artista al brano.</p> : tab === "overview" ? (
             <section className="track-panel" aria-label="Informazioni brano">
               <div className="track-panel-heading">
                 <div>
