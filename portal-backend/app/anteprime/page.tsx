@@ -1,3 +1,4 @@
+import Deliveries from "./deliveries";
 import CreatePreview from "./create-preview";
 import {headers} from "next/headers";
 import {redirect} from "next/navigation";
@@ -38,7 +39,7 @@ export default async function Page() {
      <div><span>{i.status}</span>{i.feedback?<p>{i.feedback}</p>:null}</div>
     </div>)}
   </section>}
-  {!unavailable?<CreatePreview artists={artists} tracks={tracks}/>:null}
+  {!unavailable?<><CreatePreview artists={artists} tracks={tracks}/><Deliveries artists={artists} tracks={tracks}/></>:null}
   <p className="small">L’ascolto degli artisti verrà attivato soltanto dopo la verifica dell’autenticazione separata e dei permessi.</p>
  </main>;
 }
