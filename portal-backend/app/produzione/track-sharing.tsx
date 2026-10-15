@@ -1,5 +1,5 @@
-import ArtistNotifications from "../area-artista/notifications";
 "use client";
+import ArtistNotifications from "../area-artista/notifications";
 import {useEffect,useState} from "react";
 import TrackMessages from "../area-artista/track-messages";
 const previewStates=[
