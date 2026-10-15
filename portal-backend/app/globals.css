@@ -178,3 +178,10 @@
 .artist-notification small{font-size:11px;color:var(--muted)}
 .artist-notification p{margin:8px 0 10px;font-size:13px;white-space:pre-wrap}
 .artist-notification button{color:var(--gold);background:none;border:0;padding:0;cursor:pointer;font-size:12px}
+
+
+.artist-finance{margin:24px 0;padding:20px;border:1px solid #d4b27c44;border-radius:13px;background:linear-gradient(120deg,#d4b27c10,#ffffff03)}
+.artist-finance-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.artist-finance-grid>div{background:#ffffff08;border:1px solid #ffffff1b;padding:14px;border-radius:9px;display:flex;flex-direction:column;gap:7px}
+.artist-finance-grid small{font-size:11px;color:var(--muted)}.artist-finance-grid strong{font-size:19px;color:#f3ddb7}
+@media(max-width:620px){.artist-finance-grid{grid-template-columns:1fr}.artist-finance{padding:14px}}
