@@ -53,6 +53,7 @@ export default function Navigation() {
               ["/costi", "Costi"],
               ["/accessi", "Team e accessi"],
               ["/archivio", "Archivio Drive"],
+              ["/anteprime", "Anteprime artisti"],
             ]
           : []),
       ]
