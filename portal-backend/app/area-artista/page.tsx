@@ -20,13 +20,23 @@ export default async function ArtistPage(){
  LEFT JOIN studio_projects j ON j.id=p.project_id AND j.owner_id=p.owner_id
  WHERE d.owner_id=$1 AND d.artist_id=$2 AND d.enabled=true AND COALESCE(j.artist_id,p.artist_id)=d.artist_id AND (p.project_id IS NULL OR j.deleted_at IS NULL)
  ORDER BY d.updated_at DESC LIMIT 100`,[session.ownerId,session.artistId]);
+ type ArtistPreview={id:string;title:string;versionLabel:string;status:string;trackTitle:string};
+ const groups=new Map<string,ArtistPreview[]>();
+ for(const p of r.rows as ArtistPreview[]){const key=p.trackTitle||"Brano senza titolo";const list=groups.get(key)??[];list.push(p);groups.set(key,list);}
  return <main className="shell dashboard">
   <span className="eyebrow">EMME STUDIO · AREA ARTISTA</span>
   <h1>Benvenuto, <em>{session.artistName}.</em></h1>
   <p>Qui trovi le anteprime che lo studio ha reso disponibili per l’ascolto, le richieste di revisione e le consegne autorizzate.</p>
   <section className="card"><h2>Le tue produzioni</h2>
-   {r.rows.length? r.rows.map((x:{id:string;title:string;versionLabel:string;status:string;trackTitle:string})=>
-    <div className="ledger-row" key={x.id}><div><strong>{x.trackTitle}</strong><p className="small">{x.title} · {x.versionLabel}</p></div><div><audio controls preload="none" controlsList="nodownload noremoteplayback" src={"/api/artist-audio/"+x.id} aria-label={"Ascolta "+x.title}/><Feedback id={x.id} status={x.status}/><span>{x.status==="approved"?"Versione approvata":x.status==="revision_requested"?"Revisione richiesta":"Disponibile per l’ascolto"}</span></div></div>
+   {groups.size?Array.from(groups.entries()).map(([track,versions])=>
+    <div className="artist-track-group" key={track}>
+     <div className="artist-track-heading"><h3>{track}</h3><span>{versions.length} {versions.length===1?"versione":"versioni"}</span></div>
+     {versions.map(x=><div className="artist-version-row" key={x.id}>
+      <div className="artist-version-heading"><div><strong>{x.title}</strong><p className="small">{x.versionLabel}</p></div><span className={"artist-permission-state "+(x.status==="approved"?"is-active":"is-inactive")}>{x.status==="approved"?"Versione approvata":x.status==="revision_requested"?"Revisione richiesta":"Disponibile per l’ascolto"}</span></div>
+      <audio controls preload="none" controlsList="nodownload noremoteplayback" src={"/api/artist-audio/"+x.id} aria-label={"Ascolta "+x.title}/>
+      <Feedback id={x.id} status={x.status}/>
+     </div>)}
+    </div>
    ):<p>Nessuna anteprima disponibile al momento.</p>}
   </section>
   <section className="card"><h2>Consegne disponibili</h2>{deliveries.rows.length?deliveries.rows.map((d:{id:string;title:string;fileName:string})=><div className="ledger-row" key={d.id}><div><strong>{d.title}</strong><p>{d.fileName}</p></div><a className="button" href={"/api/artist-delivery-file/"+d.id}>Scarica</a></div>):<p>Nessun file definitivo disponibile.</p>}</section>
