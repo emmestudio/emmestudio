@@ -23,15 +23,24 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
  }
  const [uploadKind,setUploadKind]=useState<"preview"|"delivery">("preview");
  const [uploadFile,setUploadFile]=useState<File|null>(null);
+ const [progress,setProgress]=useState<number|null>(null);
  async function upload(event:React.FormEvent<HTMLFormElement>){
   event.preventDefault();if(!uploadFile)return;
-  setBusy(true);setError("");
+  setBusy(true);setError("");setProgress(0);
   try{
-   const form=new FormData();form.set("artistId",artistId);form.set("trackId",trackId);form.set("kind",uploadKind);form.set("file",uploadFile);
-   const r=await fetch("/api/artist-upload",{method:"POST",body:form});
-   const d=await r.json();if(!r.ok)throw Error(d.error||"Caricamento non riuscito");
-   setUploadFile(null);const input=document.getElementById("track-file-upload") as HTMLInputElement|null;if(input)input.value="";
-   await load();
+   const file=uploadFile;
+   const start=await fetch("/api/artist-large-upload?action=start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({artistId,trackId,kind:uploadKind,name:file.name,total:file.size})});
+   const d=await start.json();if(!start.ok)throw Error(d.error||"Avvio caricamento fallito");
+   let done=false;
+   for(let offset=0;offset<file.size;offset+=d.chunkSize){
+    const end=Math.min(offset+d.chunkSize,file.size);
+    const r=await fetch("/api/artist-large-upload?action=chunk",{method:"POST",headers:{"Content-Type":"application/octet-stream","X-Upload-Ticket":d.ticket,"X-Upload-Offset":String(offset)},body:file.slice(offset,end)});
+    const result=await r.json();if(!r.ok)throw Error(result.error||"Invio interrotto");
+    done=Boolean(result.complete);
+    setProgress(Math.round(end/file.size*100));
+   }
+   if(!done)throw Error("Google Drive non ha confermato la conclusione del caricamento");
+   setUploadFile(null);setProgress(null);await load();
   }catch(e){setError(e instanceof Error?e.message:"Caricamento fallito");}finally{setBusy(false);}
  }
  return <div className="track-panel">
@@ -39,11 +48,12 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
   <p>Le anteprime sono copie MP3. I file definitivi rimangono bloccati finché non li autorizzi.</p>
   <form onSubmit={upload}>
    <h4>Carica direttamente su Google Drive</h4>
-   <p>Il file viene salvato nell’archivio privato dell’artista e associato a questo brano. La condivisione parte sempre disattivata. Limite attuale: 4 MB.</p>
+   <p>Il file viene salvato nell’archivio privato dell’artista e associato a questo brano. La condivisione parte sempre disattivata. Supporta file fino a 1 GB; le anteprime MP3 devono essere inferiori a 20 MB.</p>
    <label>Tipo materiale<select value={uploadKind} disabled={busy} onChange={e=>{setUploadKind(e.target.value as "preview"|"delivery");setUploadFile(null);}}><option value="preview">Anteprima MP3</option><option value="delivery">Consegna definitiva</option></select></label>
    <label>Seleziona file<input key={uploadKind} id="track-file-upload" type="file" required accept={uploadKind==="preview"?".mp3,audio/mpeg":".mp3,.wav,.zip,.pdf"} disabled={busy} onChange={e=>setUploadFile(e.target.files?.[0]??null)}/></label>
-   <button className="button" disabled={busy||!uploadFile||uploadFile.size>4*1024*1024} type="submit">{busy?"Caricamento…":"Carica e associa automaticamente"}</button>
-   {uploadFile&&uploadFile.size>4*1024*1024?<p role="alert">Il file supera 4 MB: usa temporaneamente l’ID Drive o prepara una copia MP3 più piccola.</p>:null}
+   <button className="button" disabled={busy||!uploadFile||uploadFile.size>1024*1024*1024||(uploadKind==="preview"&&uploadFile.size>20*1024*1024)} type="submit">{busy?"Caricamento…":"Carica e associa automaticamente"}</button>
+   {progress!==null?<div role="status" aria-live="polite">Caricamento: {progress}%<progress max={100} value={progress} style={{width:"100%"}}/></div>:null}
+   {uploadFile&&(uploadFile.size>1024*1024*1024||(uploadKind==="preview"&&uploadFile.size>20*1024*1024))?<p role="alert">File troppo grande per questa tipologia.</p>:null}
   </form>
   <h4>Anteprime per ascolto</h4>
   {previews.map(p=><div key={p.id} className="ledger-row"><div><strong>{p.title} · {p.versionLabel}</strong><p>{p.status}</p>{p.feedback?<p>Feedback: {p.feedback}</p>:null}</div><select aria-label={"Stato "+p.title} value={p.status} disabled={busy} onChange={e=>void request("/api/artist-previews","PATCH",{id:p.id,status:e.target.value})}>
