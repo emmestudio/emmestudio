@@ -143,3 +143,13 @@
 .artist-version-heading strong{color:#f4efe7;font-size:14px}
 .artist-version-heading .small{margin:4px 0 0}
 @media(max-width:600px){.artist-track-group{padding:13px}.artist-track-heading h3{font-size:17px}.artist-version-heading{align-items:flex-start}}
+
+
+.artist-history{margin:26px 0;padding:20px;border:1px solid #d4b27c3d;border-radius:12px;background:linear-gradient(125deg,#d4b27c0b,#ffffff04)}
+.artist-history-list{list-style:none;margin:18px 0 0;padding:0 0 0 20px;border-left:1px solid #d4b27c66}
+.artist-history-list li{position:relative;padding:0 0 20px 16px}
+.artist-history-list li::before{content:"";position:absolute;left:-25px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px #d4b27c20}
+.artist-history-list li>div{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.artist-history-list strong{font-size:13px;color:#f5e9d7}
+.artist-history-list span{font-size:11px;color:var(--muted)}
+.artist-history-list p{font-size:12px;color:var(--muted);margin:6px 0}
