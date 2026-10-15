@@ -162,3 +162,19 @@
 .artist-conversation-message strong{font-size:12px;color:var(--gold)}.artist-conversation-message p{margin:7px 0;white-space:pre-wrap;font-size:13px}.artist-conversation-message time{font-size:10px;color:var(--muted)}
 .artist-conversation form textarea{width:100%;max-width:100%;min-height:95px;margin:9px 0 12px}
 @media(max-width:600px){.artist-conversation{padding:13px}.artist-conversation-message{max-width:96%}}
+
+
+/* Internal studio and artist notifications */
+.artist-notifications{margin:15px 0 20px;position:relative}
+.artist-notifications-toggle{display:inline-flex;align-items:center;gap:10px;border:1px solid #d4b27c7a;border-radius:999px;padding:10px 17px;color:#f2dfbc;background:#d4b27c15;font-size:13px;font-weight:600;cursor:pointer}
+.artist-notifications-toggle:hover{background:#d4b27c25}
+.artist-notifications-count{display:inline-flex;align-items:center;justify-content:center;background:var(--gold);color:#151515;border-radius:999px;min-width:23px;height:23px;padding:0 6px;font-size:11px}
+.artist-notifications-list{margin-top:12px;padding:16px;border:1px solid #d4b27c40;border-radius:13px;background:#15161b}
+.artist-notifications-list h3{font-size:17px;margin:0 0 13px;color:#f4e5cd}
+.artist-notification{margin:8px 0;padding:13px;border:1px solid #ffffff1c;border-radius:10px;background:#ffffff05}
+.artist-notification.unread{border-color:#d4b27c70;background:#d4b27c0d}
+.artist-notification>div{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
+.artist-notification strong{font-size:13px;color:#f3e4cb}
+.artist-notification small{font-size:11px;color:var(--muted)}
+.artist-notification p{margin:8px 0 10px;font-size:13px;white-space:pre-wrap}
+.artist-notification button{color:var(--gold);background:none;border:0;padding:0;cursor:pointer;font-size:12px}
