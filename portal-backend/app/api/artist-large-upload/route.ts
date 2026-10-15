@@ -59,7 +59,7 @@ export async function POST(request:Request){
   if(!len||len>CHUNK||len!==Math.min(CHUNK,p.total-offset))return reply({error:"Dimensione blocco non valida"},413);
   const token=await ownerToken(s.workspaceOwnerId);
   const last=offset+len===p.total;
-  const upload=await fetch(p.url,{method:"PUT",headers:{Authorization:`Bearer ${token}`,"Content-Length":String(len),"Content-Range":`bytes ${offset}-${offset+len-1}/${p.total}`},body:bytes,redirect:"error",signal:AbortSignal.timeout(30000)});
+  const upload=await fetch(p.url,{method:"PUT",headers:{Authorization:`Bearer ${token}`,"Content-Length":String(len),"Content-Range":`bytes ${offset}-${offset+len-1}/${p.total}`},body:bytes,redirect:"manual",signal:AbortSignal.timeout(30000)});
   if(upload.status===308)return reply({uploaded:offset+len,complete:false});
   if(!upload.ok)return reply({error:"Blocco non accettato da Drive, interrompi il trasferimento"},502);
   if(!last)return reply({error:"Drive ha terminato prima della fine del file"},502);
