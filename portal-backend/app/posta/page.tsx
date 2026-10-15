@@ -4,6 +4,7 @@ import Link from "next/link";
 import {ownerMailboxSession} from "@/lib/mail-access";
 import {getDb} from "@/lib/db";
 import MailWorkspace from "./workspace";
+import MailAccountSetup from "./account-setup";
 export const dynamic="force-dynamic";
 export default async function Page(){
  const session=await ownerMailboxSession(await headers());
@@ -18,6 +19,7 @@ export default async function Page(){
   <span className="eyebrow">EMME STUDIO · GESTIONE RISERVATA</span>
   <h1>La tua <em>Posta.</em></h1>
   <p>Aruba e Gmail in un unico spazio, con identità di invio separate e accesso riservato al titolare.</p>
+  <MailAccountSetup accounts={accounts} migrationNeeded={migrationNeeded}/>
   <MailWorkspace accounts={accounts} migrationNeeded={migrationNeeded}/>
   <p className="small"><Link href="/dashboard">Torna alla dashboard</Link></p>
  </main>;
