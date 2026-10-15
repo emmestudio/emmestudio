@@ -1,3 +1,4 @@
+import {registerTrackPreview} from "@/lib/artist-preview-version";
 import {createHmac,timingSafeEqual} from "node:crypto";
 import {workspaceSession} from "@/lib/workspace-session";
 import {sameOrigin} from "@/lib/calendar-policy";
@@ -65,7 +66,7 @@ export async function POST(request:Request){
   const data=await upload.json() as{id?:string;size?:string};
   if(!data.id||!/^[A-Za-z0-9_-]{5,200}$/.test(data.id)||Number(data.size)!==p.total)return reply({error:"Dimensione del file su Drive non verificata"},502);
   const id=crypto.randomUUID();
-  if(p.kind==="preview")await getDb().query("INSERT INTO studio_artist_previews(id,owner_id,artist_id,track_id,title,drive_file_id,version_label,status) VALUES($1,$2,$3,$4,$5,$6,'Mix v01','draft')",[id,p.owner,p.artistId,p.trackId,p.name,data.id]);
+  if(p.kind==="preview")await registerTrackPreview({id,owner:p.owner,artistId:p.artistId,trackId:p.trackId,title:p.name,driveFileId:data.id});
   else await getDb().query("INSERT INTO studio_artist_deliveries(id,owner_id,artist_id,track_id,title,file_id,file_name,enabled) VALUES($1,$2,$3,$4,$5,$6,$7,false)",[id,p.owner,p.artistId,p.trackId,p.name,data.id,p.name]);
   return reply({complete:true,id});
  }
