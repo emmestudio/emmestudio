@@ -13,6 +13,11 @@ export default async function ArtistPage(){
    JOIN studio_production p ON p.owner_id=x.owner_id AND p.id=x.track_id AND p.deleted_at IS NULL
    WHERE x.owner_id=$1 AND x.artist_id=$2 AND x.status IN ('ready','approved','revision_requested')
    ORDER BY x.updated_at DESC LIMIT 100`,[session.ownerId,session.artistId]);
+ const deliveries=await getDb().query(`SELECT d.id,d.title,d.file_name AS "fileName" FROM studio_artist_deliveries d
+ JOIN studio_production p ON p.id=d.track_id AND p.owner_id=d.owner_id AND p.deleted_at IS NULL
+ LEFT JOIN studio_projects j ON j.id=p.project_id AND j.owner_id=p.owner_id
+ WHERE d.owner_id=$1 AND d.artist_id=$2 AND d.enabled=true AND COALESCE(j.artist_id,p.artist_id)=d.artist_id AND (p.project_id IS NULL OR j.deleted_at IS NULL)
+ ORDER BY d.updated_at DESC LIMIT 100`,[session.ownerId,session.artistId]);
  return <main className="shell dashboard">
   <span className="eyebrow">EMME STUDIO · AREA ARTISTA</span>
   <h1>Benvenuto, <em>{session.artistName}.</em></h1>
@@ -22,6 +27,7 @@ export default async function ArtistPage(){
     <div className="ledger-row" key={x.id}><div><strong>{x.trackTitle}</strong><p className="small">{x.title} · {x.versionLabel}</p></div><div><audio controls preload="none" controlsList="nodownload noremoteplayback" src={"/api/artist-audio/"+x.id} aria-label={"Ascolta "+x.title}/><Feedback id={x.id} status={x.status}/><span>{x.status==="approved"?"Approvata":"In ascolto"}</span></div></div>
    ):<p>Nessuna anteprima disponibile al momento.</p>}
   </section>
+  <section className="card"><h2>Consegne disponibili</h2>{deliveries.rows.length?deliveries.rows.map((d:{id:string;title:string;fileName:string})=><div className="ledger-row" key={d.id}><div><strong>{d.title}</strong><p>{d.fileName}</p></div><a className="button" href={"/api/artist-delivery-file/"+d.id}>Scarica</a></div>):<p>Nessun file definitivo disponibile.</p>}</section>
   <p className="small">Le anteprime sono riservate all’ascolto. Le revisioni e le consegne saranno abilitate separatamente.</p>
  </main>;
 }
