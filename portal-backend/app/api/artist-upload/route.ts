@@ -1,3 +1,4 @@
+import {registerTrackPreview} from "@/lib/artist-preview-version";
 import {workspaceSession} from "@/lib/workspace-session";
 import {sameOrigin} from "@/lib/calendar-policy";
 import {validId} from "@/lib/task-data";
@@ -46,7 +47,7 @@ export async function POST(request:Request){
   uploaded=result.id;
   const id=crypto.randomUUID();
   if(kind==="preview"){
-   await getDb().query("INSERT INTO studio_artist_previews(id,owner_id,artist_id,track_id,title,drive_file_id,version_label,status) VALUES($1,$2,$3,$4,$5,$6,$7,'draft')",[id,session.workspaceOwnerId,artistId,trackId,name,result.id,"Mix v01"]);
+   await registerTrackPreview({id,owner:session.workspaceOwnerId,artistId,trackId,title:name,driveFileId:result.id});
   }else{
    await getDb().query("INSERT INTO studio_artist_deliveries(id,owner_id,artist_id,track_id,title,file_id,file_name,enabled) VALUES($1,$2,$3,$4,$5,$6,$7,false)",[id,session.workspaceOwnerId,artistId,trackId,name,result.id,name]);
   }
