@@ -106,3 +106,25 @@ export async function listDriveFolders(owner: string, prefix?: string) {
   const r = await getDb().query('SELECT subject_key AS key,folder_id AS id,name,state,error FROM studio_drive_folders WHERE owner_id=$1 AND ($2::text IS NULL OR subject_key=$2 OR starts_with(subject_key,$2||\'/\')) ORDER BY subject_key', [owner,prefix ?? null]);
   return r.rows;
 }
+
+/** Creates or recovers per-song folders. Database keys use immutable UUIDs, never song titles. */
+export async function syncTrackDriveFolders(owner:string,trackId:string){
+ const r=await getDb().query(`SELECT p.data->>'title' AS title,COALESCE(j.artist_id,p.artist_id) AS artist_id
+ FROM studio_production p LEFT JOIN studio_projects j ON j.owner_id=p.owner_id AND j.id=p.project_id
+ JOIN studio_artists a ON a.owner_id=p.owner_id AND a.id=COALESCE(j.artist_id,p.artist_id) AND a.deleted_at IS NULL
+ WHERE p.owner_id=$1 AND p.id=$2 AND p.kind='track' AND p.deleted_at IS NULL
+ AND (p.project_id IS NULL OR j.deleted_at IS NULL)`,[owner,trackId]);
+ const song=r.rows[0];if(!song?.artist_id)throw new DriveError(404,"Brano o artista non disponibile");
+ await syncDriveSubject(owner,"artist",song.artist_id);
+ const api=await clientForOwner(owner);
+ return locked(owner,async c=>{
+  const key=`artist/${song.artist_id}`;
+  const parent=(await c.query("SELECT folder_id FROM studio_drive_folders WHERE owner_id=$1 AND subject_key=$2 AND state='ready'",[owner,key+"/music"])).rows[0]?.folder_id;
+  if(!parent)throw new DriveError(409,"Cartella Produzione musicale non disponibile");
+  const base=`track/${trackId}`;
+  const songFolder=await ensureDriveFolder(c,api,owner,base,String(song.title||"Brano senza titolo").slice(0,180),parent);
+  const previews=await ensureDriveFolder(c,api,owner,base+"/previews","Versioni anteprima",songFolder);
+  const deliveries=await ensureDriveFolder(c,api,owner,base+"/deliveries","Consegne definitive",songFolder);
+  return {previews,deliveries};
+ });
+}
