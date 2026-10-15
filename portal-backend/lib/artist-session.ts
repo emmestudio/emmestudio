@@ -1,3 +1,4 @@
+import {normalizedArtistEmail} from "./artist-access-policy";
 import "server-only";
 import {getAuth} from "./auth";
 import {configurationReady} from "./config";
@@ -13,7 +14,7 @@ export async function artistSession(headers:Headers) {
    JOIN studio_artists a ON a.id=x.artist_id AND a.owner_id=x.owner_id
    WHERE lower(x.email)=$1 AND x.enabled=true AND a.deleted_at IS NULL
    AND lower(u.email)=lower($2) AND u."emailVerified"=true LIMIT 1`,
-   [normalizeEmail(session.user.email),process.env.PORTAL_OWNER_EMAIL]);
+   [normalizedArtistEmail(session.user.email),process.env.PORTAL_OWNER_EMAIL]);
  const access=r.rows[0];
  return access?{user:session.user,ownerId:access.owner_id as string,artistId:access.artist_id as string,artistName:access.name as string}:null;
 }
