@@ -16,7 +16,10 @@ export async function GET(request:Request){
   if(!col.rows[0]?.present)return reply({skipped:"Applicare migrazione 016"},503);
   const due=await db.query(`SELECT owner_id,id,drive_file_id FROM studio_artist_previews
    WHERE superseded_at IS NOT NULL AND superseded_at<=now()-interval '30 days' AND purged_at IS NULL
-    AND status='withdrawn' ORDER BY superseded_at ASC LIMIT 15`);
+    AND status='withdrawn'
+    AND NOT EXISTS (SELECT 1 FROM studio_artist_deliveries d WHERE d.owner_id=studio_artist_previews.owner_id AND d.file_id=studio_artist_previews.drive_file_id)
+    AND NOT EXISTS (SELECT 1 FROM studio_artist_previews p2 WHERE p2.owner_id=studio_artist_previews.owner_id AND p2.drive_file_id=studio_artist_previews.drive_file_id AND p2.id<>studio_artist_previews.id AND p2.purged_at IS NULL AND p2.superseded_at IS NULL)
+   ORDER BY superseded_at ASC LIMIT 15`);
   let removed=0,failed=0;
   for(const row of due.rows){
    try{
