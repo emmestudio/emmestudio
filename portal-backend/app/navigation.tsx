@@ -44,6 +44,7 @@ export default function Navigation() {
         ["/artisti", "Artisti"],
         ["/progetti", "Progetti"],
         ["/produzione", "Produzione"],
+        ["/live", "Produzione Live"],
         ["/attivita", "Attività"],
         ["/calendario", "Calendario"],
         ...(admin
@@ -51,6 +52,7 @@ export default function Navigation() {
               ["/guadagni", "Guadagni"],
               ["/costi", "Costi"],
               ["/accessi", "Team e accessi"],
+              ["/archivio", "Archivio Drive"],
             ]
           : []),
       ]

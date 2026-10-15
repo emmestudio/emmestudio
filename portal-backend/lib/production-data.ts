@@ -147,6 +147,8 @@ export const productionSpecs: Record<
     ],
     fields: [
       { key: "showDate", label: "Data show", type: "date" },
+      { key: "contacts", label: "Contatti produzione e referenti", type: "textarea" },
+      { key: "schedule", label: "Orari: allestimento, soundcheck, apertura e show", type: "textarea" },
       { key: "venue", label: "Luogo / venue" },
       { key: "band", label: "Organico e ruoli", type: "textarea" },
       {
@@ -155,6 +157,9 @@ export const productionSpecs: Record<
         type: "textarea",
       },
       { key: "rehearsals", label: "Piano prove", type: "textarea" },
+      { key: "bandRun", label: "Band run e indicazioni per i musicisti", type: "textarea" },
+      { key: "technicalChecklist", label: "Checklist tecnica e verifiche", type: "textarea" },
+      { key: "logistics", label: "Logistica, accessi, trasporti e necessità", type: "textarea" },
       {
         key: "service",
         label: "Service e referenti tecnici",

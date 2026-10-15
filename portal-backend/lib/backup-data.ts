@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 import { createHash } from "node:crypto";
 export const backupTables = [
   "studio_artists",
+  "studio_drive_folders",
   "studio_projects",
   "studio_tasks",
   "studio_production",
@@ -32,7 +33,7 @@ export async function restoreBusinessExport(
   if (
     !backup ||
     backup.format !== "emme-studio-workspace" ||
-    ![1, 2, 3].includes(backup.version ?? 0) ||
+    ![1, 2, 3, 4].includes(backup.version ?? 0) ||
     !backup.data ||
     Object.keys(backup.data).some(
       (k) => !backupTables.includes(k) && k !== "team",
@@ -40,6 +41,7 @@ export async function restoreBusinessExport(
   )
     throw new Error("RESTORE_INVALID_FORMAT");
   const data = { ...backup.data };
+  if((backup.version ?? 0)<4)data.studio_drive_folders=[];
   if((backup.version ?? 0)<3)data.studio_finance_targets=[];
   if (backup.version === 1)
     for (const k of [

@@ -1,3 +1,4 @@
+import { autoSyncDrive } from "@/lib/drive-archive";
 import { workspaceSession } from "@/lib/workspace-session";
 import { canEdit } from "@/lib/access-policy";
 import {
@@ -13,6 +14,7 @@ import {validateQuote,FinanceInputError} from "@/lib/finance-data";
 import { validId } from "@/lib/task-data";
 import { sameOrigin } from "@/lib/calendar-policy";
 export const dynamic = "force-dynamic";
+export const maxDuration = 180;
 const reply = (d: unknown, s = 200) =>
   Response.json(d, { status: s, headers: { "Cache-Control": "no-store" } });
 export async function GET(r: Request) {
@@ -63,7 +65,8 @@ async function save(r: Request, update: boolean) {
       s.user?.name || "Team Emme Studio",
       financial,
     );
-    return reply({ saved: true });
+    const drive=b.draft?.kind === "live" ? await autoSyncDrive(s.workspaceOwnerId,"live",b.id) : undefined;
+    return reply({ saved: true, drive });
   } catch (e) {
     return reply(
       {

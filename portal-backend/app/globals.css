@@ -92,3 +92,12 @@
 /* Align form controls with multi-field assignee blocks. */
 .event-dialog .form-grid{align-items:start}
 .event-dialog .form-grid>label{align-content:start}
+
+/* Archivio artisti e regia delle produzioni live */
+.drive-panel{border:1px solid #d4b27c35;background:linear-gradient(135deg,#d4b27c09,#ffffff03);border-radius:12px;padding:22px;margin:24px 0 8px;min-width:0}
+.drive-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.drive-panel h3{font-size:22px;font-weight:500;margin:10px 0}.drive-panel .eyebrow{font-size:10px}.drive-panel .small{font-size:12px}.drive-panel p a{color:var(--gold)}
+.drive-folder-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:20px 0}.drive-folder-grid>a,.drive-folder-pending{display:flex;align-items:center;gap:12px;padding:14px 12px;border:1px solid #ffffff1b;border-radius:8px;font-size:12px;line-height:1.5;text-decoration:none;color:#e9e7e1;overflow-wrap:anywhere;transition:background .2s,border-color .2s,transform .2s}.drive-folder-grid>a:hover{background:#d4b27c13;border-color:#d4b27c70;transform:translateY(-2px)}.drive-folder-grid>a>span{color:var(--gold)}.drive-folder-pending{color:var(--muted);flex-wrap:wrap}.drive-folder-pending small{font-size:10px;color:var(--gold)}.archive-instructions{padding-left:22px;color:var(--muted);line-height:1.8}.archive-instructions li{margin:12px 0}
+@media(max-width:600px){.drive-panel{padding:16px}.drive-folder-grid{grid-template-columns:1fr}.drive-panel-heading .secondary{min-height:44px}.drive-panel>.secondary{width:100%;min-height:44px}}
+@media(prefers-reduced-motion:reduce){.drive-folder-grid>a{transition:none}.drive-folder-grid>a:hover{transform:none}}
+
+.live-drive-disclosure{margin:20px 0;border-top:1px solid #ffffff20;padding-top:16px}.live-drive-disclosure>summary{color:var(--gold);font-size:13px;cursor:pointer;padding:8px 0}.live-drive-disclosure .drive-panel{margin-top:14px}

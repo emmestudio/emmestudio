@@ -2,6 +2,7 @@ import "server-only";
 import { getDb } from "./db";
 const tables = [
   "studio_artists",
+  "studio_drive_folders",
   "studio_projects",
   "studio_tasks",
   "studio_production",
@@ -42,7 +43,7 @@ export async function exportWorkspace(owner: string) {
     await c.query("COMMIT");
     return {
       format: "emme-studio-workspace",
-      version: 3,
+      version: 4,
       exportedAt: new Date().toISOString(),
       data,
     };

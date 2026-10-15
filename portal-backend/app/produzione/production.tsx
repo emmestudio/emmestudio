@@ -1,4 +1,5 @@
 "use client";
+import {DriveFolderDisclosure} from "../drive-folders";
 import QuoteFields from "../progetti/quote-fields";
 import {euro,moneyInput,type QuoteDraft,type Ledger} from "@/lib/finance-data";
 import RemoveButton from "../remove-button";
@@ -19,7 +20,7 @@ import {
 import type { StudioArtist } from "@/lib/artist-data";
 import type { StudioProject } from "@/lib/project-data";
 const kinds: ProductionKind[] = ["track", "recording", "live", "service"];
-export default function Production() {
+export default function Production({liveOnly=false}:{liveOnly?:boolean}) {
   const [ledger,setLedger]=useState<Ledger>({quotes:[],payments:[],installments:[]});
   const [quote,setQuote]=useState<QuoteDraft>({amount:0,status:"Bozza",notes:""});
   const [amount,setAmount]=useState("0.00"),[quoteVersion,setQuoteVersion]=useState(0),[hasQuote,setHasQuote]=useState(false);
@@ -33,7 +34,7 @@ export default function Production() {
     [refresh, setRefresh] = useState(0),
     [error, setError] = useState("");
   const [project, setProject] = useState(""),
-    [kind, setKind] = useState<ProductionKind>("track"),
+    [kind, setKind] = useState<ProductionKind>(liveOnly?"live":"track"),
     [search, setSearch] = useState(""),
     [onlyOpen, setOnlyOpen] = useState(false);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
@@ -71,7 +72,7 @@ export default function Production() {
           setProject(q.get("project") ?? "");
           setArtist(q.get("artist") ?? "");
           if (q.get("track")) setSelectedTrackId(q.get("track"));
-          const tab = q.get("kind");
+          const tab = liveOnly ? "live" : q.get("kind");
           if (kinds.includes(tab as ProductionKind))
             setKind(tab as ProductionKind);
           if (q.get("new") === "1" && a.canEdit && kinds.includes(tab as ProductionKind)) {
@@ -90,7 +91,7 @@ export default function Production() {
         if (!c.signal.aborted) setLoading(false);
       });
     return () => c.abort();
-  }, [refresh]);
+  }, [refresh,liveOnly]);
   useEffect(() => {
     if (editor && !dialog.current?.open) dialog.current?.showModal();
     if (!editor || editor === "new") {
@@ -231,9 +232,7 @@ export default function Production() {
     <section>
       <div className="agenda-heading">
         <p>
-          Ogni brano raccoglie sessioni, voci, mix, mastering, materiali e
-          revisioni. Le registrazioni indipendenti restano in una sezione
-          separata. Collega ogni lavoro direttamente all’artista, oppure raggruppalo in un progetto o album.
+          {liveOnly ? "Organizza ogni spettacolo: artista, organico, prove, service, scaletta e sincronizzazioni. Le cartelle Drive raccolgono i materiali per tutti gli ambiti del live." : "Ogni brano raccoglie sessioni, voci, mix, mastering, materiali e revisioni. Collega ogni lavoro all’artista o raggruppalo in un progetto o album."}
         </p>
         <button
           className="button"
@@ -251,7 +250,7 @@ export default function Production() {
         role="group"
         aria-label="Aree produzione"
       >
-        {kinds.map((k) => (
+        {(liveOnly ? ["live"] as ProductionKind[] : kinds).map((k) => (
           <button
             key={k}
             className={kind === k ? "selected" : ""}
@@ -399,6 +398,7 @@ export default function Production() {
                 ))}
               </div>
             ) : null}
+            {i.kind === "live" ? <DriveFolderDisclosure key={i.id+":"+refresh} kind="live" id={i.id}/> : null}
             <div className="project-card-footer">
               <span>
                 {i.assignee || "Responsabile da assegnare"}
@@ -604,7 +604,7 @@ export default function Production() {
             {productionSpecs[draft.kind].fields.filter(f=>f.key!=="serviceOther" || draft.details.service==="Altro").map((f) => (
               <label key={f.key}>
                 {f.label}
-                {f.key === "service" ? <select required value={draft.details.service || ""} onChange={e=>setDraft({...draft,details:{...draft.details,service:e.target.value,serviceOther:e.target.value==="Altro"?draft.details.serviceOther||"":""}})}><option value="">Seleziona il servizio</option>{standaloneServices.map(service=><option key={service} value={service}>{service}</option>)}</select> : f.key === "phase" ? (
+                {draft.kind === "service" && f.key === "service" ? <select required value={draft.details.service || ""} onChange={e=>setDraft({...draft,details:{...draft.details,service:e.target.value,serviceOther:e.target.value==="Altro"?draft.details.serviceOther||"":""}})}><option value="">Seleziona il servizio</option>{standaloneServices.map(service=><option key={service} value={service}>{service}</option>)}</select> : f.key === "phase" ? (
                   <select
                     required
                     value={draft.details.phase || ""}

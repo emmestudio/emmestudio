@@ -1,3 +1,4 @@
+import { autoSyncDrive } from "@/lib/drive-archive";
 import {listFinanceTargets} from "@/lib/finance-targets";
 import { workspaceSession } from "@/lib/workspace-session";
 import { canEdit } from "@/lib/access-policy";
@@ -10,6 +11,7 @@ import { validId } from "@/lib/task-data";
 import { sameOrigin } from "@/lib/calendar-policy";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 180;
 const reply = (data: unknown, status = 200) =>
   Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
 export async function GET(request: Request) {
@@ -98,6 +100,7 @@ async function save(request: Request, update: boolean) {
         },
         409,
       );
+    if(extras.newArtist) await autoSyncDrive(session.workspaceOwnerId,"artist",extras.newArtist.id);
     return reply({ project });
   } catch (error) {
     return error instanceof ProjectInputError ||

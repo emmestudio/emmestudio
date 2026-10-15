@@ -1,6 +1,7 @@
 "use client";
 import type {FinanceTarget} from "@/lib/finance-targets";
 import {productionSpecs, type ProductionItem} from "@/lib/production-data";
+import DriveFolders from "../drive-folders";
 import RemoveButton from "../remove-button";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -231,9 +232,10 @@ export default function Artists() {
                     + Progetto per l’artista
                   </Link>
                 ) : null}
-                {writable ? <><Link className="button" href={"/produzione?artist="+selected.id+"&kind=track&new=1"}>+ Brano singolo</Link><Link className="secondary" href={"/produzione?artist="+selected.id+"&kind=recording&new=1"}>+ Registrazione</Link><Link className="secondary" href={"/produzione?artist="+selected.id+"&kind=service&new=1"}>+ Servizio singolo</Link></> : null}
+                {writable ? <><Link className="button" href={"/produzione?artist="+selected.id+"&kind=track&new=1"}>+ Brano singolo</Link><Link className="secondary" href={"/produzione?artist="+selected.id+"&kind=recording&new=1"}>+ Registrazione</Link><Link className="secondary" href={"/produzione?artist="+selected.id+"&kind=service&new=1"}>+ Servizio singolo</Link><Link className="secondary" href={"/live?artist="+selected.id+"&kind=live&new=1"}>+ Produzione live</Link></> : null}
               </div>
             </section>
+            <DriveFolders key={selected.id+":"+refresh} kind="artist" id={selected.id}/>
             <div className="artist-counts">
               {["Da realizzare", "In realizzazione", "Realizzati"].map((g) => (
                 <div key={g}>

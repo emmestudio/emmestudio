@@ -1,3 +1,4 @@
+import { autoSyncDrive } from "@/lib/drive-archive";
 import { workspaceSession } from "@/lib/workspace-session";
 import { canEdit } from "@/lib/access-policy";
 import { listArtists, saveArtist } from "@/lib/artists";
@@ -5,6 +6,7 @@ import { validateArtist, ArtistInputError } from "@/lib/artist-data";
 import { validId } from "@/lib/task-data";
 import { sameOrigin } from "@/lib/calendar-policy";
 export const dynamic = "force-dynamic";
+export const maxDuration = 180;
 const reply = (d: unknown, s = 200) =>
   Response.json(d, { status: s, headers: { "Cache-Control": "no-store" } });
 export async function GET(request: Request) {
@@ -38,8 +40,9 @@ async function save(request: Request, update: boolean) {
       update ? b.version : undefined,
       validateArtist(b.draft),
     );
+    const drive=ok ? await autoSyncDrive(s.workspaceOwnerId,"artist",b.id) : undefined;
     return ok
-      ? reply({ saved: true })
+      ? reply({ saved: true, drive })
       : reply(
           { error: "Profilo già salvato o modificato. Aggiorna e riaprilo." },
           409,

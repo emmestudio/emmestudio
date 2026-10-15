@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 const db=new PGlite(),scratch=await mkdtemp(join(tmpdir(),'emme-direct-'));
 globalThis.directDb={connect:async()=>({query:(q,v)=>db.query(q,v),release(){}}),query:(q,v)=>db.query(q,v)};
 try {
-await build({stdin:{contents:`export * from '${resolve('lib/production.ts')}';export * from '${resolve('lib/production-data.ts')}';export * from '${resolve('lib/operations.ts')}';export * from '${resolve('lib/finance.ts')}';export * from '${resolve('lib/finance-data.ts')}';export * from '${resolve('lib/finance-targets.ts')}';export * from '${resolve('lib/workspace-export.ts')}';export * from '${resolve('lib/backup-data.ts')}';export {default as quotePage} from '${resolve('app/preventivi/[id]/page.tsx')}';export * as productionApi from '${resolve('app/api/production/route.ts')}';`,resolveDir:resolve('.')},outfile:join(scratch,'svc.mjs'),bundle:true,platform:'node',format:'esm',jsx:'automatic',plugins:[{name:'isolated',setup(b){b.onResolve({filter:/^(server-only|\.\/db|\.\/team|@\/lib\/workspace-session|next\/(?:headers|navigation|link))$/},a=>({path:a.path,namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},a=>({contents:a.path==='@/lib/workspace-session'?'export const workspaceSession=async()=>globalThis.financeSession':a.path==='next/headers'?'export const headers=async()=>new Headers()':a.path==='next/navigation'?'export const redirect=(p)=>{throw Error(p)};export const notFound=()=>{throw Error("NOT_FOUND")}':a.path==='next/link'?'export default function Link(){return null}':a.path==='./db'?'export const getDb=()=>globalThis.directDb':a.path==='./team'?'export const resolveAssignee=async()=>null':'',loader:'js'}));}}]});
+await build({stdin:{contents:`export * from '${resolve('lib/production.ts')}';export * from '${resolve('lib/production-data.ts')}';export * from '${resolve('lib/operations.ts')}';export * from '${resolve('lib/finance.ts')}';export * from '${resolve('lib/finance-data.ts')}';export * from '${resolve('lib/finance-targets.ts')}';export * from '${resolve('lib/workspace-export.ts')}';export * from '${resolve('lib/backup-data.ts')}';export {default as quotePage} from '${resolve('app/preventivi/[id]/page.tsx')}';export * as productionApi from '${resolve('app/api/production/route.ts')}';`,resolveDir:resolve('.')},outfile:join(scratch,'svc.mjs'),bundle:true,platform:'node',format:'esm',jsx:'automatic',plugins:[{name:'isolated',setup(b){b.onResolve({filter:/^(@\/lib\/drive-archive|server-only|\.\/db|\.\/team|@\/lib\/workspace-session|next\/(?:headers|navigation|link))$/},a=>({path:a.path,namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},a=>({contents:a.path==='@/lib/drive-archive'?'export const autoSyncDrive=async()=>({ready:false})':a.path==='@/lib/workspace-session'?'export const workspaceSession=async()=>globalThis.financeSession':a.path==='next/headers'?'export const headers=async()=>new Headers()':a.path==='next/navigation'?'export const redirect=(p)=>{throw Error(p)};export const notFound=()=>{throw Error("NOT_FOUND")}':a.path==='next/link'?'export default function Link(){return null}':a.path==='./db'?'export const getDb=()=>globalThis.directDb':a.path==='./team'?'export const resolveAssignee=async()=>null':'',loader:'js'}));}}]});
 const svc=await import(join(scratch,'svc.mjs'));
 await db.exec('CREATE TABLE "user"(id text PRIMARY KEY);INSERT INTO "user" VALUES(\'owner\'),(\'other\');');
 for(const f of ['002-projects.sql','003-tasks.sql','004-members.sql','005-artists-finance.sql','006-production-finance.sql','007-workflow.sql','008-operations-trash.sql'])await db.exec(await readFile('db/'+f,'utf8'));
@@ -20,9 +20,11 @@ await db.query("INSERT INTO studio_production(id,owner_id,project_id,kind,data,r
 await db.exec(await readFile('db/009-direct-artist-production.sql','utf8'));
 await db.exec(await readFile('db/010-production-finance.sql','utf8'));
 await db.exec(await readFile('db/011-artist-personal-names.sql','utf8'));
+await db.exec(await readFile('db/012-drive-archive.sql','utf8'));
 await db.exec(await readFile('db/009-direct-artist-production.sql','utf8'));
 await db.exec(await readFile('db/010-production-finance.sql','utf8'));
 await db.exec(await readFile('db/011-artist-personal-names.sql','utf8'));
+await db.exec(await readFile('db/012-drive-archive.sql','utf8'));
 assert.equal((await svc.listProduction('owner')).find(i=>i.id===legacy).artistId,artist);
 
 const quote={amount:40000,status:'Confermato',notes:'Condizioni demo',items:[{description:'Lavoro',quantity:100,unitPrice:40000}]};
@@ -61,10 +63,10 @@ assert.equal(make('service','Reamp',{service:'Reamp',serviceOther:'ignored'}).de
 const c=await globalThis.directDb.connect();await c.query('BEGIN');await svc.writeQuote(c,'owner',project,{amount:9000,status:'Bozza',notes:'Esistente'},0);await c.query('COMMIT');
 assert.equal((await svc.listLedger('owner')).quotes.find(q=>q.projectId===project).amount,9000);
 // Verify the new finance references survive export and isolated local restoration.
-const exported=await svc.exportWorkspace('owner');assert.equal(exported.version,3);
+const exported=await svc.exportWorkspace('owner');assert.equal(exported.version,4);
 const restored=new PGlite();try{
  await restored.exec('CREATE TABLE "user"(id text PRIMARY KEY);INSERT INTO "user" VALUES(\'restored-owner\');');
- for(const f of ['002-projects.sql','003-tasks.sql','004-members.sql','005-artists-finance.sql','006-production-finance.sql','007-workflow.sql','008-operations-trash.sql','009-direct-artist-production.sql','010-production-finance.sql','011-artist-personal-names.sql'])await restored.exec(await readFile('db/'+f,'utf8'));
+ for(const f of ['002-projects.sql','003-tasks.sql','004-members.sql','005-artists-finance.sql','006-production-finance.sql','007-workflow.sql','008-operations-trash.sql','009-direct-artist-production.sql','010-production-finance.sql','011-artist-personal-names.sql','012-drive-archive.sql'])await restored.exec(await readFile('db/'+f,'utf8'));
  await svc.restoreBusinessExport({query:(q,v)=>restored.query(q,v)},'restored-owner',exported);
  assert.equal((await restored.query('SELECT count(*) AS n FROM studio_quotes')).rows[0].n,5);
  assert.equal((await restored.query('SELECT sum(amount) AS n FROM studio_payments')).rows[0].n,10000);
