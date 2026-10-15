@@ -1,0 +1,30 @@
+import {ownerMailboxSession} from "@/lib/mail-access";
+import {getDb} from "@/lib/db";
+import {validId} from "@/lib/task-data";
+import {createHmac,randomBytes} from "node:crypto";
+export const runtime="nodejs";export const dynamic="force-dynamic";
+export async function GET(req:Request){
+ const session=await ownerMailboxSession(req.headers);
+ if(!session)return Response.json({error:"Riservato al titolare"},{status:403});
+ const id=new URL(req.url).searchParams.get("accountId");
+ if(!validId(id))return Response.json({error:"Casella non valida"},{status:400});
+ if(!process.env.GMAIL_OAUTH_CLIENT_ID||!process.env.GMAIL_OAUTH_CLIENT_SECRET||!process.env.MAIL_TOKEN_ENCRYPTION_KEY)return Response.json({error:"Gmail non ancora configurato sul server"},{status:503});
+ const found=await getDb().query("SELECT id FROM studio_mail_accounts WHERE id=$1 AND owner_id=$2 AND provider='gmail'",[id,session.workspaceOwnerId]);
+ if(!found.rowCount)return Response.json({error:"Account non trovato"},{status:404});
+ const nonce=randomBytes(20).toString("base64url");
+ const state=Buffer.from(JSON.stringify({id,owner:session.workspaceOwnerId,nonce,exp:Date.now()+10*60*1000})).toString("base64url");
+ const signature=createHmac("sha256",process.env.BETTER_AUTH_SECRET!).update(state).digest("base64url");
+ const base=process.env.BETTER_AUTH_URL!;
+ const redirectUri=new URL("/api/mail/google/callback",base).toString();
+ const url=new URL("https://accounts.google.com/o/oauth2/v2/auth");
+ url.searchParams.set("client_id",process.env.GMAIL_OAUTH_CLIENT_ID);
+ url.searchParams.set("redirect_uri",redirectUri);
+ url.searchParams.set("response_type","code");
+ url.searchParams.set("scope","openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send");
+ url.searchParams.set("access_type","offline");
+ url.searchParams.set("prompt","consent select_account");
+ url.searchParams.set("state",state+"."+signature);
+ const response=Response.redirect(url.toString());
+ response.headers.append("Set-Cookie",`mail_oauth_nonce=${nonce}; Path=/api/mail/google; Max-Age=600; HttpOnly; Secure; SameSite=Lax`);
+ return response;
+}
