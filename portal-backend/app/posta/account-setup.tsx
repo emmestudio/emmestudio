@@ -17,6 +17,6 @@ export default function MailAccountSetup({accounts:initial,migrationNeeded}:{acc
   <label>Indirizzo email<input value={address} onChange={e=>setAddress(e.target.value)} type="email" required placeholder={provider==="aruba"?"posta@emmestudioproduction.it":"nome@gmail.com"}/></label>
   <button type="submit" className="button" disabled={migrationNeeded||busy||!address.trim()}>{busy?"Registrazione…":"Registra indirizzo"}</button></form>
   {notice?<p role="status">{notice}</p>:null}
-  <div className="mail-setup-status">{accounts.length?accounts.map(a=><div key={a.id}><strong>{a.provider==="aruba"?"Aruba":"Gmail"} · {a.address}</strong><span>{a.status==="connected"?"Connessa":"Da collegare (nessun accesso alla posta)"}</span></div>):<p>Nessun indirizzo ancora registrato.</p>}</div>
+  <div className="mail-setup-status">{accounts.length?accounts.map(a=><div key={a.id}><strong>{a.provider==="aruba"?"Aruba":"Gmail"} · {a.address}</strong><span>{a.status==="connected"?"Connessa":"Da collegare (nessun accesso alla posta)"}</span>{a.provider==="gmail"&&a.status!=="connected"?<a href={"/api/mail/google/start?accountId="+encodeURIComponent(a.id)}>Autorizza Gmail</a>:null}</div>):<p>Nessun indirizzo ancora registrato.</p>}</div>
  </section>;
 }
