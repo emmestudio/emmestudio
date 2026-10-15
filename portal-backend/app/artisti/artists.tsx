@@ -1,4 +1,5 @@
 "use client";
+import type {FinanceTarget} from "@/lib/finance-targets";
 import {productionSpecs, type ProductionItem} from "@/lib/production-data";
 import RemoveButton from "../remove-button";
 import { useEffect, useRef, useState } from "react";
@@ -12,6 +13,7 @@ import {
 import { projectProgress, type StudioProject } from "@/lib/project-data";
 import { type Ledger, projectBalance, euro } from "@/lib/finance-data";
 export default function Artists() {
+  const [financialTargets,setFinancialTargets]=useState<FinanceTarget[]>([]);
   const [production,setProduction] = useState<ProductionItem[]>([]);
   const [admin, setAdmin] = useState(false);
   const [artists, setArtists] = useState<StudioArtist[]>([]),
@@ -48,6 +50,7 @@ export default function Artists() {
         setWritable(a.canEdit);
         setProjects(p.projects);
         setLedger(p.ledger ?? null);
+        setFinancialTargets(p.financialTargets ?? []);
         setError("");
         setSelected(
           (old) =>
@@ -253,7 +256,7 @@ export default function Artists() {
                     Incassato{" "}
                     <strong>
                       {euro(
-                        works.reduce(
+                        financialTargets.filter(p=>p.artistId===selected.id).reduce(
                           (s, p) =>
                             s + projectBalance(p.id, ledger, today).received,
                           0,
@@ -265,7 +268,7 @@ export default function Artists() {
                     Da incassare{" "}
                     <strong>
                       {euro(
-                        works.reduce(
+                        financialTargets.filter(p=>p.artistId===selected.id).reduce(
                           (s, p) =>
                             s + projectBalance(p.id, ledger, today).outstanding,
                           0,

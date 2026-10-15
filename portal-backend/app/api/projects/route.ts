@@ -1,3 +1,4 @@
+import {listFinanceTargets} from "@/lib/finance-targets";
 import { workspaceSession } from "@/lib/workspace-session";
 import { canEdit } from "@/lib/access-policy";
 import { createProject, listProjects, updateProject } from "@/lib/projects";
@@ -15,11 +16,12 @@ export async function GET(request: Request) {
   try {
     const session = await workspaceSession(request.headers);
     if (!session) return reply({ error: "Accesso richiesto." }, 401);
-    const [projects, ledger] = await Promise.all([
+    const [projects, ledger, financialTargets] = await Promise.all([
       listProjects(session.workspaceOwnerId, session.role === "admin"),
       session.role === "admin"
         ? listLedger(session.workspaceOwnerId)
         : Promise.resolve(undefined),
+      session.role === "admin" ? listFinanceTargets(session.workspaceOwnerId) : Promise.resolve(undefined),
     ]);
     return reply({
       projects: projects.filter((p) => !p.deletedAt),
@@ -27,6 +29,7 @@ export async function GET(request: Request) {
       canEdit: canEdit(session.role),
       canManageFinance: session.role === "admin",
       ledger,
+      financialTargets,
     });
   } catch {
     return reply(

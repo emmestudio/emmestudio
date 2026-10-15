@@ -141,7 +141,7 @@ export default function QuoteFields({
           setItems([
             ...items,
             {
-              description: items.length ? "" : "Servizio progetto",
+              description: items.length ? "" : "Servizio",
               quantity: 100,
               unitPrice: items.length ? 0 : current,
             },

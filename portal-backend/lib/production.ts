@@ -1,4 +1,6 @@
 import "server-only";
+import {writeQuote} from "./finance";
+import type {QuoteDraft} from "./finance-data";
 import { resolveAssignee } from "./team";
 import { createHash } from "node:crypto";
 import { getDb } from "./db";
@@ -35,6 +37,7 @@ export async function saveProduction(
   version: number | undefined,
   d: ProductionDraft,
   actor: string,
+  financial?: {quote:QuoteDraft;quoteVersion:number},
 ) {
   const c = await getDb().connect();
   try {
@@ -59,7 +62,7 @@ export async function saveProduction(
       throw new ProductionInputError(
         "Ripristina la scheda dal cestino prima di modificarla.",
       );
-    const digest = createHash("sha256").update(JSON.stringify(d)).digest("hex");
+    const digest = createHash("sha256").update(JSON.stringify(financial ? {draft:d,financial} : d)).digest("hex");
     if (!version && old.rows[0]) {
       if (old.rows[0].request_digest !== digest)
         throw new ProductionInputError("Identificativo già utilizzato.");
@@ -144,6 +147,7 @@ export async function saveProduction(
       "INSERT INTO studio_production_history(item_id,owner_id,version,data,actor) VALUES($1,$2,$3,$4,$5)",
       [id, owner, next, JSON.stringify(d), actor],
     );
+    if(financial)await writeQuote(c,owner,id,financial.quote,financial.quoteVersion,"production");
     await c.query("COMMIT");
   } catch (e) {
     await c.query("ROLLBACK");

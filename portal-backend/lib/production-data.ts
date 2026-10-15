@@ -1,5 +1,6 @@
 import { validDate } from "./event-data.ts";
 import { validId } from "./task-data.ts";
+export const standaloneServices = ["Riarrangiamento Cover","Servizio Mix","Servizio Master","Mix & Master","Reamp","Post-produzione audio","Altro"] as const;
 export const sessionPhases = [
   "Registrazione strumenti",
   "Registrazione voce",
@@ -20,7 +21,7 @@ export const productionSpecs: Record<
   ProductionKind,
   { label: string; singular: string; states: string[]; fields: Field[] }
 > = {
-  service: {label: "Servizi singoli", singular: "Servizio", states: ["Da pianificare", "In lavorazione", "Completato", "Archiviato"], fields: [{key:"service",label:"Tipo di servizio",required:true},{key:"scope",label:"Attività concordate e consegne",type:"textarea"},{key:"url",label:"Cartella di lavoro",type:"url"}]},
+  service: {label: "Servizi singoli", singular: "Servizio", states: ["Da pianificare", "In lavorazione", "Completato", "Archiviato"], fields: [{key:"service",label:"Tipo di servizio",required:true},{key:"serviceOther",label:"Specifica il servizio"},{key:"scope",label:"Attività concordate e consegne",type:"textarea"},{key:"url",label:"Cartella di lavoro",type:"url"}]},
   track: {
     label: "Brani",
     singular: "Brano",
@@ -284,6 +285,11 @@ export function validateProduction(input: unknown): ProductionDraft {
       throw new ProductionInputError("Inserisci un link HTTPS valido.");
     if (v && f.type === "date" && !validDate(v))
       throw new ProductionInputError("Data non valida.");
+  }
+  if(kind==="service") {
+    if(!standaloneServices.includes(details.service as typeof standaloneServices[number]))throw new ProductionInputError("Seleziona il tipo di servizio.");
+    if(details.service==="Altro" && !details.serviceOther.trim())throw new ProductionInputError("Specifica il servizio selezionando Altro.");
+    if(details.service!=="Altro")details.serviceOther="";
   }
   if (
     kind === "track" &&

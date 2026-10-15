@@ -9,6 +9,7 @@ import {
   validateProduction,
   ProductionInputError,
 } from "@/lib/production-data";
+import {validateQuote,FinanceInputError} from "@/lib/finance-data";
 import { validId } from "@/lib/task-data";
 import { sameOrigin } from "@/lib/calendar-policy";
 export const dynamic = "force-dynamic";
@@ -46,23 +47,32 @@ async function save(r: Request, update: boolean) {
       (update && (!Number.isSafeInteger(b.version) || b.version < 1))
     )
       return reply({ error: "Identificativo o versione non validi." }, 400);
+    let financial;
+    if(b.quote !== undefined){
+      if(s.role!=="admin")return reply({error:"Preventivi riservati all’amministratore."},403);
+      if(!Number.isSafeInteger(b.quoteVersion)||b.quoteVersion<0)return reply({error:"Versione preventivo non valida."},400);
+      const kind=b.draft?.kind;
+      if(!["track","recording","live","service"].includes(kind))return reply({error:"Preventivo non disponibile per questa scheda."},400);
+      financial={quote:validateQuote(b.quote),quoteVersion:b.quoteVersion};
+    }
     await saveProduction(
       s.workspaceOwnerId,
       b.id,
       update ? b.version : undefined,
       validateProduction(b.draft),
       s.user?.name || "Team Emme Studio",
+      financial,
     );
     return reply({ saved: true });
   } catch (e) {
     return reply(
       {
         error:
-          e instanceof ProductionInputError
+          (e instanceof ProductionInputError || e instanceof FinanceInputError)
             ? e.message
             : "Salvataggio non completato. Aggiorna prima di riprovare.",
       },
-      e instanceof ProductionInputError ? 400 : 503,
+      (e instanceof ProductionInputError || e instanceof FinanceInputError) ? 400 : 503,
     );
   }
 }

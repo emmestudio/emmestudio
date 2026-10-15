@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { workspaceSession } from "@/lib/workspace-session";
-import { listProjects } from "@/lib/projects";
+import {listFinanceTargets} from "@/lib/finance-targets";
 import { listLedger } from "@/lib/finance";
 import { quoteHistory } from "@/lib/costs";
 import { validId } from "@/lib/task-data";
@@ -20,7 +20,7 @@ export default async function Page({
   const { id } = await params;
   if (!validId(id)) notFound();
   const [projects, ledger, history] = await Promise.all([
-    listProjects(s.workspaceOwnerId, true),
+    listFinanceTargets(s.workspaceOwnerId),
     listLedger(s.workspaceOwnerId),
     quoteHistory(s.workspaceOwnerId, id),
   ]);
@@ -47,7 +47,7 @@ export default async function Page({
             </small>
           </div>
         </header>
-        <span className="eyebrow">IL TUO PROGETTO, CON EMME STUDIO</span>
+        <span className="eyebrow">IL TUO LAVORO, CON EMME STUDIO</span>
         <h1>{p.title}</h1>
         <div className="quote-meta quote-info">
           <p>
@@ -132,7 +132,7 @@ export default async function Page({
       </article>
       <div className="dialog-actions no-print">
         <PrintButton />
-        <Link className="text-button" href={"/progetti?project=" + id}>
+        <Link className="text-button" href={p.subjectKind === "project" ? "/progetti?project="+id : "/produzione?kind="+p.productionKind+"&artist="+p.artistId+(p.productionKind==="track"?"&track="+id:"")}>
           Modifica preventivo ↗
         </Link>
       </div>

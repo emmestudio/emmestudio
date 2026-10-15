@@ -6,6 +6,7 @@ export const backupTables = [
   "studio_tasks",
   "studio_production",
   "studio_production_history",
+  "studio_finance_targets",
   "studio_quotes",
   "studio_quote_history",
   "studio_installments",
@@ -31,7 +32,7 @@ export async function restoreBusinessExport(
   if (
     !backup ||
     backup.format !== "emme-studio-workspace" ||
-    ![1, 2].includes(backup.version ?? 0) ||
+    ![1, 2, 3].includes(backup.version ?? 0) ||
     !backup.data ||
     Object.keys(backup.data).some(
       (k) => !backupTables.includes(k) && k !== "team",
@@ -39,6 +40,7 @@ export async function restoreBusinessExport(
   )
     throw new Error("RESTORE_INVALID_FORMAT");
   const data = { ...backup.data };
+  if((backup.version ?? 0)<3)data.studio_finance_targets=[];
   if (backup.version === 1)
     for (const k of [
       "studio_workflow",
@@ -96,9 +98,13 @@ export async function restoreBusinessExport(
             : row[k],
         );
         await c.query(
-          `INSERT INTO ${table}(${keys.map((k) => '"' + k + '"').join(",")}) VALUES(${keys.map((_, i) => "$" + (i + 1)).join(",")})`,
+          `INSERT INTO ${table}(${keys.map((k) => '"' + k + '"').join(",")}) VALUES(${keys.map((_, i) => "$" + (i + 1)).join(",")})${table === "studio_finance_targets" ? " ON CONFLICT(id) DO NOTHING" : ""}`,
           values,
         );
+        if(table === "studio_finance_targets"){
+          const match=await c.query("SELECT id FROM studio_finance_targets WHERE id=$1 AND owner_id=$2 AND project_id IS NOT DISTINCT FROM $3::uuid AND production_id IS NOT DISTINCT FROM $4::uuid",[row.id,owner,row.project_id??null,row.production_id??null]);
+          if(!match.rows[0])throw new Error("RESTORE_FINANCE_TARGET_CONFLICT");
+        }
       }
     }
     await c.query("COMMIT");

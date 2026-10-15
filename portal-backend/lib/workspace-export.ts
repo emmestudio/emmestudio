@@ -6,6 +6,7 @@ const tables = [
   "studio_tasks",
   "studio_production",
   "studio_production_history",
+  "studio_finance_targets",
   "studio_quotes",
   "studio_quote_history",
   "studio_installments",
@@ -41,7 +42,7 @@ export async function exportWorkspace(owner: string) {
     await c.query("COMMIT");
     return {
       format: "emme-studio-workspace",
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString(),
       data,
     };

@@ -1,4 +1,5 @@
 import "server-only";
+import {lockFinanceTarget} from "./finance-targets";
 import type { PoolClient } from "pg";
 import { getDb } from "./db";
 import {
@@ -41,14 +42,16 @@ export async function writeQuote(
   project: string,
   d: QuoteDraft,
   expected: number,
+  kind: "project" | "production" = "project",
 ) {
+  await lockFinanceTarget(c,owner,project,kind,true);
   const existing = await c.query(
     "SELECT * FROM studio_quotes WHERE owner_id=$1 AND project_id=$2 FOR UPDATE",
     [owner, project],
   );
   if ((existing.rows[0]?.version ?? 0) !== expected)
     throw new FinanceInputError(
-      "Il preventivo è cambiato. Aggiorna e riapri il progetto.",
+      "Il preventivo è cambiato. Aggiorna e riapri la scheda.",
     );
   const totals = await c.query(
     `SELECT (SELECT COALESCE(sum(amount),0) FROM studio_payments WHERE owner_id=$1 AND project_id=$2 AND void_reason IS NULL) AS received,(SELECT COALESCE(sum(amount),0) FROM studio_installments WHERE owner_id=$1 AND project_id=$2) AS scheduled`,
@@ -133,12 +136,9 @@ export async function saveMovement(owner: string, b: Record<string, unknown>) {
   try {
     await c.query("BEGIN");
     // Project lock serializes quote changes, receipt registrations, reversals and schedule edits.
-    const project = await c.query(
-      "SELECT id FROM studio_projects WHERE owner_id=$1 AND id=$2 FOR UPDATE",
-      [owner, b.projectId],
-    );
-    if (!project.rows[0])
-      throw new FinanceInputError("Progetto non disponibile.");
+    const target=await c.query("SELECT production_id FROM studio_finance_targets WHERE owner_id=$1 AND id=$2",[owner,b.projectId]);
+    if(!target.rows[0])throw new FinanceInputError("Lavoro non disponibile.");
+    await lockFinanceTarget(c,owner,String(b.projectId),target.rows[0].production_id ? "production" : "project");
     const q = await c.query(
       "SELECT amount,status,version FROM studio_quotes WHERE owner_id=$1 AND project_id=$2",
       [owner, b.projectId],
@@ -169,7 +169,7 @@ export async function saveMovement(owner: string, b: Record<string, unknown>) {
     } else if (b.action === "payment" || b.action === "due") {
       if (q.rows[0].status !== "Confermato")
         throw new FinanceInputError(
-          "Conferma prima il preventivo del progetto.",
+          "Conferma prima il preventivo del lavoro.",
         );
       const d = validateMovement(b, b.action === "payment");
       const table =

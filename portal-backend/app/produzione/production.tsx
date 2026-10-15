@@ -1,10 +1,13 @@
 "use client";
+import QuoteFields from "../progetti/quote-fields";
+import {euro,moneyInput,type QuoteDraft,type Ledger} from "@/lib/finance-data";
 import RemoveButton from "../remove-button";
 import AssigneeField from "../assignee-field";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import TrackWorkspace from "./track-workspace";
 import {
+  standaloneServices,
   productionSpecs,
   sessionPhases,
   emptyProduction,
@@ -17,6 +20,9 @@ import type { StudioArtist } from "@/lib/artist-data";
 import type { StudioProject } from "@/lib/project-data";
 const kinds: ProductionKind[] = ["track", "recording", "live", "service"];
 export default function Production() {
+  const [ledger,setLedger]=useState<Ledger>({quotes:[],payments:[],installments:[]});
+  const [quote,setQuote]=useState<QuoteDraft>({amount:0,status:"Bozza",notes:""});
+  const [amount,setAmount]=useState("0.00"),[quoteVersion,setQuoteVersion]=useState(0),[hasQuote,setHasQuote]=useState(false);
   const [artists, setArtists] = useState<StudioArtist[]>([]);
   const [artist, setArtist] = useState("");
   const [admin, setAdmin] = useState(false);
@@ -54,6 +60,7 @@ export default function Production() {
       .then(([a, p, ar]) => {
         setArtists(ar.artists);
         setAdmin(Boolean(p.canManageFinance));
+        setLedger(p.ledger ?? {quotes:[],payments:[],installments:[]});
         setItems(a.items);
         setWritable(a.canEdit);
         setProjects(p.projects);
@@ -108,6 +115,9 @@ export default function Production() {
     return () => c.abort();
   }, [editor]);
   function open(item?: ProductionItem) {
+    const savedQuote=ledger.quotes.find(q=>q.projectId===item?.id);
+    setQuote(savedQuote ?? {amount:0,status:"Bozza",notes:""});setAmount(((savedQuote?.amount??0)/100).toFixed(2));setQuoteVersion(savedQuote?.version??0);setHasQuote(Boolean(savedQuote));
+    if(item?.kind==="service" && item.details.service && !standaloneServices.includes(item.details.service as typeof standaloneServices[number])) item={...item,details:{...item.details,service:"Altro",serviceOther:item.details.service}};
     setEditor(item ?? "new");
     setDraft(
       item
@@ -145,6 +155,7 @@ export default function Production() {
           id,
           version: editor && editor !== "new" ? editor.version : undefined,
           draft,
+          ...(admin && hasQuote && ["track","recording","live","service"].includes(draft.kind) ? {quote:{...quote,amount:moneyInput(amount)},quoteVersion} : {}),
         }),
       });
       const d = await r.json();
@@ -201,6 +212,7 @@ export default function Production() {
     writable &&
     projects.find((p) => p.id === draft.projectId)?.status !== "Archiviato";
   function openChild(childKind: ProductionKind, parent: ProductionItem) {
+    setHasQuote(false);setQuote({amount:0,status:"Bozza",notes:""});setAmount("0.00");setQuoteVersion(0);
     setEditor("new");
     const newDraft = emptyProduction(childKind, parent.projectId);
     setDraft({
@@ -315,6 +327,7 @@ export default function Production() {
               <span className="status-pill">{i.status}</span>
             </div>
             <h2>{i.title}</h2>
+            {admin && ledger.quotes.find(q=>q.projectId===i.id) ? <p className="small">Preventivo: <strong>{euro(ledger.quotes.find(q=>q.projectId===i.id)!.amount)}</strong> · {ledger.quotes.find(q=>q.projectId===i.id)!.status} <Link className="text-button" href={"/preventivi/"+i.id}>PDF ↗</Link></p> : null}
             <p className="project-artist">
               {artists.find(a=>a.id===i.artistId)?.name || projects.find((p) => p.id === i.projectId)?.artist}
               {i.trackId
@@ -588,10 +601,10 @@ export default function Production() {
                 </select>
               </label>
             ) : null}
-            {productionSpecs[draft.kind].fields.map((f) => (
+            {productionSpecs[draft.kind].fields.filter(f=>f.key!=="serviceOther" || draft.details.service==="Altro").map((f) => (
               <label key={f.key}>
                 {f.label}
-                {f.key === "phase" ? (
+                {f.key === "service" ? <select required value={draft.details.service || ""} onChange={e=>setDraft({...draft,details:{...draft.details,service:e.target.value,serviceOther:e.target.value==="Altro"?draft.details.serviceOther||"":""}})}><option value="">Seleziona il servizio</option>{standaloneServices.map(service=><option key={service} value={service}>{service}</option>)}</select> : f.key === "phase" ? (
                   <select
                     required
                     value={draft.details.phase || ""}
@@ -626,7 +639,7 @@ export default function Production() {
                   <input
                     type={f.type ?? "text"}
                     required={
-                      f.required ||
+                      f.required || f.key === "serviceOther" ||
                       (draft.kind === "recording" &&
                         ["instrument", "musician"].includes(f.key) &&
                         !["Editing", "Mix", "Mastering", "Altro"].includes(
@@ -645,6 +658,16 @@ export default function Production() {
                 )}
               </label>
             ))}
+            {admin && ["track","recording","live","service"].includes(draft.kind) ? <section className="inline-panel">
+              <h3>Preventivo e importo del lavoro · riservato</h3>
+              <p className="small">Importo da addebitare all’artista. Questo preventivo è autonomo: non reinserire importi già compresi nel preventivo del progetto o del brano.</p>
+              {!hasQuote ? <button type="button" className="secondary" onClick={()=>setHasQuote(true)}>+ Aggiungi preventivo / importo</button> : <>
+              <QuoteFields quote={quote} setQuote={setQuote} amount={amount} setAmount={setAmount}/>
+              <p className="small">Solo gli importi confermati alimentano Guadagni. Incassi e scadenze si gestiscono nel registro economico.</p>
+              {editor && editor!=="new" && quoteVersion>0 ? <div className="dialog-actions"><Link className="text-button" href={"/preventivi/"+editor.id}>Stampa / PDF preventivo ↗</Link><Link className="text-button" href={"/guadagni?project="+editor.id}>Incassi e scadenze ↗</Link></div> : null}
+              {!quoteVersion ? <button type="button" className="text-button" onClick={()=>setHasQuote(false)}>Rimuovi preventivo non salvato</button> : null}
+              </>}
+            </section> : null}
             <label>
               Note interne
               <textarea

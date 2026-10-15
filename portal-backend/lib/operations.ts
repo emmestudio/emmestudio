@@ -32,7 +32,9 @@ export async function purgeProject(owner: string, id: string, version: number, c
       UNION SELECT id FROM studio_costs WHERE owner_id=$1 AND project_id=$2)`,[owner,id]);
     await c.query("DELETE FROM studio_cost_history WHERE cost_id IN (SELECT id FROM studio_costs WHERE owner_id=$1 AND project_id=$2)",[owner,id]);
     await c.query("DELETE FROM studio_production_history WHERE owner_id=$1 AND item_id IN (SELECT id FROM studio_production WHERE owner_id=$1 AND project_id=$2)",[owner,id]);
-    for (const table of ["studio_payments","studio_installments","studio_quote_history","studio_quotes","studio_costs","studio_hours","studio_delivery","studio_workflow","studio_tasks","studio_production"])
+    for(const table of ["studio_payments","studio_installments","studio_quote_history","studio_quotes"])
+      await c.query(`DELETE FROM ${table} WHERE owner_id=$1 AND project_id IN (SELECT id FROM studio_projects WHERE owner_id=$1 AND id=$2 UNION SELECT id FROM studio_production WHERE owner_id=$1 AND project_id=$2)`,[owner,id]);
+    for(const table of ["studio_costs","studio_hours","studio_delivery","studio_workflow","studio_tasks","studio_production"])
       await c.query(`DELETE FROM ${table} WHERE owner_id=$1 AND project_id=$2`,[owner,id]);
     await c.query("DELETE FROM studio_projects WHERE owner_id=$1 AND id=$2",[owner,id]);
     await c.query("COMMIT");

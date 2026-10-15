@@ -8,7 +8,7 @@ import {
   paymentMethods,
   type Ledger,
 } from "@/lib/finance-data";
-import { type StudioProject } from "@/lib/project-data";
+import type {FinanceTarget} from "@/lib/finance-targets";
 const emptyLedger: Ledger = { quotes: [], installments: [], payments: [] };
 const todayRome = () =>
   new Intl.DateTimeFormat("en-CA", {
@@ -23,7 +23,7 @@ const dateLabel = (d: string) =>
   });
 export default function Finance() {
   const [ledger, setLedger] = useState<Ledger>(emptyLedger),
-    [projects, setProjects] = useState<StudioProject[]>([]),
+    [projects, setProjects] = useState<FinanceTarget[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [refresh, setRefresh] = useState(0);
@@ -51,7 +51,7 @@ export default function Finance() {
     const c = new AbortController();
     setLoading(true);
     Promise.all(
-      ["/api/finance", "/api/projects"].map(async (url) => {
+      ["/api/finance", "/api/finance/targets"].map(async (url) => {
         const r = await fetch(url, { cache: "no-store", signal: c.signal });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error);
@@ -60,7 +60,7 @@ export default function Finance() {
     )
       .then(([l, p]) => {
         setLedger(l);
-        setProjects(p.financialProjects ?? p.projects);
+        setProjects(p.targets);
         setError("");
         if (!initial.current) {
           initial.current = true;
@@ -80,7 +80,7 @@ export default function Finance() {
   useEffect(() => {
     if (action && !dialog.current?.open) dialog.current?.showModal();
   }, [action]);
-  function open(a: typeof action, p: StudioProject, existingId?: string) {
+  function open(a: typeof action, p: FinanceTarget, existingId?: string) {
     setAction(a);
     setProjectId(p.id);
     setId(existingId ?? crypto.randomUUID());
@@ -191,7 +191,7 @@ export default function Finance() {
         </a>
       </div>
       <p>
-        Preventivi, pagamenti parziali e scadenze dei progetti. Gli incassi sono
+        Preventivi, pagamenti parziali e scadenze dei progetti e dei lavori singoli. Gli incassi sono
         somme ricevute, prima di costi e imposte; il registro non sostituisce la
         contabilità fiscale.
       </p>
@@ -200,7 +200,7 @@ export default function Finance() {
           <span className="sr-only">Cerca nel registro</span>
           <input
             type="search"
-            placeholder="Cerca progetto, artista o servizio"
+            placeholder="Cerca lavoro, progetto, artista o servizio"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -225,7 +225,7 @@ export default function Finance() {
       </div>
       {selected || artist ? (
         <p className="small">
-          Vista filtrata per {selected ? "progetto" : "artista"}.{" "}
+          Vista filtrata per {selected ? "lavoro / progetto" : "artista"}.{" "}
           <button
             className="text-button"
             onClick={() => {
@@ -252,7 +252,7 @@ export default function Finance() {
         ))}
       </div>
       <p className="small">
-        I totali seguono la vista artista/progetto. Ricerca e filtro di stato
+        I totali seguono la vista artista/lavoro. Ricerca e filtro di stato
         agiscono sull’elenco sottostante. Il mese selezionato filtra solo gli
         incassi.
       </p>
@@ -260,7 +260,7 @@ export default function Finance() {
         <h2>Scadenze di pagamento</h2>
         {allDues.slice(0, 20).map((d) => (
           <div className="deadline-row" key={d.id}>
-            <Link href={"/progetti?project=" + d.projectId}>
+            <Link href={d.p.subjectKind === "project" ? "/progetti?project="+d.projectId : "/produzione?kind="+d.p.productionKind+"&artist="+d.p.artistId+(d.p.productionKind==="track"?"&track="+d.projectId:"")}>
               {d.p.title} · {d.label}
             </Link>
             <span className={d.dueDate < today ? "danger" : ""}>
@@ -278,7 +278,7 @@ export default function Finance() {
         {allDues.length > 20 ? (
           <p className="small">
             Prime 20 scadenze. Le altre sono nelle schede economiche dei
-            progetti.
+            lavori.
           </p>
         ) : null}
         {balances.some((b) => b.unscheduled > 0) ? (
@@ -289,12 +289,12 @@ export default function Finance() {
           </p>
         ) : null}
       </section>
-      <h2 className="section-heading">Situazione dei progetti</h2>
+      <h2 className="section-heading">Situazione di progetti e lavori</h2>
       <div className="project-grid">
         {shown.map((b) => (
           <article className="project-card" key={b.p.id}>
             <div className="list-heading">
-              <span className="badge">{b.p.service}</span>
+              <span className="badge">{b.p.service} · {b.p.subjectKind === "production" ? "Produzione" : "Progetto"}</span>
               <span className="status-pill">
                 {b.quote?.status ?? "Senza preventivo"}
               </span>
@@ -370,7 +370,7 @@ export default function Finance() {
                 di una rata non elimina gli incassi.
               </p>
             </details>
-            <Link className="text-button" href={"/progetti?project=" + b.p.id}>
+            <Link className="text-button" href={b.p.subjectKind === "project" ? "/progetti?project="+b.p.id : "/produzione?kind="+b.p.productionKind+"&artist="+b.p.artistId+(b.p.productionKind==="track"?"&track="+b.p.id:"")}>
               Modifica servizio e preventivo ↗
             </Link>
             {b.quote ? (
@@ -385,7 +385,7 @@ export default function Finance() {
         <p>
           {loading
             ? "Caricamento…"
-            : "Nessun progetto corrispondente. Crea un progetto e inserisci il preventivo."}
+            : "Nessun lavoro corrispondente. Inserisci un preventivo nella scheda di produzione o del progetto."}
         </p>
       ) : null}
       <section className="card">

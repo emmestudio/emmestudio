@@ -18,7 +18,9 @@ await db.query("INSERT INTO studio_projects(id,owner_id,title,artist,artist_id,k
 const legacyDraft={...svc.emptyProduction('track',project),title:'Esistente'};
 await db.query("INSERT INTO studio_production(id,owner_id,project_id,kind,data,request_digest) VALUES($1,'owner',$2,'track',$3,'x')",[legacy,project,JSON.stringify(legacyDraft)]);
 await db.exec(await readFile('db/009-direct-artist-production.sql','utf8'));
+await db.exec(await readFile('db/010-production-finance.sql','utf8'));
 await db.exec(await readFile('db/009-direct-artist-production.sql','utf8'));
+await db.exec(await readFile('db/010-production-finance.sql','utf8'));
 assert.equal((await svc.listProduction('owner')).find(i=>i.id===legacy).artistId,artist);
 const draft=(kind,title,extra={})=>svc.validateProduction({...svc.emptyProduction(kind),artistId:artist,title,...extra});
 const track=randomUUID(),session=randomUUID(),material=randomUUID(),revision=randomUUID(),service=randomUUID();
@@ -28,7 +30,7 @@ await svc.saveProduction('owner',track,undefined,t,'test'); // retry idempotent
 await svc.saveProduction('owner',session,undefined,draft('recording','Voce',{trackId:track,details:{phase:'Registrazione voce',instrument:'Voce',musician:'Artista'}}),'test');
 await svc.saveProduction('owner',material,undefined,draft('material','Mix v1',{trackId:track,details:{category:'Mix',versionLabel:'v1',url:'https://example.test/mix'}}),'test');
 await svc.saveProduction('owner',revision,undefined,draft('revision','Feedback',{trackId:track,details:{versionLabel:'v1',feedback:'Voce'}}),'test');
-await svc.saveProduction('owner',service,undefined,draft('service','Master singolo',{details:{service:'Mastering'}}),'test');
+await svc.saveProduction('owner',service,undefined,draft('service','Master singolo',{details:{service:'Servizio Master'}}),'test');
 await svc.saveProduction('owner',randomUUID(),undefined,draft('recording','Registrazione autonoma',{details:{phase:'Registrazione strumenti',instrument:'Chitarra',musician:'Artista'}}),'test');
 await svc.saveProduction('owner',randomUUID(),undefined,draft('live','Live autonomo'),'test');
 assert.equal((await svc.listProduction('owner')).find(i=>i.id===track).projectId,'');
