@@ -153,3 +153,12 @@
 .artist-history-list strong{font-size:13px;color:#f5e9d7}
 .artist-history-list span{font-size:11px;color:var(--muted)}
 .artist-history-list p{font-size:12px;color:var(--muted);margin:6px 0}
+
+
+.artist-conversation{margin:22px 0;padding:20px;border:1px solid #d4b27c38;border-radius:14px;background:linear-gradient(125deg,#d4b27c0a,#ffffff05)}
+.artist-conversation h4{color:#f6e6c9}.artist-conversation-thread{display:flex;flex-direction:column;gap:12px;max-height:460px;overflow:auto;margin:14px 0 22px}
+.artist-conversation-message{padding:13px 15px;background:#ffffff09;border:1px solid #ffffff22;border-radius:12px;max-width:86%;overflow-wrap:anywhere}
+.artist-conversation-message.from-studio{border-color:#d4b27c6b;background:#d4b27c10;align-self:flex-start}.artist-conversation-message.from-artist{align-self:flex-end}
+.artist-conversation-message strong{font-size:12px;color:var(--gold)}.artist-conversation-message p{margin:7px 0;white-space:pre-wrap;font-size:13px}.artist-conversation-message time{font-size:10px;color:var(--muted)}
+.artist-conversation form textarea{width:100%;max-width:100%;min-height:95px;margin:9px 0 12px}
+@media(max-width:600px){.artist-conversation{padding:13px}.artist-conversation-message{max-width:96%}}
