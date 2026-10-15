@@ -106,6 +106,7 @@ export default function Navigation() {
             {title}
           </Link>
         ))}
+        <Link href="/installa" aria-current={pathname === "/installa" ? "page" : undefined}>Installa app</Link>
         <a className="portal-site-link" href="https://emmestudioproduction.it/">
           Sito Emme Studio ↗
         </a>
