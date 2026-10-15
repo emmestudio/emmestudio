@@ -1,3 +1,4 @@
+import ArtistNotifications from "../area-artista/notifications";
 "use client";
 import {useEffect,useState} from "react";
 import TrackMessages from "../area-artista/track-messages";
@@ -67,6 +68,7 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
  }
  return <div className="track-panel">
   <h3>Area Artista · Condivisioni</h3>
+  <ArtistNotifications/>
   <p>Le anteprime sono copie MP3. I file definitivi rimangono bloccati finché non li autorizzi.</p>
   <form onSubmit={upload}>
    <h4>Carica direttamente su Google Drive</h4>
