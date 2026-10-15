@@ -13,6 +13,17 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
  const [title,setTitle]=useState(""),[version,setVersion]=useState("Mix v01"),[previewFile,setPreviewFile]=useState("");
  const [deliveryName,setDeliveryName]=useState(""),[deliveryFile,setDeliveryFile]=useState(""),[deliveryTitle,setDeliveryTitle]=useState("");
  const [error,setError]=useState(""),[busy,setBusy]=useState(false);
+ async function removeMaterial(kind:"preview"|"delivery",id:string,name:string){
+  if(!window.confirm("Spostare nel cestino di Google Drive e rimuovere dal portale il file «"+name+"»? L’operazione impedirà immediatamente l’accesso dell’artista."))return;
+  setBusy(true);setError("");
+  try{
+   const r=await fetch("/api/artist-material-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind,id,artistId,trackId})});
+   const d=await r.json();if(!r.ok)throw Error(d.error||"Eliminazione non riuscita");
+   await load();
+  }catch(e){setError(e instanceof Error?e.message:"Eliminazione non riuscita");}
+  finally{setBusy(false);}
+ }
+
  async function load(){
   const [a,b]=await Promise.all([fetch("/api/artist-previews?artist="+artistId,{cache:"no-store"}),fetch("/api/artist-deliveries?artistId="+artistId,{cache:"no-store"})]);
   const x=await a.json(),y=await b.json();
@@ -67,7 +78,7 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
    <div className="artist-permission-details"><strong>{p.title} · {p.versionLabel}</strong><span className="artist-permission-file">{previewStates.find(x=>x.value===p.status)?.description??p.status}</span>{p.feedback?<span className="artist-permission-file">Feedback: {p.feedback}</span>:null}</div>
    <div className="artist-preview-status-control"><label htmlFor={"preview-status-"+p.id}>Visibilità e stato dell’anteprima</label><select id={"preview-status-"+p.id} aria-label={"Stato anteprima "+p.title} value={p.status} disabled={busy} onChange={e=>void request("/api/artist-previews","PATCH",{id:p.id,status:e.target.value})}>
     {previewStates.map(x=><option key={x.value} value={x.value}>{x.label}</option>)}
-   </select></div>
+   </select><button type="button" className="secondary" disabled={busy} onClick={()=>void removeMaterial("preview",p.id,p.title)}>Elimina anteprima</button></div>
   </div>)}
   <h4>Consegne definitive</h4>
   {deliveries.map(d=><div key={d.id} className="artist-permission-row">
