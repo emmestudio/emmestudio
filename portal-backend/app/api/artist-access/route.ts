@@ -1,3 +1,4 @@
+import {normalizedArtistEmail,validArtistEmail} from "@/lib/artist-access-policy";
 import {workspaceSession} from "@/lib/workspace-session";
 import {sameOrigin} from "@/lib/calendar-policy";
 import {validId} from "@/lib/task-data";
@@ -24,8 +25,8 @@ export async function PUT(request:Request){
   if(s.role!=="admin")return reply({error:"Solo amministratore."},403);
   const body=await request.json();
   if(!validId(body.artistId)||typeof body.email!=="string"||typeof body.enabled!=="boolean")return reply({error:"Dati non validi."},400);
-  const email=normalizeEmail(body.email);
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)return reply({error:"Email non valida."},400);
+  const email=normalizedArtistEmail(body.email);
+  if(!validArtistEmail(email))return reply({error:"Email non valida."},400);
   const client=await getDb().connect();
   try{
    await client.query("BEGIN");
