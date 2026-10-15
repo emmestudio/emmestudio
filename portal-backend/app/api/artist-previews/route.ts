@@ -1,3 +1,4 @@
+import {notifyArtistEvent} from "@/lib/artist-notifications";
 import { workspaceSession } from "@/lib/workspace-session";
 import { getDb } from "@/lib/db";
 import { validId } from "@/lib/task-data";
@@ -96,6 +97,7 @@ export async function PATCH(request: Request) {
       `UPDATE studio_artist_previews SET status=$3,updated_at=now()
        WHERE owner_id=$1 AND id=$2 RETURNING id`,[s.workspaceOwnerId,b.id,b.status],
     );
+    if(result.rowCount&&b.status==="ready"){const v=await getDb().query("SELECT artist_id,track_id FROM studio_artist_previews WHERE id=$1 AND owner_id=$2",[b.id,s.workspaceOwnerId]);if(v.rows[0])await notifyArtistEvent(s.workspaceOwnerId,v.rows[0].artist_id,v.rows[0].track_id,"artist","preview","Nuova versione disponibile per l’ascolto");}
     return result.rowCount?reply({saved:true}):reply({error:"Anteprima non trovata."},404);
   } catch {return reply({error:"Modifica anteprima non disponibile."},503);}
 }
