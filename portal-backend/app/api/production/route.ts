@@ -1,4 +1,4 @@
-import { autoSyncDrive } from "@/lib/drive-archive";
+import { autoSyncDrive, syncTrackDriveFolders } from "@/lib/drive-archive";
 import { workspaceSession } from "@/lib/workspace-session";
 import { canEdit } from "@/lib/access-policy";
 import {
@@ -65,7 +65,7 @@ async function save(r: Request, update: boolean) {
       s.user?.name || "Team Emme Studio",
       financial,
     );
-    const drive=b.draft?.kind === "live" ? await autoSyncDrive(s.workspaceOwnerId,"live",b.id) : undefined;
+    const drive=b.draft?.kind === "live" ? await autoSyncDrive(s.workspaceOwnerId,"live",b.id) : b.draft?.kind === "track" ? await syncTrackDriveFolders(s.workspaceOwnerId,b.id).then(()=>({ready:true})).catch(()=>({ready:false,message:"Brano salvato; cartelle Drive da sincronizzare al prossimo caricamento."})) : undefined;
     return reply({ saved: true, drive });
   } catch (e) {
     return reply(
