@@ -18,8 +18,8 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
   setBusy(true);setError("");
   try{
    const r=await fetch(url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
-   const d=await r.json();if(!r.ok)throw Error(d.error||"Operazione fallita");await load();
-  }catch(e){setError(e instanceof Error?e.message:"Operazione non riuscita");}finally{setBusy(false);}
+   const d=await r.json();if(!r.ok)throw Error(d.error||"Operazione fallita");await load();return true;
+  }catch(e){setError(e instanceof Error?e.message:"Operazione non riuscita");return false;}finally{setBusy(false);}
  }
  return <div className="track-panel">
   <h3>Area Artista · Condivisioni</h3>
@@ -28,7 +28,7 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
   {previews.map(p=><div key={p.id} className="ledger-row"><div><strong>{p.title} · {p.versionLabel}</strong><p>{p.status}</p>{p.feedback?<p>Feedback: {p.feedback}</p>:null}</div><select aria-label={"Stato "+p.title} value={p.status} disabled={busy} onChange={e=>void request("/api/artist-previews","PATCH",{id:p.id,status:e.target.value})}>
    {["draft","ready","approved","revision_requested","withdrawn"].map(x=><option key={x} value={x}>{x}</option>)}
   </select></div>)}
-  <form onSubmit={e=>{e.preventDefault();void request("/api/artist-previews","POST",{id:crypto.randomUUID(),artistId,trackId,title,versionLabel:version,driveFileId:previewFile}).then(()=>{setTitle("");setPreviewFile("");});}}>
+  <form onSubmit={e=>{e.preventDefault();void request("/api/artist-previews","POST",{id:crypto.randomUUID(),artistId,trackId,title,versionLabel:version,driveFileId:previewFile}).then(ok=>{if(ok){setTitle("");setPreviewFile("");}});}}>
    <label>Titolo anteprima<input required value={title} onChange={e=>setTitle(e.target.value)}/></label>
    <label>Versione<input required value={version} onChange={e=>setVersion(e.target.value)}/></label>
    <label>ID Drive copia MP3<input required value={previewFile} onChange={e=>setPreviewFile(e.target.value)}/></label>
@@ -36,7 +36,7 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
   </form>
   <h4>Consegne definitive</h4>
   {deliveries.map(d=><div key={d.id} className="ledger-row"><div><strong>{d.title}</strong><p>{d.fileName}</p></div><label><input role="switch" type="checkbox" checked={d.enabled} disabled={busy} onChange={e=>void request("/api/artist-deliveries","PATCH",{id:d.id,enabled:e.target.checked})}/> {d.enabled?"Download abilitato":"Download bloccato"}</label></div>)}
-  <form onSubmit={e=>{e.preventDefault();void request("/api/artist-deliveries","POST",{id:crypto.randomUUID(),artistId,trackId,title:deliveryTitle,fileName:deliveryName,fileId:deliveryFile}).then(()=>{setDeliveryTitle("");setDeliveryName("");setDeliveryFile("");});}}>
+  <form onSubmit={e=>{e.preventDefault();void request("/api/artist-deliveries","POST",{id:crypto.randomUUID(),artistId,trackId,title:deliveryTitle,fileName:deliveryName,fileId:deliveryFile}).then(ok=>{if(ok){setDeliveryTitle("");setDeliveryName("");setDeliveryFile("");}});}}>
    <label>Descrizione consegna<input required value={deliveryTitle} onChange={e=>setDeliveryTitle(e.target.value)}/></label>
    <label>Nome file<input required value={deliveryName} onChange={e=>setDeliveryName(e.target.value)}/></label>
    <label>ID Drive file definitivo<input required value={deliveryFile} onChange={e=>setDeliveryFile(e.target.value)}/></label>
