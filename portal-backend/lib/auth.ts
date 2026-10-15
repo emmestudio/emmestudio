@@ -1,3 +1,4 @@
+import {databaseConnectionString} from "./database-connection";
 import "server-only";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { APIError } from "better-auth/api";
@@ -15,7 +16,7 @@ export function getAuth() {
     appName: "Emme Studio Portal",
     baseURL: process.env.BETTER_AUTH_URL!,
     secret: process.env.BETTER_AUTH_SECRET!,
-    database: new Pool({ connectionString: process.env.DATABASE_URL, max: 5 }),
+    database: new Pool({ connectionString: databaseConnectionString(), max: 5 }),
     emailAndPassword: { enabled: false },
     account: { encryptOAuthTokens: true },
     rateLimit: { enabled: true, storage: "database" },
