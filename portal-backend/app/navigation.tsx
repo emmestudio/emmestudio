@@ -37,7 +37,8 @@ export default function Navigation() {
     document.addEventListener("pointerdown", outside);
     return () => document.removeEventListener("pointerdown", outside);
   }, [open]);
-  const links = signedIn
+  const artistArea = pathname.startsWith("/area-artista");
+  const links = artistArea ? [["/area-artista", "Area Artista"]] : signedIn
     ? [
         ["/dashboard", "Panoramica"],
         ["/lavoro", "Il mio lavoro"],
