@@ -8,12 +8,12 @@ export default async function Page() {
  const session=await workspaceSession(await headers());
  if(!session)redirect("/accesso");
  if(session.role!=="admin")redirect("/dashboard");
- let items: {id:string;title:string;version_label:string;status:string;artist_name:string;track_name:string}[]=[];
+ let items: {id:string;title:string;version_label:string;status:string;feedback:string;artist_name:string;track_name:string}[]=[];
  let unavailable=false;
  let artists: {id:string;name:string}[]=[];
  let tracks: {id:string;artistId:string;title:string}[]=[];
  try {
-  const result=await getDb().query(`SELECT x.id,x.title,x.version_label,x.status,
+  const result=await getDb().query(`SELECT x.id,x.title,x.version_label,x.status,x.feedback,
      a.name AS artist_name, p.data->>'title' AS track_name
      FROM studio_artist_previews x
      JOIN studio_artists a ON a.owner_id=x.owner_id AND a.id=x.artist_id
@@ -35,7 +35,7 @@ export default async function Page() {
   {!items.length?<p>Nessuna anteprima presente.</p>:items.map(i=>
     <div className="ledger-row" key={i.id}>
      <div><strong>{i.title}</strong><p className="small">{i.artist_name} · {i.track_name} · {i.version_label}</p></div>
-     <span>{i.status}</span>
+     <div><span>{i.status}</span>{i.feedback?<p>{i.feedback}</p>:null}</div>
     </div>)}
   </section>}
   {!unavailable?<CreatePreview artists={artists} tracks={tracks}/>:null}
