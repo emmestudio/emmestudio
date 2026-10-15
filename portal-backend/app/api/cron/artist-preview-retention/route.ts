@@ -20,6 +20,7 @@ export async function GET(request:Request){
     AND NOT EXISTS (SELECT 1 FROM studio_artist_deliveries d WHERE d.owner_id=studio_artist_previews.owner_id AND d.file_id=studio_artist_previews.drive_file_id)
     AND NOT EXISTS (SELECT 1 FROM studio_artist_previews p2 WHERE p2.owner_id=studio_artist_previews.owner_id AND p2.drive_file_id=studio_artist_previews.drive_file_id AND p2.id<>studio_artist_previews.id AND p2.purged_at IS NULL AND p2.superseded_at IS NULL)
    ORDER BY superseded_at ASC LIMIT 15`);
+  if(new URL(request.url).searchParams.get("dryRun")==="1")return reply({dryRun:true,eligible:due.rowCount,files:due.rows.map((r:{id:string})=>({previewId:r.id}))});
   let removed=0,failed=0;
   for(const row of due.rows){
    try{
