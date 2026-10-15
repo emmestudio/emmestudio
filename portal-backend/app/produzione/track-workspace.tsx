@@ -18,6 +18,7 @@ type Props = {
   project: StudioProject | undefined;
   items: ProductionItem[];
   writable: boolean;
+  admin: boolean;
   onClose: () => void;
   onEdit: (item: ProductionItem) => void;
   onAdd: (kind: ProductionKind, track: ProductionItem) => void;
@@ -40,6 +41,7 @@ export default function TrackWorkspace({
   project,
   items,
   writable,
+  admin,
   onClose,
   onEdit,
   onAdd,
@@ -104,7 +106,7 @@ export default function TrackWorkspace({
               ))}
           </div>
           <div className="track-nav" role="group" aria-label="Sezioni della scheda brano">
-            {views.map((view) => (
+            {views.filter(view=>view.key!=="sharing"||admin).map((view) => (
               <button
                 type="button"
                 key={view.key}
@@ -117,7 +119,7 @@ export default function TrackWorkspace({
               </button>
             ))}
           </div>
-          {tab === "sharing" ? (track.artistId || project?.artistId) ? <TrackSharing key={track.id} trackId={track.id} artistId={(project?.artistId || track.artistId)!}/> : <p>Assegna prima un artista al brano.</p> : tab === "overview" ? (
+          {tab === "sharing" && admin ? (track.artistId || project?.artistId) ? <TrackSharing key={track.id} trackId={track.id} artistId={(project?.artistId || track.artistId)!}/> : <p>Assegna prima un artista al brano.</p> : tab === "overview" ? (
             <section className="track-panel" aria-label="Informazioni brano">
               <div className="track-panel-heading">
                 <div>
