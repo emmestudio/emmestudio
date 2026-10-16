@@ -17,7 +17,7 @@ export async function POST(request:Request){
  if(!s)return reply({error:"Accesso riservato al titolare"},403);
  try{
   const b=await request.json();
-  if(!["gmail","aruba"].includes(b.provider)||typeof b.address!=="string"||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(b.address.trim())||b.address.length>254)return reply({error:"Casella email non valida"},400);
+  if(!["gmail","aruba"].includes(b.provider)||typeof b.address!=="string"||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.address.trim())||b.address.length>254)return reply({error:"Casella email non valida"},400);
   const address=b.address.trim().toLowerCase();
   const displayName=typeof b.displayName==="string"?b.displayName.trim().slice(0,100):"";
   const result=await getDb().query(`INSERT INTO studio_mail_accounts(owner_id,provider,address,display_name,status)
