@@ -24,7 +24,7 @@ export async function GET(req:Request){
  url.searchParams.set("access_type","offline");
  url.searchParams.set("prompt","consent select_account");
  url.searchParams.set("state",state+"."+signature);
- const response=Response.redirect(url.toString());
+ const response=new Response(null,{status:302,headers:{Location:url.toString(),"Cache-Control":"no-store"}});
  response.headers.append("Set-Cookie",`mail_oauth_nonce=${nonce}; Path=/api/mail/google; Max-Age=600; HttpOnly; Secure; SameSite=Lax`);
  return response;
 }
