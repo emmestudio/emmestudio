@@ -232,3 +232,10 @@
  .portal-navigation-v2 .portal-nav-dropdown,.portal-navigation-v2 .portal-nav-dropdown-right{position:static;min-width:0;margin:2px 0 8px 10px;box-shadow:none;border-color:#d4b27c26;background:#ffffff04}
  .portal-navigation-v2 .portal-nav-account{border-left:0;border-top:1px solid #d4b27c30;margin:8px 0 0;padding:10px 0 0}
 }
+
+
+/* Refined dropdown affordance: tiny gold line expands and rotates when open */
+.portal-navigation-v2 .portal-nav-indicator{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:2px}
+.portal-navigation-v2 .portal-nav-indicator-line{display:block;width:7px;height:2px;border-radius:2px;background:#d4b27c;box-shadow:0 0 8px #d4b27c40;transition:width .22s ease,transform .22s ease}
+.portal-navigation-v2 .portal-nav-trigger[aria-expanded=true] .portal-nav-indicator-line{width:13px;transform:rotate(90deg)}
+.artist-status-pill{display:inline-flex;align-items:center;border:1px solid #d4b27c65;background:#d4b27c13;color:#f0d2a2;padding:7px 11px;border-radius:999px;font-size:12px;line-height:1.2}
