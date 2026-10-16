@@ -44,13 +44,13 @@ export default function Navigation(){
   <nav id="portal-links" className={open?"is-open":""} aria-label="Navigazione portale">
    {artistArea?link(entry("/area-artista","Area Artista")):signedIn?<>{link(entry("/dashboard","Panoramica"))}{link(entry("/artisti","Artisti"))}
     {groups.map(group=><div className="portal-nav-group" key={group.label}>
-     <button type="button" className="portal-nav-trigger" aria-expanded={expanded===group.label} aria-haspopup="menu" onClick={()=>setExpanded(expanded===group.label?null:group.label)} data-active={group.items.some(i=>active(i.href))?"true":undefined}>{group.label}<span aria-hidden="true" className="portal-nav-chevron">⌄</span></button>
+     <button type="button" className="portal-nav-trigger" aria-expanded={expanded===group.label} aria-haspopup="menu" onClick={()=>setExpanded(expanded===group.label?null:group.label)} data-active={group.items.some(i=>active(i.href))?"true":undefined}>{group.label}<span aria-hidden="true" className="portal-nav-indicator"><span className="portal-nav-indicator-line"/></span></button>
      {expanded===group.label?<div className="portal-nav-dropdown">{group.items.map(link)}</div>:null}
     </div>)}
     {owner?link(entry("/posta","Posta")):null}
    </>:link(entry("/accesso","Accesso team"))}
    <div className="portal-nav-group portal-nav-account">
-    <button type="button" className="portal-nav-trigger" aria-expanded={expanded==="account"} onClick={()=>setExpanded(expanded==="account"?null:"account")}>Account <span aria-hidden="true">⌄</span></button>
+    <button type="button" className="portal-nav-trigger" aria-expanded={expanded==="account"} onClick={()=>setExpanded(expanded==="account"?null:"account")}>Account <span aria-hidden="true" className="portal-nav-indicator"><span className="portal-nav-indicator-line"/></span></button>
     {expanded==="account"?<div className="portal-nav-dropdown portal-nav-dropdown-right">
      {link(entry("/installa","Installa app"))}
      <a href="https://emmestudioproduction.it/" target="_blank" rel="noopener noreferrer">Sito Emme Studio ↗</a>
