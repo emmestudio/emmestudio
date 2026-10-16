@@ -5,6 +5,13 @@ import {redirect} from "next/navigation";
 import {workspaceSession} from "@/lib/workspace-session";
 import {getDb} from "@/lib/db";
 export const dynamic="force-dynamic";
+const stateLabel:Record<string,{label:string;description:string}>={
+ draft:{label:"In preparazione",description:"Versione non ancora pubblicata per l’artista"},
+ ready:{label:"Disponibile all’ascolto",description:"L’artista può ascoltare questa versione"},
+ approved:{label:"Approvata dall’artista",description:"L’artista ha confermato la versione"},
+ revision_requested:{label:"Modifiche richieste",description:"L’artista ha chiesto una revisione"},
+ withdrawn:{label:"Ritirata",description:"Versione non più disponibile per l’ascolto"}
+};
 export default async function Page() {
  const session=await workspaceSession(await headers());
  if(!session)redirect("/accesso");
@@ -36,7 +43,7 @@ export default async function Page() {
   {!items.length?<p>Nessuna anteprima presente.</p>:items.map(i=>
     <div className="ledger-row" key={i.id}>
      <div><strong>{i.title}</strong><p className="small">{i.artist_name} · {i.track_name} · {i.version_label}</p></div>
-     <div><span>{i.status}</span>{i.feedback?<p>{i.feedback}</p>:null}</div>
+     <div><span className="artist-status-pill" title={stateLabel[i.status]?.description??"Stato della versione"}>{stateLabel[i.status]?.label??"Stato da verificare"}</span>{i.feedback?<p>{i.feedback}</p>:null}</div>
     </div>)}
   </section>}
   {!unavailable?<><CreatePreview artists={artists} tracks={tracks}/><Deliveries artists={artists} tracks={tracks}/></>:null}
