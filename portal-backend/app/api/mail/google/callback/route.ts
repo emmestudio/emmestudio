@@ -6,7 +6,7 @@ export const runtime="nodejs";export const dynamic="force-dynamic";
 function go(status:string){
  const url=new URL("/posta",process.env.BETTER_AUTH_URL!);
  url.searchParams.set("mail",status);
- const response=Response.redirect(url.toString(),303);
+ const response=new Response(null,{status:303,headers:{Location:url.toString(),"Cache-Control":"no-store"}});
  response.headers.append("Set-Cookie","mail_oauth_nonce=; Path=/api/mail/google; Max-Age=0; HttpOnly; Secure; SameSite=Lax");
  return response;
 }
