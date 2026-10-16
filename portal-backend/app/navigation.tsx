@@ -15,10 +15,7 @@ export default function Navigation(){
   setOpen(false);setExpanded(null);setSignedIn(false);setAdmin(false);setOwner(false);
   fetch("/api/workspace",{cache:"no-store",signal:controller.signal}).then(async r=>{
    if(!r.ok)return;
-   const d=await r.json();setSignedIn(true);setAdmin(Boolean(d.canManageAccess));
-   // The mailbox is owner-only; no team role may inherit this access.
-   const response=await fetch("/api/mail/accounts",{cache:"no-store",signal:controller.signal});
-   setOwner(response.ok);
+   const d=await r.json();setSignedIn(true);setAdmin(Boolean(d.canManageAccess));setOwner(d.isOwner===true);
   }).catch(()=>{});
   return ()=>controller.abort();
  },[pathname]);
@@ -47,7 +44,7 @@ export default function Navigation(){
   <nav id="portal-links" className={open?"is-open":""} aria-label="Navigazione portale">
    {artistArea?link(entry("/area-artista","Area Artista")):signedIn?<>{link(entry("/dashboard","Panoramica"))}{link(entry("/artisti","Artisti"))}
     {groups.map(group=><div className="portal-nav-group" key={group.label}>
-     <button type="button" className="portal-nav-trigger" aria-expanded={expanded===group.label} aria-haspopup="true" onClick={()=>setExpanded(expanded===group.label?null:group.label)} data-active={group.items.some(i=>active(i.href))?"true":undefined}>{group.label}<span aria-hidden="true" className="portal-nav-chevron">⌄</span></button>
+     <button type="button" className="portal-nav-trigger" aria-expanded={expanded===group.label} aria-haspopup="menu" onClick={()=>setExpanded(expanded===group.label?null:group.label)} data-active={group.items.some(i=>active(i.href))?"true":undefined}>{group.label}<span aria-hidden="true" className="portal-nav-chevron">⌄</span></button>
      {expanded===group.label?<div className="portal-nav-dropdown">{group.items.map(link)}</div>:null}
     </div>)}
     {owner?link(entry("/posta","Posta")):null}
