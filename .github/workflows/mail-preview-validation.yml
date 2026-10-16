@@ -1,0 +1,31 @@
+name: Mail preview code validation
+on:
+  push:
+    branches:
+      - feature/posta-e-consegne-economiche
+    paths:
+      - 'portal-backend/**'
+      - '.github/workflows/mail-preview-validation.yml'
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: portal-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: portal-backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: TypeScript and Next route types
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Production compilation (no deployment)
+        run: npm run build
