@@ -1,7 +1,9 @@
 "use client";
 import {useState} from "react";
+import {useRouter} from "next/navigation";
 type Account={id:string;provider:"aruba"|"gmail";address:string;status:string};
 export default function MailAccountSetup({accounts:initial,migrationNeeded}:{accounts:Account[];migrationNeeded:boolean}){
+ const router=useRouter();
  const [accounts,setAccounts]=useState(initial),[provider,setProvider]=useState<"aruba"|"gmail">("aruba");
  const [address,setAddress]=useState(""),[busy,setBusy]=useState(false),[notice,setNotice]=useState("");
  async function checkAruba(){setNotice("Verifica TLS in corso…");try{const r=await fetch("/api/mail/aruba/connectivity",{cache:"no-store"});const d=await r.json();if(!r.ok)throw Error(d.error||"Verifica non disponibile");setNotice("Aruba: IMAP "+(d.imap.ok?"TLS OK":"da verificare")+" · SMTP "+(d.smtp.ok?"TLS OK":"da verificare")+". Nessun accesso alla casella effettuato.");}catch(e){setNotice(e instanceof Error?e.message:"Verifica non disponibile");}}
@@ -10,7 +12,7 @@ export default function MailAccountSetup({accounts:initial,migrationNeeded}:{acc
   try{
    const r=await fetch("/api/mail/accounts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({provider,address})});
    const d=await r.json();if(!r.ok)throw Error(d.error||"Operazione non riuscita");
-   setAccounts(old=>[...old.filter(x=>x.id!==d.account.id),d.account]);setAddress("");setNotice(d.notice);
+   setAccounts(old=>[...old.filter(x=>x.id!==d.account.id),d.account]);setAddress("");setNotice(d.notice);router.refresh();
   }catch(e){setNotice(e instanceof Error?e.message:"Errore");}finally{setBusy(false);}
  }
  return <section className="mail-account-setup"><h2>Impostazioni caselle</h2><p className="small">Registra solo gli indirizzi da collegare. Non inserire password o codici OAuth: le connessioni IMAP/SMTP e Google saranno abilitate con un flusso separato e protetto.</p>
