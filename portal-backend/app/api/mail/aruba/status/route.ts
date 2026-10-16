@@ -4,6 +4,12 @@ export const dynamic="force-dynamic";
 export async function GET(request:Request){
  const session=await ownerMailboxSession(request.headers);
  if(!session)return Response.json({error:"Accesso riservato al titolare"},{status:403});
- const readiness=arubaMailReadiness();
- return Response.json({provider:"aruba",address:ARUBA_MAIL.address,imapReady:readiness.configured,smtpReady:readiness.configured,connected:false,notice:"Configurazione locale soltanto: connessioni IMAP/SMTP non ancora testate."},{headers:{"Cache-Control":"no-store"}});
+ const ready=arubaMailReadiness();
+ return Response.json({
+  provider:"aruba",address:ARUBA_MAIL.address,
+  credentialsConfigured:ready.configured,
+  authenticated:false,receiveEnabled:false,sendEnabled:false,
+  nextStep:ready.configured?"Verifica autenticazione IMAP e SMTP da implementare":"Configurare ARUBA_MAIL_USERNAME e ARUBA_MAIL_PASSWORD come segreti del ramo Preview",
+  notice:"Nessuna connessione autenticata o invio di email effettuato."
+ },{headers:{"Cache-Control":"no-store"}});
 }
