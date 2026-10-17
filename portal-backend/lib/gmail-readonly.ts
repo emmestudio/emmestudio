@@ -23,5 +23,5 @@ export async function listGmailHeaders(ownerId:string,accountId:string):Promise<
   const h=(key:string)=>b.payload?.headers?.find(v=>v.name.toLowerCase()===key)?.value??"";
   return {id:b.id,accountId,provider:"gmail" as const,from:h("from").slice(0,300),subject:h("subject").slice(0,300),date:h("date"),snippet:(b.snippet??"").slice(0,400),unread:(b.labelIds??[]).includes("UNREAD")};
  }));
- return records.filter((v):v is MailHeader=>v!==null);
+ return records.filter((v):v is NonNullable<typeof v>=>v!==null);
 }
