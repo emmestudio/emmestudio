@@ -20,6 +20,7 @@ export async function POST(req:Request){
   const accounts=await getDb().query("SELECT provider FROM studio_mail_accounts WHERE id=$1 AND owner_id=$2",[accountId,owner.workspaceOwnerId]);
   if(!accounts.rowCount)return reply({error:"Casella non autorizzata"},403);
   const provider=accounts.rows[0].provider;
+  if(provider==="aruba"&&process.env.ARUBA_SMTP_SEND_ENABLED!=="true")return reply({error:"Invio Aruba temporaneamente sospeso: il provider ha bloccato la casella (525 5.7.13). Ricezione IMAP disponibile."},423);
   const result=provider==="gmail"?await sendGmail(owner.workspaceOwnerId,accountId,mail):provider==="aruba"?await sendAruba(owner.workspaceOwnerId,accountId,mail):null;
   if(!result)return reply({error:"Provider non supportato"},400);
   return reply(result);
