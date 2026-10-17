@@ -7,6 +7,7 @@ import {
   trashResource,
   purgeProject,
   purgeProduction,
+  purgeSimpleResource,
   OperationsError,
   type ResourceKind,
 } from "@/lib/operations";
@@ -52,7 +53,8 @@ export async function POST(r: Request) {
       if (s.role !== "admin") return reply({error:"Eliminazione definitiva riservata agli amministratori."},403);
       if(b.kind==="project")await purgeProject(s.workspaceOwnerId,b.id,b.version,b.confirmation);
       else if(b.kind==="production")await purgeProduction(s.workspaceOwnerId,b.id,b.version,b.confirmation);
-      else return reply({error:"Eliminazione definitiva disponibile per progetti e produzioni."},400);
+      else if(["artist","task"].includes(b.kind))await purgeSimpleResource(s.workspaceOwnerId,b.kind,b.id,b.version,b.confirmation);
+      else return reply({error:"Tipo di scheda non valido."},400);
     } else if (["delete", "restore"].includes(b.action)) {
       if (s.role !== "admin")
         return reply(

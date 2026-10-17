@@ -11,6 +11,12 @@ const resources = {
   artist: { table: "studio_artists", title: "name" },
 } as const;
 export type ResourceKind = keyof typeof resources;
+async function cleanupArtistRecords(c: import("pg").PoolClient, owner:string, ids:string[]){
+ for(const [table,condition] of [
+  ["studio_artist_preview_events","preview_id IN (SELECT id FROM studio_artist_previews WHERE owner_id=$1 AND track_id=ANY($2::uuid[]))"],
+  ...["studio_artist_notifications","studio_artist_track_messages","studio_artist_deliveries","studio_artist_previews"].map(t=>[t,"track_id=ANY($2::uuid[])"])
+ ]){const exists=await c.query("SELECT to_regclass($1) AS name",['public.'+table]);if(exists.rows[0]?.name)await c.query(`DELETE FROM ${table} WHERE owner_id=$1 AND ${condition}`,[owner,ids]);}
+}
 export async function purgeProject(owner: string, id: string, version: number, confirmation: string) {
   if (!validId(id)) throw new OperationsError("Identificativo non valido.");
   const c = await getDb().connect();
@@ -22,6 +28,8 @@ export async function purgeProject(owner: string, id: string, version: number, c
     if (!p || !p.deleted_at) throw new OperationsError("Puoi eliminare definitivamente solo un progetto nel cestino.");
     if (p.version !== version) throw new OperationsError("Progetto modificato. Aggiorna e riprova.");
     if (confirmation !== p.title) throw new OperationsError("Scrivi il titolo esatto per confermare l’eliminazione definitiva.");
+    const children=await c.query("SELECT id FROM studio_production WHERE owner_id=$1 AND project_id=$2 FOR UPDATE",[owner,id]);
+    await cleanupArtistRecords(c,owner,children.rows.map(r=>r.id));
     // Remove resource histories before their parents; every query is workspace scoped.
     await c.query(`DELETE FROM studio_work_history WHERE owner_id=$1 AND resource_id IN (
       SELECT id FROM studio_projects WHERE owner_id=$1 AND id=$2
@@ -47,6 +55,8 @@ export async function purgeProduction(owner:string,id:string,version:number,conf
  try{
   await c.query("BEGIN");
   await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1,2))",[owner]);
+  const parent=await c.query("SELECT project_id FROM studio_production WHERE owner_id=$1 AND id=$2",[owner,id]);
+  if(parent.rows[0]?.project_id)await c.query("SELECT id FROM studio_projects WHERE owner_id=$1 AND id=$2 FOR UPDATE",[owner,parent.rows[0].project_id]);
   const r=await c.query("SELECT id,kind,data,version,deleted_at FROM studio_production WHERE owner_id=$1 AND id=$2 FOR UPDATE",[owner,id]);
   const item=r.rows[0];
   if(!item||!item.deleted_at)throw new OperationsError("Puoi eliminare definitivamente solo una produzione nel cestino.");
@@ -55,12 +65,15 @@ export async function purgeProduction(owner:string,id:string,version:number,conf
   if(!["track","recording","live","service","material","revision"].includes(item.kind))throw new OperationsError("Tipo di produzione non eliminabile.");
   const related=await c.query(`WITH RECURSIVE tree AS (
    SELECT id,kind,data FROM studio_production WHERE owner_id=$1 AND id=$2
-   UNION ALL SELECT child.id,child.kind,child.data FROM studio_production child
+   UNION SELECT child.id,child.kind,child.data FROM studio_production child
    JOIN tree parent ON child.owner_id=$1 AND child.data->>'trackId'=parent.id::text
    WHERE child.id<>parent.id
   ) SELECT DISTINCT id,kind FROM tree`,[owner,id]);
   const ids=related.rows.map(x=>x.id);
   if(!ids.length)throw new OperationsError("Produzione non disponibile.");
+  await cleanupArtistRecords(c,owner,ids);
+  await c.query("DELETE FROM studio_work_history WHERE owner_id=$1 AND resource_id IN (SELECT id FROM studio_hours WHERE owner_id=$1 AND production_id=ANY($2::uuid[]))",[owner,ids]);
+  await c.query("DELETE FROM studio_hours WHERE owner_id=$1 AND production_id=ANY($2::uuid[])",[owner,ids]);
   // Restrict all deletions to records of this workspace.
   const optional=async(table:string,condition:string,params:unknown[])=>{
     const exists=await c.query("SELECT to_regclass($1) AS name",["public."+table]);
@@ -78,6 +91,19 @@ export async function purgeProduction(owner:string,id:string,version:number,conf
   await c.query("COMMIT");
  }catch(e){await c.query("ROLLBACK");throw e}
  finally{c.release()}
+}
+export async function purgeSimpleResource(owner:string,kind:"artist"|"task",id:string,version:number,confirmation:string){
+ if(!validId(id)||!["artist","task"].includes(kind))throw new OperationsError("Scheda non valida.");
+ const c=await getDb().connect();try{await c.query("BEGIN");await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1,2))",[owner]);const spec=resources[kind];
+ const r=(await c.query(`SELECT version,deleted_at,${spec.title} AS title FROM ${spec.table} WHERE owner_id=$1 AND id=$2 FOR UPDATE`,[owner,id])).rows[0];
+ if(!r?.deleted_at||r.version!==version||r.title!==confirmation)throw new OperationsError("Controlla titolo e versione della scheda nel cestino.");
+ if(kind==='artist'){
+ const links=await c.query("SELECT id FROM studio_projects WHERE owner_id=$1 AND artist_id=$2 UNION SELECT id FROM studio_production WHERE owner_id=$1 AND artist_id=$2 LIMIT 1",[owner,id]);
+ if(links.rows.length)throw new OperationsError("Elimina definitivamente o riassegna prima tutti i lavori collegati all’artista, anche nel cestino.");
+ for(const table of ['studio_artist_access','studio_artist_notifications','studio_artist_track_messages','studio_artist_deliveries','studio_artist_previews']){const exists=await c.query('SELECT to_regclass($1) AS name',['public.'+table]);if(exists.rows[0]?.name)await c.query(`DELETE FROM ${table} WHERE owner_id=$1 AND artist_id=$2`,[owner,id]);}
+ }else await c.query("UPDATE studio_tasks SET blocked_by=blocked_by-$2,version=version+1,updated_at=now() WHERE owner_id=$1 AND blocked_by ? $2",[owner,id]);
+ await c.query("DELETE FROM studio_work_history WHERE owner_id=$1 AND resource_id=$2",[owner,id]);await c.query(`DELETE FROM ${spec.table} WHERE owner_id=$1 AND id=$2`,[owner,id]);await c.query("COMMIT");
+ }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}
 }
 export async function saveOperations(
   owner: string,

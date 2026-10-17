@@ -1,5 +1,5 @@
 import "server-only";
-import {lockFinanceTarget,listFinanceTargets} from "./finance-targets";
+import {lockFinanceTarget} from "./finance-targets";
 import type { PoolClient } from "pg";
 import { getDb } from "./db";
 import {
@@ -26,8 +26,10 @@ export async function listLedger(owner: string): Promise<Ledger> {
       'SELECT id,project_id AS "projectId",amount,paid_date AS "paidDate",method,notes,void_reason AS "voidReason" FROM studio_payments WHERE owner_id=$1 ORDER BY paid_date DESC,created_at DESC',
       [owner],
     );
+    const active=await c.query(`SELECT p.id FROM studio_projects p LEFT JOIN studio_artists a ON a.id=p.artist_id AND a.owner_id=p.owner_id WHERE p.owner_id=$1 AND p.deleted_at IS NULL AND a.deleted_at IS NULL
+      UNION SELECT r.id FROM studio_production r LEFT JOIN studio_projects j ON j.id=r.project_id AND j.owner_id=r.owner_id LEFT JOIN studio_artists a ON a.id=COALESCE(j.artist_id,r.artist_id) AND a.owner_id=r.owner_id LEFT JOIN studio_production t ON t.id::text=r.data->>'trackId' AND t.owner_id=r.owner_id WHERE r.owner_id=$1 AND r.kind IN ('track','recording','live','service') AND r.deleted_at IS NULL AND j.deleted_at IS NULL AND a.deleted_at IS NULL AND t.deleted_at IS NULL`,[owner]);
+    const activeIds=new Set(active.rows.map(x=>x.id));
     await c.query("COMMIT");
-    const activeIds=new Set((await listFinanceTargets(owner)).map(x=>x.id));
     return {quotes:q.rows.filter(x=>activeIds.has(x.projectId)),installments:i.rows.filter(x=>activeIds.has(x.projectId)),payments:p.rows.filter(x=>activeIds.has(x.projectId))};
   } catch (e) {
     await c.query("ROLLBACK");

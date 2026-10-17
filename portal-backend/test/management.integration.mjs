@@ -81,7 +81,7 @@ try {
           b.onLoad({ filter: /.*/, namespace: "test" }, (a) => ({
             resolveDir: root,
             contents:
-              a.path === "drive-archive" ? "export const autoSyncDrive=async()=>({ready:false});" : a.path === "calendar-context"
+              a.path === "drive-archive" ? "export const autoSyncDrive=async()=>({ready:false});export const syncTrackDriveFolders=async()=>({});" : a.path === "calendar-context"
                 ? "export const calendarContext=async()=>({workspaceOwnerId:globalThis.emmeTestSession.workspaceOwnerId,events:globalThis.emmeTestCalendar,canEdit:true,canOpenGoogle:false});"
                 : a.path === "blob-test"
                   ? "export const put=(...a)=>globalThis.emmeTestBlob.put(...a);export const get=(...a)=>globalThis.emmeTestBlob.get(...a);export const list=(...a)=>globalThis.emmeTestBlob.list(...a);export const del=(...a)=>globalThis.emmeTestBlob.del(...a);"

@@ -22,7 +22,7 @@ export default function PreviewRegister({initial}: {initial:Preview[]}){
  },[items,filter]);
  async function change(id:string,status:string){
   setBusy(id);setError("");
-  try{const r=await fetch("/api/artist-previews",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,status})});const d=await r.json();if(!r.ok)throw Error(d.error||"Impossibile modificare lo stato");setItems(old=>old.map(x=>x.id===id?{...x,status}:x));}
+  try{const r=await fetch("/api/artist-previews",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,status})});const d=await r.json();if(!r.ok)throw Error(d.error||"Impossibile modificare lo stato");window.location.reload();}
   catch(e){setError(e instanceof Error?e.message:"Errore di salvataggio");}finally{setBusy("")}
  }
  async function remove(x:Preview){

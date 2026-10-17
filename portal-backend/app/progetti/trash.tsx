@@ -85,7 +85,7 @@ export default function Trash({ onRestored }: { onRestored: () => void }) {
           >
             {busy === p.id ? "Ripristino…" : "Ripristina"}
           </button>
-          {["project","production"].includes(p.kind) && !busy ? <RemoveButton permanent kind={p.kind} id={p.id} version={p.version} title={p.title} onRemoved={() => {setRefresh(n=>n+1);onRestored();}} /> : null}
+          {!busy ? <RemoveButton permanent kind={p.kind} id={p.id} version={p.version} title={p.title} onRemoved={() => {setRefresh(n=>n+1);onRestored();}} /> : null}
           </div>
         </div>
       ))}

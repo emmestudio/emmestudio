@@ -1,3 +1,4 @@
+import {extraArchiveTables} from "./archive-tables";
 import type { PoolClient } from "pg";
 import { createHash } from "node:crypto";
 export const backupTables = [
@@ -19,6 +20,7 @@ export const backupTables = [
   "studio_delivery",
   "studio_work_history",
   "portal_members",
+  ...extraArchiveTables,
 ];
 export async function restoreBusinessExport(
   c: Pick<PoolClient, "query">,
@@ -33,7 +35,7 @@ export async function restoreBusinessExport(
   if (
     !backup ||
     backup.format !== "emme-studio-workspace" ||
-    ![1, 2, 3, 4].includes(backup.version ?? 0) ||
+    ![1, 2, 3, 4, 5].includes(backup.version ?? 0) ||
     !backup.data ||
     Object.keys(backup.data).some(
       (k) => !backupTables.includes(k) && k !== "team",
@@ -41,6 +43,7 @@ export async function restoreBusinessExport(
   )
     throw new Error("RESTORE_INVALID_FORMAT");
   const data = { ...backup.data };
+  if((backup.version??0)<5)for(const t of extraArchiveTables)data[t]=[];
   if((backup.version ?? 0)<4)data.studio_drive_folders=[];
   if((backup.version ?? 0)<3)data.studio_finance_targets=[];
   if (backup.version === 1)
@@ -61,12 +64,19 @@ export async function restoreBusinessExport(
     await c.query("SELECT pg_advisory_xact_lock(187346212)");
     const user = await c.query('SELECT id FROM "user" WHERE id=$1', [owner]);
     if (!user.rows[0]) throw new Error("RESTORE_OWNER_NOT_FOUND");
+    await c.query("SELECT set_config('emme.restoring','1',true)");
+    const present:string[]=[];
     for (const table of backupTables) {
+      if(extraArchiveTables.includes(table)){
+        const exists=await c.query("SELECT to_regclass($1) AS name",['public.'+table]);
+        if(!exists.rows[0]?.name){if((data[table] as unknown[]).length)throw Error('RESTORE_SCHEMA_MISSING');continue;}
+      }
+      present.push(table);
       const count = await c.query(`SELECT count(*) AS count FROM ${table}`);
       if (Number(count.rows[0].count) > 0)
         throw new Error("RESTORE_TARGET_NOT_EMPTY");
     }
-    for (const table of backupTables) {
+    for (const table of present) {
       const metadata = await c.query(
         "SELECT column_name,data_type FROM information_schema.columns WHERE table_schema='public' AND table_name=$1",
         [table],
@@ -93,6 +103,9 @@ export async function restoreBusinessExport(
             .update(JSON.stringify(raw))
             .digest("hex");
         if (table === "portal_members") row.active = false;
+        if (table === "studio_artist_access") row.enabled = false;
+        if (table === "studio_mail_accounts") row.status = 'not_connected';
+        if (table === "studio_artist_email_outbox" && row.state!=='sent') {row.state='uncertain';row.error='Ripristinata: verificare prima di inviare';}
         const keys = Object.keys(row);
         const values = keys.map((k) =>
           ["json", "jsonb"].includes(columns.get(k) ?? "")

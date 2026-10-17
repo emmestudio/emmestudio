@@ -11,8 +11,11 @@ export async function GET(r: Request) {
         { error: "Riservato all’amministratore." },
         { status: 403 },
       );
+    const bytes=new TextEncoder().encode(JSON.stringify(await exportWorkspace(s.workspaceOwnerId), null, 2));
+    let offset=0;
+    const stream=new ReadableStream<Uint8Array>({pull(controller){if(offset>=bytes.length){controller.close();return;}controller.enqueue(bytes.subarray(offset,offset+65536));offset+=65536;}});
     return new Response(
-      JSON.stringify(await exportWorkspace(s.workspaceOwnerId), null, 2),
+      stream,
       {
         headers: {
           "Content-Type": "application/json",

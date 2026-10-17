@@ -6,7 +6,7 @@ import {validId} from "@/lib/task-data";
 import {sameOrigin} from "@/lib/calendar-policy";
 import {canEdit} from "@/lib/access-policy";
 export const dynamic="force-dynamic";
-const MAX=10*1024*1024;
+const MAX=4*1024*1024;
 const ALLOWED=new Set(["application/pdf","image/png","image/jpeg","image/webp"]);
 const out=(body:unknown,status=200)=>Response.json(body,{status,headers:{"Cache-Control":"no-store"}});
 export async function POST(req:Request){
@@ -15,11 +15,11 @@ export async function POST(req:Request){
  if(!s)return out({error:"Accesso richiesto"},401);
  if(!canEdit(s.role))return out({error:"Ruolo di sola lettura"},403);
  const contentLength=Number(req.headers.get("content-length")||0);
- if(contentLength>MAX+65536)return out({error:"File troppo grande (massimo 10 MB)"},413);
+ if(contentLength>MAX+65536)return out({error:"File troppo grande (massimo 4 MB nel percorso precedente)"},413);
  try{
   const form=await req.formData(),messageId=form.get("messageId"),file=form.get("file");
   if(typeof messageId!=="string"||!validId(messageId)||!(file instanceof File))return out({error:"Richiesta non valida"},400);
-  if(!ALLOWED.has(file.type)||file.size<=0||file.size>MAX)return out({error:"Solo PDF o immagini PNG, JPEG, WebP fino a 10 MB"},400);
+  if(!ALLOWED.has(file.type)||file.size<=0||file.size>MAX)return out({error:"Solo PDF o immagini PNG, JPEG, WebP fino a 4 MB nel percorso precedente"},400);
   const result=await getDb().query(`SELECT m.artist_id,m.track_id FROM studio_artist_track_messages m
    JOIN studio_production t ON t.id=m.track_id AND t.owner_id=m.owner_id AND t.deleted_at IS NULL
    LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id

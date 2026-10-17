@@ -82,7 +82,7 @@ try{
  denied=true;
  const liveRequest=new Request('https://portal.example/api/production',{method:'POST',headers:{Origin:'https://portal.example','Content-Type':'application/json'},body:JSON.stringify({id:routeLive,draft:{...svc.emptyProduction('live'),artistId:routeArtist,title:'Live con Drive momentaneamente non disponibile'}})});
  const saved=await svc.productionApi.POST(liveRequest);assert.equal(saved.status,200);assert.equal((await saved.json()).drive.ready,false);assert.ok((await svc.listProduction('owner')).some(p=>p.id===routeLive),'Google failure preserves saved live');denied=false;await svc.syncDriveSubject('owner','live',routeLive);
- const exported=await svc.exportWorkspace('owner');assert.equal(exported.version,4);assert.ok(exported.data.studio_drive_folders.length>0);
+ const exported=await svc.exportWorkspace('owner');assert.equal(exported.version,5);assert.ok(exported.data.studio_drive_folders.length>0);
  const restored=new PGlite();try{
  await restored.exec(`CREATE TABLE "user"(id text PRIMARY KEY);INSERT INTO "user" VALUES('restored');`);
  for(const file of schemaFiles)await restored.exec(await readFile('db/'+file,'utf8'));

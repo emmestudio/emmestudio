@@ -4,7 +4,7 @@ export default function CreatePreview({artists,tracks}:{artists:{id:string;name:
  const [artistId,setArtistId]=useState("");
  const [trackId,setTrackId]=useState("");
  const [title,setTitle]=useState("");
- const [versionLabel,setVersionLabel]=useState("Mix v01");
+ const versionLabel="auto";
  const [driveFileId,setDriveFileId]=useState("");
  const [message,setMessage]=useState("");
  const [busy,setBusy]=useState(false);
@@ -22,7 +22,7 @@ export default function CreatePreview({artists,tracks}:{artists:{id:string;name:
  <label>Artista<select required value={artistId} onChange={e=>{setArtistId(e.target.value);setTrackId("");}}><option value="">Seleziona</option>{artists.map(a=><option value={a.id} key={a.id}>{a.name}</option>)}</select></label>
  <label>Brano<select required value={trackId} onChange={e=>setTrackId(e.target.value)}><option value="">Seleziona</option>{tracks.filter(t=>t.artistId===artistId).map(t=><option value={t.id} key={t.id}>{t.title}</option>)}</select></label>
  <label>Titolo<input required maxLength={300} value={title} onChange={e=>setTitle(e.target.value)}/></label>
- <label>Versione<input required maxLength={100} value={versionLabel} onChange={e=>setVersionLabel(e.target.value)}/></label>
+ <p className="small">La versione viene numerata automaticamente per ogni brano, senza riutilizzare i numeri eliminati.</p>
  <label>ID file Drive<input required maxLength={200} value={driveFileId} onChange={e=>setDriveFileId(e.target.value)}/></label>
  <button className="button" disabled={busy} type="submit">{busy?"Salvataggio…":"Registra anteprima"}</button>
  {message?<p role="alert">{message}</p>:null}

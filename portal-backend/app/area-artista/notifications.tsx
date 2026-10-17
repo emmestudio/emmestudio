@@ -4,7 +4,7 @@ type Notice={id:string;eventType:string;body:string;trackTitle:string;createdAt:
 export default function ArtistNotifications(){
  const [items,setItems]=useState<Notice[]>([]),[open,setOpen]=useState(false),[error,setError]=useState("");
  async function load(){const r=await fetch("/api/artist-notifications",{cache:"no-store"});const data=await r.json();if(!r.ok)throw Error(data.error||"Notifiche non disponibili");setItems(data.items);}
- useEffect(()=>{load().catch(e=>setError(e.message));},[]);
+ useEffect(()=>{const refresh=()=>{if(document.visibilityState==='visible')void load().catch(e=>setError(e.message))};refresh();const timer=setInterval(refresh,30000);return()=>clearInterval(timer);},[]);
  async function read(id:string){
   const r=await fetch("/api/artist-notifications",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});
   if(r.ok)await load();else setError("Impossibile segnare la notifica come letta");

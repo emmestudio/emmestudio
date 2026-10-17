@@ -64,7 +64,7 @@ export default function RemoveButton({
         <div className="delete-confirm">
           <strong>{permanent ? `Eliminare definitivamente «${title}»?` : `Spostare «${title}» nel cestino?`}</strong>
           <p>
-            {permanent ? "Questa azione non è reversibile: elimina progetto, brani, registrazioni, materiali, revisioni, live, attività, ore, verifiche, preventivi, incassi, rate, costi e storico collegati. Il profilo artista resta conservato. File esterni ed eventi Google Calendar restano disponibili nei rispettivi servizi." : <>
+            {permanent ? <>{kind==='artist'?'Elimina il profilo artista: prima elimina o riassegna i suoi lavori, anche nel cestino.':kind==='task'?'Elimina l’attività e rimuove le dipendenze dalle altre attività.':kind==='production'?'Elimina questa produzione, le sue schede figlie, ore, verifiche e dati economici collegati. Gli altri lavori restano conservati.':'Elimina il progetto e i suoi dati operativi ed economici collegati. Il profilo artista resta conservato.'} Questa operazione è irreversibile. File Drive e Calendar restano conservati.</> : <>
             {kind === "project"
               ? "Anche i suoi brani e attività saranno nascosti dalle viste operative. "
               : ""}

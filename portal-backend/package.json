@@ -9,7 +9,9 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "test:integration": "node test/management.integration.mjs",
-    "test:visual": "node test/management.integration.mjs --visual"
+    "test:visual": "node test/management.integration.mjs --visual",
+    "test:consolidation": "node test/consolidation.integration.mjs && node test/message-attachment-upload.integration.mjs",
+    "test:all": "npm test && npm run test:integration && npm run test:consolidation && node test/production-finance.integration.mjs && node test/drive-archive.integration.mjs && node test/artist-area-db.integration.mjs && node --test test/artist-access-policy.test.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.2",

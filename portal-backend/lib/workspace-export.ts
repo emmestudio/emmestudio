@@ -1,4 +1,5 @@
 import "server-only";
+import {extraArchiveTables} from "./archive-tables";
 import { getDb } from "./db";
 const tables = [
   "studio_artists",
@@ -40,10 +41,14 @@ export async function exportWorkspace(owner: string) {
       [owner],
     );
     data.team = members.rows;
+    for(const table of extraArchiveTables){
+      const exists=await c.query("SELECT to_regclass($1) AS name",["public."+table]);
+      data[table]=exists.rows[0]?.name ? (await c.query(`SELECT to_jsonb(t)-'owner_id' AS data FROM ${table} t WHERE owner_id=$1`,[owner])).rows.map(r=>r.data) : [];
+    }
     await c.query("COMMIT");
     return {
       format: "emme-studio-workspace",
-      version: 4,
+      version: 5,
       exportedAt: new Date().toISOString(),
       data,
     };

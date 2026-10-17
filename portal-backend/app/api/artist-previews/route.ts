@@ -93,12 +93,15 @@ export async function PATCH(request: Request) {
     const b=await request.json();
     if (!validId(b.id) || !allowed.has(b.status) || b.deliveryUnlocked!==undefined)
       return reply({error:"Stato non valido: la consegna non si sblocca qui."},400);
-    const result=await getDb().query(
-      `UPDATE studio_artist_previews SET status=$3,updated_at=now()
-       WHERE owner_id=$1 AND id=$2 RETURNING id`,[s.workspaceOwnerId,b.id,b.status],
-    );
-    if(result.rowCount&&b.status==="ready"){const v=await getDb().query("SELECT artist_id,track_id FROM studio_artist_previews WHERE id=$1 AND owner_id=$2",[b.id,s.workspaceOwnerId]);if(v.rows[0])await notifyArtistEvent(s.workspaceOwnerId,v.rows[0].artist_id,v.rows[0].track_id,"artist","preview","Nuova versione disponibile per l’ascolto");}
-    return result.rowCount?reply({saved:true}):reply({error:"Anteprima non trovata."},404);
+    const result=await getDb().query(`WITH prior AS (
+      SELECT id,status,artist_id,track_id FROM studio_artist_previews WHERE owner_id=$1 AND id=$2 AND purged_at IS NULL FOR UPDATE
+    ) UPDATE studio_artist_previews p SET status=$3,updated_at=now() FROM prior
+    WHERE p.id=prior.id AND p.owner_id=$1 AND prior.status IS DISTINCT FROM $3
+    AND EXISTS(SELECT 1 FROM studio_production t LEFT JOIN studio_projects j ON j.owner_id=t.owner_id AND j.id=t.project_id JOIN studio_artists a ON a.owner_id=t.owner_id AND a.id=COALESCE(j.artist_id,t.artist_id) WHERE t.id=p.track_id AND t.owner_id=p.owner_id AND t.deleted_at IS NULL AND a.id=p.artist_id AND a.deleted_at IS NULL AND (j.id IS NULL OR j.deleted_at IS NULL))
+    RETURNING p.id,p.artist_id,p.track_id`,[s.workspaceOwnerId,b.id,b.status]);
+    if(result.rowCount && b.status==='ready')await notifyArtistEvent(s.workspaceOwnerId,result.rows[0].artist_id,result.rows[0].track_id,'artist','preview','Nuova versione disponibile per l’ascolto');
+    if(!result.rowCount){const current=await getDb().query('SELECT status FROM studio_artist_previews WHERE owner_id=$1 AND id=$2 AND purged_at IS NULL',[s.workspaceOwnerId,b.id]);if(current.rows[0]?.status===b.status)return reply({saved:true,changed:false});return reply({error:'Anteprima non disponibile, ritirata definitivamente o lavoro non attivo.'},409);}
+    return reply({saved:true,changed:true});
   } catch {return reply({error:"Modifica anteprima non disponibile."},503);}
 }
 

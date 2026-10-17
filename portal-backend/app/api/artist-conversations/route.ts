@@ -10,26 +10,27 @@ export async function GET(req:Request){
  const s=await workspaceSession(req.headers);if(!s)return out({error:"Accesso richiesto"},401);
  const params=new URL(req.url).searchParams,artistId=params.get("artistId"),trackId=params.get("trackId");
  if(artistId&&!validId(artistId)||trackId&&!validId(trackId))return out({error:"Filtro non valido"},400);
+ const before=params.get('before'),beforeId=params.get('beforeId');if((before&&Number.isNaN(Date.parse(before)))||(beforeId&&!validId(beforeId)))return out({error:'Data non valida'},400);
  try{
- const [artists,messages,events,tracks,attachments,previews]=await Promise.all([
+ const [artists,messages,events,tracks,previews]=await Promise.all([
  getDb().query(`SELECT id,name FROM studio_artists WHERE owner_id=$1 AND deleted_at IS NULL ORDER BY name`,[s.workspaceOwnerId]),
  getDb().query(`SELECT m.id,m.artist_id AS "artistId",m.track_id AS "trackId",m.sender_role AS "senderRole",m.body,m.created_at AS "createdAt",t.data->>'title' AS "trackTitle"
  FROM studio_artist_track_messages m JOIN studio_production t ON t.id=m.track_id AND t.owner_id=m.owner_id AND t.deleted_at IS NULL
  LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id
  WHERE m.owner_id=$1 AND ($2::uuid IS NULL OR m.artist_id=$2::uuid) AND ($3::uuid IS NULL OR m.track_id=$3::uuid)
  AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND COALESCE(p.artist_id,t.artist_id)=m.artist_id
- ORDER BY m.created_at DESC LIMIT 750`,[s.workspaceOwnerId,artistId,trackId]),
+ AND ($4::timestamptz IS NULL OR (m.created_at,m.id)<($4::timestamptz,COALESCE($5::uuid,'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid))) ORDER BY m.created_at DESC,m.id DESC LIMIT 101`,[s.workspaceOwnerId,artistId,trackId,before,beforeId]),
  getDb().query(`SELECT n.id,n.artist_id AS "artistId",n.track_id AS "trackId",n.event_type AS "eventType",n.body,n.created_at AS "createdAt",t.data->>'title' AS "trackTitle"
  FROM studio_artist_notifications n JOIN studio_production t ON t.id=n.track_id AND t.owner_id=n.owner_id AND t.deleted_at IS NULL
  LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id
  WHERE n.owner_id=$1 AND n.recipient='studio' AND n.event_type<>'message' AND ($2::uuid IS NULL OR n.artist_id=$2::uuid)
  AND ($3::uuid IS NULL OR n.track_id=$3::uuid) AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND COALESCE(p.artist_id,t.artist_id)=n.artist_id
  ORDER BY n.created_at DESC LIMIT 300`,[s.workspaceOwnerId,artistId,trackId]),
- getDb().query(`SELECT t.id,COALESCE(p.artist_id,t.artist_id) AS "artistId",COALESCE(t.data->>'title','Brano') AS title FROM studio_production t LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id WHERE t.owner_id=$1 AND t.kind='track' AND t.deleted_at IS NULL AND (t.project_id IS NULL OR p.deleted_at IS NULL) ORDER BY t.created_at DESC LIMIT 800`,[s.workspaceOwnerId]),
- getDb().query(`SELECT a.id,a.message_id AS "messageId",a.artist_id AS "artistId",a.track_id AS "trackId",a.filename,a.mime_type AS "mimeType" FROM studio_artist_message_attachments a JOIN studio_production t ON t.id=a.track_id AND t.owner_id=a.owner_id AND t.deleted_at IS NULL LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id WHERE a.owner_id=$1 AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND COALESCE(p.artist_id,t.artist_id)=a.artist_id ORDER BY a.created_at DESC LIMIT 1000`,[s.workspaceOwnerId]),
- getDb().query(`SELECT v.id,v.artist_id AS "artistId",v.track_id AS "trackId",v.title,v.version_label AS "versionLabel",v.status,v.updated_at AS "updatedAt" FROM studio_artist_previews v JOIN studio_production t ON t.owner_id=v.owner_id AND t.id=v.track_id AND t.deleted_at IS NULL LEFT JOIN studio_projects p ON p.owner_id=t.owner_id AND p.id=t.project_id WHERE v.owner_id=$1 AND v.status IN ('ready','approved','revision_requested') AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND COALESCE(p.artist_id,t.artist_id)=v.artist_id ORDER BY v.updated_at DESC LIMIT 750`,[s.workspaceOwnerId])
+ getDb().query(`SELECT t.id,COALESCE(p.artist_id,t.artist_id) AS "artistId",COALESCE(t.data->>'title','Brano') AS title FROM studio_production t LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id WHERE t.owner_id=$1 AND t.kind='track' AND t.deleted_at IS NULL AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND ($2::uuid IS NULL OR COALESCE(p.artist_id,t.artist_id)=$2::uuid) ORDER BY t.created_at DESC`,[s.workspaceOwnerId,artistId]),
+ getDb().query(`SELECT v.id,v.artist_id AS "artistId",v.track_id AS "trackId",v.title,v.version_label AS "versionLabel",v.status,v.updated_at AS "updatedAt" FROM studio_artist_previews v JOIN studio_production t ON t.owner_id=v.owner_id AND t.id=v.track_id AND t.deleted_at IS NULL LEFT JOIN studio_projects p ON p.owner_id=t.owner_id AND p.id=t.project_id WHERE v.owner_id=$1 AND v.status IN ('ready','approved','revision_requested') AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND COALESCE(p.artist_id,t.artist_id)=v.artist_id AND ($2::uuid IS NULL OR v.artist_id=$2::uuid) ORDER BY v.updated_at DESC`,[s.workspaceOwnerId,artistId])
  ]);
- return out({artists:artists.rows,messages:messages.rows,events:events.rows,tracks:tracks.rows,attachments:attachments.rows,previews:previews.rows});
+ const attachments=await getDb().query(`SELECT id,message_id AS "messageId",artist_id AS "artistId",track_id AS "trackId",filename,mime_type AS "mimeType" FROM studio_artist_message_attachments WHERE owner_id=$1 AND message_id=ANY($2::uuid[])`,[s.workspaceOwnerId,messages.rows.slice(0,100).map(m=>m.id)]);
+ return out({artists:artists.rows,messages:messages.rows.slice(0,100),events:events.rows,tracks:tracks.rows,attachments:attachments.rows,previews:previews.rows,canEdit:canEdit(s.role),hasMore:messages.rows.length>100,nextBefore:messages.rows.slice(0,100).at(-1)?.createdAt,nextBeforeId:messages.rows.slice(0,100).at(-1)?.id});
  }catch{return out({error:"Conversazioni non disponibili: controllare le migrazioni 018 e 019"},503)}
 }
 export async function POST(req:Request){

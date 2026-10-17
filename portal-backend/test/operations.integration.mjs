@@ -211,7 +211,7 @@ export async function verifyOperations({ svc, db, artistId }) {
   );
   assert.ok(!(await svc.listTasks("owner")).some((p) => p.projectId === id));
   assert.ok(
-    (await svc.listLedger("owner")).quotes.some((q) => q.projectId === id),
+    !(await svc.listLedger("owner")).quotes.some((q) => q.projectId === id),
   );
   assert.ok(
     (await svc.listProjects("owner", true)).some(
@@ -244,6 +244,7 @@ export async function verifyOperations({ svc, db, artistId }) {
     "owner@example.test",
   );
   assert.ok((await svc.listTasks("owner")).some((p) => p.id === a));
+  assert.ok((await svc.listLedger("owner")).quotes.some(q=>q.projectId===id),"Restore reinstates preserved quote");
   await assert.rejects(
     svc.trashResource(
       "owner",

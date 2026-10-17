@@ -9,13 +9,13 @@ const entry=(href:string,label:string):NavItem=>({href,label});
 export default function Navigation(){
  const pathname=usePathname();
  const container=useRef<HTMLDivElement>(null);
- const [admin,setAdmin]=useState(false),[owner,setOwner]=useState(false),[signedIn,setSignedIn]=useState(false),[open,setOpen]=useState(false),[expanded,setExpanded]=useState<string|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState("");
+ const [authenticated,setAuthenticated]=useState(false),[admin,setAdmin]=useState(false),[owner,setOwner]=useState(false),[signedIn,setSignedIn]=useState(false),[open,setOpen]=useState(false),[expanded,setExpanded]=useState<string|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState("");
  useEffect(()=>{
   const controller=new AbortController();
   setOpen(false);setExpanded(null);setSignedIn(false);setAdmin(false);setOwner(false);
   fetch("/api/workspace",{cache:"no-store",signal:controller.signal}).then(async r=>{
    if(!r.ok)return;
-   const d=await r.json();setSignedIn(true);setAdmin(Boolean(d.canManageAccess));setOwner(Boolean(d.canManageAccess));
+   const d=await r.json();setAuthenticated(Boolean(d.authenticated));setSignedIn(Boolean(d.role));setAdmin(Boolean(d.canManageAccess));setOwner(Boolean(d.canManageAccess));
   }).catch(()=>{});
   return ()=>controller.abort();
  },[pathname]);
@@ -54,7 +54,7 @@ export default function Navigation(){
     {expanded==="account"?<div className="portal-nav-dropdown portal-nav-dropdown-right">
      {link(entry("/installa","Installa app"))}
      <a href="https://emmestudioproduction.it/" target="_blank" rel="noopener noreferrer">Sito Emme Studio ↗</a>
-     {signedIn?<button className="portal-nav-exit" type="button" onClick={()=>void signOut()} disabled={busy}>{busy?"Uscita…":"Esci"}</button>:null}
+     {authenticated?<button className="portal-nav-exit" type="button" onClick={()=>void signOut()} disabled={busy}>{busy?"Uscita…":"Esci"}</button>:null}
     </div>:null}
    </div>
   </nav>{error?<p className="navigation-error" role="alert">{error}</p>:null}

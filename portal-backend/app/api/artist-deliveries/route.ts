@@ -41,8 +41,9 @@ export async function PATCH(request:Request){
  try{
  const b=await request.json();
  if(!validId(b.id)||typeof b.enabled!=="boolean")return reply({error:"Dati non validi"},400);
- const r=await getDb().query('UPDATE studio_artist_deliveries SET enabled=$3,updated_at=now() WHERE owner_id=$1 AND id=$2 RETURNING id',[session.workspaceOwnerId,b.id,b.enabled]);
+ const r=await getDb().query('UPDATE studio_artist_deliveries SET enabled=$3,updated_at=now() WHERE owner_id=$1 AND id=$2 AND enabled IS DISTINCT FROM $3 RETURNING id',[session.workspaceOwnerId,b.id,b.enabled]);
  if(r.rowCount&&b.enabled){const v=await getDb().query("SELECT artist_id,track_id FROM studio_artist_deliveries WHERE id=$1 AND owner_id=$2",[b.id,session.workspaceOwnerId]);if(v.rows[0])await notifyArtistEvent(session.workspaceOwnerId,v.rows[0].artist_id,v.rows[0].track_id,"artist","delivery","Nuova consegna disponibile per il download");}
- return r.rowCount?reply({saved:true}):reply({error:"Consegna inesistente"},404);
+ if(!r.rowCount){const existing=await getDb().query("SELECT id FROM studio_artist_deliveries WHERE owner_id=$1 AND id=$2",[session.workspaceOwnerId,b.id]);if(!existing.rowCount)return reply({error:"Consegna inesistente"},404);}
+ return reply({saved:true});
  }catch{return reply({error:"Aggiornamento fallito"},503);}
 }
