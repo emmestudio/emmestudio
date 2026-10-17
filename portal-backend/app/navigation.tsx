@@ -51,6 +51,7 @@ export default function Navigation() {
         ...(admin
           ? [
               ["/guadagni", "Guadagni"],
+              ["/posta", "Posta"],
               ["/costi", "Costi"],
               ["/accessi", "Team e accessi"],
               ["/archivio", "Archivio Drive"],
