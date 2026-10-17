@@ -20,7 +20,7 @@ export default async function Page(){
   <h1>La tua <em>Posta.</em></h1>
   <p>Aruba e Gmail in un unico spazio, con identità di invio separate e accesso riservato al titolare.</p>
   <MailAccountSetup accounts={accounts} migrationNeeded={migrationNeeded}/>
-  <MailWorkspace accounts={accounts} migrationNeeded={migrationNeeded} sendEnabled={process.env.MAIL_SEND_ENABLED==="true"}/>
+  <MailWorkspace accounts={accounts} migrationNeeded={migrationNeeded} sendEnabled={process.env.MAIL_SEND_ENABLED==="true"} arubaSendEnabled={process.env.ARUBA_SMTP_SEND_ENABLED==="true"}/>
   <p className="small"><Link href="/dashboard">Torna alla dashboard</Link></p>
  </main>;
 }
