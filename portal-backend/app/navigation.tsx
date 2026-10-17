@@ -15,7 +15,7 @@ export default function Navigation(){
   setOpen(false);setExpanded(null);setSignedIn(false);setAdmin(false);setOwner(false);
   fetch("/api/workspace",{cache:"no-store",signal:controller.signal}).then(async r=>{
    if(!r.ok)return;
-   const d=await r.json();setSignedIn(true);setAdmin(Boolean(d.canManageAccess));setOwner(d.isOwner===true);
+   const d=await r.json();setSignedIn(true);setAdmin(Boolean(d.canManageAccess));setOwner(Boolean(d.canManageAccess));
   }).catch(()=>{});
   return ()=>controller.abort();
  },[pathname]);
