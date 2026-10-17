@@ -2,7 +2,7 @@ import "server-only";
 import {getDb} from "./db";
 import {decryptMailSecret} from "./mail-crypto";
 export type MailHeader={id:string;accountId:string;provider:"gmail"|"aruba";from:string;subject:string;date:string;snippet:string;unread:boolean};
-export async function listGmailHeaders(ownerId:string,accountId:string):Promise<MailHeader[]>{
+export async function listGmailHeaders(ownerId:string,accountId:string,folder:"INBOX"|"SENT"="INBOX"):Promise<MailHeader[]>{
  const db=getDb();
  const r=await db.query(`SELECT a.id,a.address,c.encrypted_refresh_token FROM studio_mail_accounts a
  JOIN studio_mail_google_credentials c ON c.account_id=a.id AND c.owner_id=a.owner_id
@@ -12,7 +12,7 @@ export async function listGmailHeaders(ownerId:string,accountId:string):Promise<
  if(!token.ok)throw Error("Autorizzazione Gmail scaduta o non disponibile.");
  const info=await token.json() as {access_token?:string};if(!info.access_token)throw Error("Token Gmail non disponibile");
  const headers={Authorization:"Bearer "+info.access_token};
- const list=await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages?"+new URLSearchParams({maxResults:"15",labelIds:"INBOX"}),{headers,signal:AbortSignal.timeout(10000),cache:"no-store"});
+ const list=await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages?"+new URLSearchParams({maxResults:"15",labelIds:folder}),{headers,signal:AbortSignal.timeout(10000),cache:"no-store"});
  if(!list.ok){
   const status=list.status;
   let reason="";
