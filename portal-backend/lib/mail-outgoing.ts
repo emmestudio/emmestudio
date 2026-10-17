@@ -5,7 +5,7 @@ import {getDb} from "./db";
 import {decryptMailSecret} from "./mail-crypto";
 import {ARUBA_MAIL,arubaMailReadiness} from "./aruba-mail-config";
 export type OutgoingAttachment={name:string;mimeType:string;contentBase64:string};
-export type OutgoingMail={to:string;subject:string;body:string;attachments:OutgoingAttachment[];replyMessageId?:string};
+export type OutgoingMail={to:string;subject:string;body:string;attachments:OutgoingAttachment[];replyMessageId?:string;threadId?:string};
 function b64(value:string){return Buffer.from(value,"utf8").toString("base64");}
 function mimeHeader(value:string){return "=?UTF-8?B?"+b64(value)+"?=";}
 function wrap64(value:string){return value.replace(/.{1,76}/g,"$&\r\n").trimEnd();}
@@ -25,10 +25,10 @@ export function prepareOutgoing(input:unknown):OutgoingMail{
   if(typeof a.mimeType!=="string"||a.mimeType.length>100||!/^[\w.+-]+\/[\w.+-]+$/.test(a.mimeType))throw Error("Tipo allegato non valido");
   if(typeof a.contentBase64!=="string"||!/^([A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(a.contentBase64))throw Error("Formato allegato non valido");
   const buf=Buffer.from(a.contentBase64,"base64");total+=buf.length;
-  if(buf.length>4*1024*1024||total>8*1024*1024)throw Error("Limite allegati: 4 MB per file, 8 MB complessivi");
+  if(buf.length>1536*1024||total>2*1024*1024)throw Error("Limite allegati: 1,5 MB per file e 2 MB complessivi");
   return {name:a.name,mimeType:a.mimeType,contentBase64:a.contentBase64};
  });
- return {to:x.to.toLowerCase(),subject:x.subject.trim(),body:x.body,attachments,replyMessageId:typeof x.replyMessageId==="string"?x.replyMessageId.slice(0,300):undefined};
+ return {to:x.to.toLowerCase(),subject:x.subject.trim(),body:x.body,attachments,replyMessageId:typeof x.replyMessageId==="string"?x.replyMessageId.slice(0,300):undefined,threadId:typeof x.threadId==="string"&&/^[a-fA-F0-9]{1,64}$/.test(x.threadId)?x.threadId:undefined};
 }
 export function buildRfc822(from:string,mail:OutgoingMail):string{
  const boundary="emmestudio-"+randomBytes(12).toString("hex");
@@ -64,7 +64,7 @@ async function gmailToken(ownerId:string,accountId:string){
 export async function sendGmail(ownerId:string,accountId:string,mail:OutgoingMail){
  const {from,access}=await gmailToken(ownerId,accountId);
  const raw=Buffer.from(buildRfc822(from,mail),"utf8").toString("base64url");
- const res=await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send",{method:"POST",headers:{"Authorization":"Bearer "+access,"Content-Type":"application/json"},body:JSON.stringify({raw}),signal:AbortSignal.timeout(20000),cache:"no-store"});
+ const res=await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send",{method:"POST",headers:{"Authorization":"Bearer "+access,"Content-Type":"application/json"},body:JSON.stringify(mail.threadId?{raw,threadId:mail.threadId}:{raw}),signal:AbortSignal.timeout(20000),cache:"no-store"});
  if(!res.ok)throw Error(res.status===403?"Gmail non autorizza l'invio: controlla gli scope Google.":"Invio Gmail non riuscito (HTTP "+res.status+")");
  return {sent:true,provider:"gmail"};
 }
