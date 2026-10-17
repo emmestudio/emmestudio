@@ -2,13 +2,25 @@ import {ownerMailboxSession} from "@/lib/mail-access";
 import {getDb} from "@/lib/db";
 import {validId} from "@/lib/task-data";
 import {decryptMailSecret} from "@/lib/mail-crypto";
+import {fetchArubaFull} from "@/lib/aruba-message-readonly";
+import {ARUBA_MAIL} from "@/lib/aruba-mail-config";
 export const runtime="nodejs";export const dynamic="force-dynamic";export const maxDuration=25;
 const response=(error:string,status:number)=>Response.json({error},{status,headers:{"Cache-Control":"no-store"}});
 export async function GET(req:Request){
  const owner=await ownerMailboxSession(req.headers);if(!owner)return response("Non autorizzato",403);
- const q=new URL(req.url).searchParams,id=q.get("accountId"),mid=q.get("messageId"),idx=Number(q.get("index"));
- if(!validId(id)||!mid||!/^[a-zA-Z0-9_-]{5,100}$/.test(mid)||!Number.isInteger(idx)||idx<0||idx>19)return response("Allegato non valido",400);
+ const q=new URL(req.url).searchParams,id=q.get("accountId"),mid=q.get("messageId"),provider=q.get("provider")??"gmail",idx=Number(q.get("index"));
+ if(!validId(id)||!mid||(provider==="gmail"?!/^[a-zA-Z0-9_-]{5,100}$/.test(mid):provider==="aruba"?!/^\d{1,18}$/.test(mid):true)||!Number.isInteger(idx)||idx<0||idx>19)return response("Allegato non valido",400);
  try{
+ if(provider==="aruba"){
+  const owned=await getDb().query("SELECT address FROM studio_mail_accounts WHERE id=$1 AND owner_id=$2 AND provider='aruba'",[id,owner.workspaceOwnerId]);
+  if(!owned.rowCount||String(owned.rows[0].address).toLowerCase()!==ARUBA_MAIL.address)return response("Casella Aruba non autorizzata",403);
+  const full=await fetchArubaFull(mid);
+  const info=full.message.attachments[idx],bytes=full.buffers[idx];
+  if(!info||!bytes)return response("Allegato Aruba non trovato",404);
+  if(bytes.length>8*1024*1024)return response("Allegato superiore a 8 MB",413);
+  const safe=info.name.replace(/[\r\n"\\/]/g,"_").slice(0,120);
+  return new Response(new Uint8Array(bytes),{headers:{"Content-Type":"application/octet-stream","Content-Disposition":'attachment; filename="'+safe+'"',"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
+ }
  const r=await getDb().query(`SELECT c.encrypted_refresh_token FROM studio_mail_accounts a JOIN studio_mail_google_credentials c ON c.account_id=a.id AND a.owner_id=c.owner_id WHERE a.id=$1 AND a.owner_id=$2 AND a.provider='gmail' AND a.status='connected'`,[id,owner.workspaceOwnerId]);
  if(!r.rowCount)return response("Casella non autorizzata",403);
  const t=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({client_id:process.env.GMAIL_OAUTH_CLIENT_ID!,client_secret:process.env.GMAIL_OAUTH_CLIENT_SECRET!,refresh_token:decryptMailSecret(r.rows[0].encrypted_refresh_token),grant_type:"refresh_token"}),cache:"no-store",signal:AbortSignal.timeout(10000)});
