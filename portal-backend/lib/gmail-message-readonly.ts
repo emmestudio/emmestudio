@@ -18,6 +18,7 @@ export async function readGmailMessage(ownerId:string,accountId:string,messageId
  const plain=parts.find(p=>p.mimeType==="text/plain"&&p.body?.data);
  const html=parts.find(p=>p.mimeType==="text/html"&&p.body?.data);
  const decode=(p:Part)=>Buffer.from(p.body?.data??"","base64url").toString("utf8").slice(0,150000);
- let body=plain?decode(plain):html?decode(html).replace(/<[^>]*>/g," ").replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">"):"";
- return {from:field("from"),to:field("to"),subject:field("subject"),date:field("date"),messageId:field("message-id"),threadId:m.threadId??"",body,attachments,notice:!plain&&html?"Testo HTML mostrato senza formattazione per sicurezza.":undefined};
+ let body=plain?decode(plain):html?decode(html).replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi," ").replace(/<[^>]*>/g," ").replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">"):"";
+ const htmlBody=html?decode(html).slice(0,150000):undefined;
+ return {from:field("from"),to:field("to"),subject:field("subject"),date:field("date"),messageId:field("message-id"),threadId:m.threadId??"",body,htmlBody,attachments,notice:html?"HTML isolato; immagini esterne bloccate fino alla tua autorizzazione.":undefined};
 }
