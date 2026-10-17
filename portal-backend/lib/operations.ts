@@ -41,6 +41,44 @@ export async function purgeProject(owner: string, id: string, version: number, c
   } catch(e) { await c.query("ROLLBACK"); throw e; }
   finally { c.release(); }
 }
+export async function purgeProduction(owner:string,id:string,version:number,confirmation:string){
+ if(!validId(id))throw new OperationsError("Identificativo non valido.");
+ const c=await getDb().connect();
+ try{
+  await c.query("BEGIN");
+  await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1,2))",[owner]);
+  const r=await c.query("SELECT id,kind,data,version,deleted_at FROM studio_production WHERE owner_id=$1 AND id=$2 FOR UPDATE",[owner,id]);
+  const item=r.rows[0];
+  if(!item||!item.deleted_at)throw new OperationsError("Puoi eliminare definitivamente solo una produzione nel cestino.");
+  if(item.version!==version)throw new OperationsError("Scheda modificata. Aggiorna e riprova.");
+  if(confirmation!==(item.data?.title??""))throw new OperationsError("Scrivi il titolo esatto per confermare.");
+  if(!["track","recording","live","service","material","revision"].includes(item.kind))throw new OperationsError("Tipo di produzione non eliminabile.");
+  const related=await c.query(`WITH RECURSIVE tree AS (
+   SELECT id,kind,data FROM studio_production WHERE owner_id=$1 AND id=$2
+   UNION ALL SELECT child.id,child.kind,child.data FROM studio_production child
+   JOIN tree parent ON child.owner_id=$1 AND child.data->>'trackId'=parent.id::text
+   WHERE child.id<>parent.id
+  ) SELECT DISTINCT id,kind FROM tree`,[owner,id]);
+  const ids=related.rows.map(x=>x.id);
+  if(!ids.length)throw new OperationsError("Produzione non disponibile.");
+  // Restrict all deletions to records of this workspace.
+  const optional=async(table:string,condition:string,params:unknown[])=>{
+    const exists=await c.query("SELECT to_regclass($1) AS name",["public."+table]);
+    if(exists.rows[0]?.name)await c.query(`DELETE FROM ${table} WHERE owner_id=$1 AND ${condition}`,params);
+  };
+  await optional("studio_artist_preview_events","preview_id IN (SELECT id FROM studio_artist_previews WHERE owner_id=$1 AND track_id=ANY($2::uuid[]))",[owner,ids]);
+  for(const table of ["studio_artist_notifications","studio_artist_track_messages","studio_artist_deliveries","studio_artist_previews"])
+   await optional(table,"track_id=ANY($2::uuid[])",[owner,ids]);
+  await optional("studio_production_history","item_id=ANY($2::uuid[])",[owner,ids]);
+  await optional("studio_work_history","resource_id=ANY($2::uuid[])",[owner,ids]);
+  for(const table of ["studio_payments","studio_installments","studio_quote_history","studio_quotes"])
+   await optional(table,"project_id=ANY($2::uuid[])",[owner,ids]);
+  await optional("studio_delivery","track_id=ANY($2::uuid[])",[owner,ids]);
+  await c.query("DELETE FROM studio_production WHERE owner_id=$1 AND id=ANY($2::uuid[])",[owner,ids]);
+  await c.query("COMMIT");
+ }catch(e){await c.query("ROLLBACK");throw e}
+ finally{c.release()}
+}
 export async function saveOperations(
   owner: string,
   id: string,
