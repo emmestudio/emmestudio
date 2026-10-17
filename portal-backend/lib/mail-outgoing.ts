@@ -37,7 +37,8 @@ export function buildRfc822(from:string,mail:OutgoingMail):string{
   "To: <"+mail.to+">",
   "Subject: "+mimeHeader(mail.subject),
   "Date: "+new Date().toUTCString(),
-  "MIME-Version: 1.0"
+  "MIME-Version: 1.0",
+  "Message-ID: <"+randomBytes(12).toString("hex")+"@emmestudioproduction.it>"
  ];
  if(mail.replyMessageId&&/^<[^<>\r\n]+>$/.test(mail.replyMessageId))head.push("In-Reply-To: "+mail.replyMessageId,"References: "+mail.replyMessageId);
  if(!mail.attachments.length)return [...head,'Content-Type: text/plain; charset="UTF-8"',"Content-Transfer-Encoding: base64","",wrap64(b64(mail.body)),""].join("\r\n");
@@ -83,9 +84,11 @@ async function smtpAruba(from:string,mail:OutgoingMail){
   if(output.length){resolve(output.splice(0).join("\n"));return;}
   waiter=resolve;failed=reject;
  });
+ let returnCode=0;
  const step=async(cmd:string|undefined,expected:number[])=>{
   if(cmd!==undefined)socket.write(cmd+"\r\n");
   const response=await reply();const n=Number(response.match(/^(\d{3})/)?.[1]);
+  returnCode=n;
   if(!expected.includes(n))throw Error("SMTP Aruba: comando rifiutato ("+n+")");
  };
  try{
@@ -99,8 +102,7 @@ async function smtpAruba(from:string,mail:OutgoingMail){
   await step("DATA",[354]);
   const mime=buildRfc822(from,mail).replace(/(^|\r\n)\./g,"$1..");
   await step(mime+"\r\n.",[250]);
-  socket.write("QUIT\r\n");
-  return {sent:true,provider:"aruba"};
+  return {sent:true,provider:"aruba",smtpAccepted:true,smtpCode:returnCode,notice:"Messaggio accettato dal server SMTP Aruba; recapito al destinatario non ancora confermato."};
  }finally{socket.destroy();}
 }
 export async function sendAruba(ownerId:string,accountId:string,mail:OutgoingMail){
