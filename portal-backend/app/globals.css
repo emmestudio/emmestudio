@@ -301,3 +301,9 @@
 .mail-quotes-picker>div{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid #ffffff20;padding:9px 0;color:#e5ded4}
 .mail-quotes-picker a{color:#d4b27c;text-decoration:underline}
 .mail-quotes-picker button{background:#d4b27c1c;border:1px solid #d4b27c66;border-radius:8px;color:#e7cc9d;padding:8px 12px;cursor:pointer}
+
+
+.mail-html-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 9px;color:#ddccad;font-size:12px}
+.mail-html-toolbar span{margin-right:auto;font-weight:650}
+.mail-html-toolbar button{border:1px solid #d4b27c66;background:#d4b27c12;border-radius:8px;padding:7px 10px;color:#e4c896;cursor:pointer}
+.mail-html-frame{display:block;width:100%;height:min(56vh,600px);min-height:320px;box-sizing:border-box;background:#fff;border:1px solid #ffffff30;border-radius:10px}
