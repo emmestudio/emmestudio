@@ -14,7 +14,7 @@ export async function readGmailMessage(ownerId:string,accountId:string,messageId
  const m=await msg.json() as {id:string;payload?:Part&{headers?:{name:string;value:string}[]}};
  const field=(name:string)=>m.payload?.headers?.find(h=>h.name.toLowerCase()===name)?.value??"";
  const parts:Part[]=[];const walk=(p:Part,depth=0)=>{if(depth>8||parts.length>75)return;parts.push(p);for(const child of p.parts??[])walk(child,depth+1);};if(m.payload)walk(m.payload);
- const attachments=parts.filter(p=>p.filename&&p.body?.attachmentId).slice(0,20).map(p=>({name:p.filename!.slice(0,180),mimeType:p.mimeType??"application/octet-stream",size:p.body?.size??0}));
+ const attachments=parts.filter(p=>p.filename&&(p.body?.attachmentId||p.body?.data)).slice(0,20).map((p,index)=>({index,name:p.filename!.slice(0,180),mimeType:p.mimeType??"application/octet-stream",size:p.body?.size??0}));
  const plain=parts.find(p=>p.mimeType==="text/plain"&&p.body?.data);
  const html=parts.find(p=>p.mimeType==="text/html"&&p.body?.data);
  const decode=(p:Part)=>Buffer.from(p.body?.data??"","base64url").toString("utf8").slice(0,150000);
