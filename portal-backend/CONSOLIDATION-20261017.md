@@ -32,3 +32,7 @@ I test di consolidamento usano PGlite, storage e Gmail simulati. Non certificano
 ## Esito locale finale
 
 Build di produzione e TypeScript superati su checkout isolato. Test unitari, gestione completa, produzione/finanza, Drive, nuovo consolidamento, upload privato simulato e controlli grafici a 390/1440 px superati. La pubblicazione applicativa rimane bloccata dal limite Vercel. La correzione SQL del trigger richiede applicazione sul solo database Emme Studio oppure il runner dopo lo sblocco dei deploy.
+
+## Stato Vercel dopo i tentativi di rilascio
+
+Il codice applicativo `457a5d3` ha raggiunto READY tramite il deploy Git `dpl_ANcmYKZDj9dueczrTEJYNw6tPB2S`. Il successivo deploy per correggere la funzione DB non è partito e le richieste API continuano a restituire 402. Non considerare quindi applicata automaticamente la funzione corretta: serve la correzione SQL manuale sul DB Emme o il prossimo deploy con il preparatore protetto. Il preparatore salta la migrazione se riconosce già la funzione corretta e il registro invii, ed è disattivato nelle build locali/preview. Il buildCommand Vercel resta `npm run build`.
