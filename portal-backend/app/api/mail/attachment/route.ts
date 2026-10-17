@@ -8,13 +8,13 @@ export const runtime="nodejs";export const dynamic="force-dynamic";export const 
 const response=(error:string,status:number)=>Response.json({error},{status,headers:{"Cache-Control":"no-store"}});
 export async function GET(req:Request){
  const owner=await ownerMailboxSession(req.headers);if(!owner)return response("Non autorizzato",403);
- const q=new URL(req.url).searchParams,id=q.get("accountId"),mid=q.get("messageId"),provider=q.get("provider")??"gmail",idx=Number(q.get("index"));
- if(!validId(id)||!mid||(provider==="gmail"?!/^[a-zA-Z0-9_-]{5,100}$/.test(mid):provider==="aruba"?!/^\d{1,18}$/.test(mid):true)||!Number.isInteger(idx)||idx<0||idx>19)return response("Allegato non valido",400);
+ const q=new URL(req.url).searchParams,id=q.get("accountId"),mid=q.get("messageId"),provider=q.get("provider")??"gmail",folder=q.get("folder")??"inbox",idx=Number(q.get("index"));
+ if(!["inbox","sent"].includes(folder)||!validId(id)||!mid||(provider==="gmail"?!/^[a-zA-Z0-9_-]{5,100}$/.test(mid):provider==="aruba"?!/^\d{1,18}$/.test(mid):true)||!Number.isInteger(idx)||idx<0||idx>19)return response("Allegato non valido",400);
  try{
  if(provider==="aruba"){
   const owned=await getDb().query("SELECT address FROM studio_mail_accounts WHERE id=$1 AND owner_id=$2 AND provider='aruba'",[id,owner.workspaceOwnerId]);
   if(!owned.rowCount||String(owned.rows[0].address).toLowerCase()!==ARUBA_MAIL.address)return response("Casella Aruba non autorizzata",403);
-  const full=await fetchArubaFull(mid);
+  const full=await fetchArubaFull(mid,folder==="sent"?"sent":"inbox");
   const info=full.message.attachments[idx],bytes=full.buffers[idx];
   if(!info||!bytes)return response("Allegato Aruba non trovato",404);
   if(bytes.length>8*1024*1024)return response("Allegato superiore a 8 MB",413);
