@@ -11,7 +11,7 @@ export async function GET(req:Request){
  const params=new URL(req.url).searchParams,artistId=params.get("artistId"),trackId=params.get("trackId");
  if(artistId&&!validId(artistId)||trackId&&!validId(trackId))return out({error:"Filtro non valido"},400);
  try{
- const [artists,messages,events,tracks]=await Promise.all([
+ const [artists,messages,events,tracks,attachments]=await Promise.all([
  getDb().query(`SELECT id,name FROM studio_artists WHERE owner_id=$1 AND deleted_at IS NULL ORDER BY name`,[s.workspaceOwnerId]),
  getDb().query(`SELECT m.id,m.artist_id AS "artistId",m.track_id AS "trackId",m.sender_role AS "senderRole",m.body,m.created_at AS "createdAt",t.data->>'title' AS "trackTitle"
  FROM studio_artist_track_messages m JOIN studio_production t ON t.id=m.track_id AND t.owner_id=m.owner_id AND t.deleted_at IS NULL
@@ -25,9 +25,10 @@ export async function GET(req:Request){
  WHERE n.owner_id=$1 AND n.recipient='studio' AND n.event_type<>'message' AND ($2::uuid IS NULL OR n.artist_id=$2::uuid)
  AND ($3::uuid IS NULL OR n.track_id=$3::uuid) AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND COALESCE(p.artist_id,t.artist_id)=n.artist_id
  ORDER BY n.created_at DESC LIMIT 300`,[s.workspaceOwnerId,artistId,trackId]),
- getDb().query(`SELECT t.id,COALESCE(p.artist_id,t.artist_id) AS "artistId",COALESCE(t.data->>'title','Brano') AS title FROM studio_production t LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id WHERE t.owner_id=$1 AND t.kind='track' AND t.deleted_at IS NULL AND (t.project_id IS NULL OR p.deleted_at IS NULL) ORDER BY t.created_at DESC LIMIT 800`,[s.workspaceOwnerId])
+ getDb().query(`SELECT t.id,COALESCE(p.artist_id,t.artist_id) AS "artistId",COALESCE(t.data->>'title','Brano') AS title FROM studio_production t LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id WHERE t.owner_id=$1 AND t.kind='track' AND t.deleted_at IS NULL AND (t.project_id IS NULL OR p.deleted_at IS NULL) ORDER BY t.created_at DESC LIMIT 800`,[s.workspaceOwnerId]),
+ getDb().query(`SELECT a.id,a.message_id AS "messageId",a.artist_id AS "artistId",a.track_id AS "trackId",a.filename,a.mime_type AS "mimeType" FROM studio_artist_message_attachments a JOIN studio_production t ON t.id=a.track_id AND t.owner_id=a.owner_id AND t.deleted_at IS NULL LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id WHERE a.owner_id=$1 AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND COALESCE(p.artist_id,t.artist_id)=a.artist_id ORDER BY a.created_at DESC LIMIT 1000`,[s.workspaceOwnerId])
  ]);
- return out({artists:artists.rows,messages:messages.rows,events:events.rows,tracks:tracks.rows});
+ return out({artists:artists.rows,messages:messages.rows,events:events.rows,tracks:tracks.rows,attachments:attachments.rows});
  }catch{return out({error:"Conversazioni non disponibili: controllare le migrazioni 018 e 019"},503)}
 }
 export async function POST(req:Request){
