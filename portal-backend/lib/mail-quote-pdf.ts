@@ -1,4 +1,3 @@
-import "server-only";
 type Line={description:string;quantity:number;unitPrice:number};
 type QuotePdf={title:string;artist:string;service:string;id:string;version:number;status:string;amount:number;notes:string;items:Line[]};
 const esc=(s:string)=>s.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^\x20-\x7E]/g," ").replace(/[()\\]/g,c=>"\\"+c).slice(0,240);
