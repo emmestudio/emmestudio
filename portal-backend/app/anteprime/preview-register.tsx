@@ -34,13 +34,13 @@ export default function PreviewRegister({initial}: {initial:Preview[]}){
  return <section className="card preview-register">
  <div className="preview-register-head"><div><h2>Versioni registrate</h2><p className="small">{items.length} versioni · organizzate per artista e brano</p></div><label className="preview-register-search">Cerca artista o brano<input type="search" value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Cerca nel registro…"/></label></div>
  {error?<p role="alert" style={{color:"#fca5a5"}}>{error}</p>:null}
- {!groups.length?<p>Nessuna anteprima trovata.</p>:groups.map(g=><section key={g.artist} style={{marginTop:26}}>
+ {!groups.length?<p>Nessuna anteprima trovata.</p>:groups.map(g=><section key={g.artist} className="preview-register-artist">
  <h3 style={{borderBottom:"1px solid #444",paddingBottom:10}}>{g.artist}</h3>
- {g.songs.map(([song,versions])=><div key={song} style={{margin:"15px 0 22px",border:"1px solid #383838",borderRadius:12,padding:"12px 18px"}}>
+ {g.songs.map(([song,versions])=><div key={song} className="preview-register-song">
  <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><strong style={{fontSize:"1.05rem"}}>{song}</strong><small>{versions.length} {versions.length===1?"versione":"versioni"}</small></div>
- {versions.map(v=><div key={v.id} className="ledger-row" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:14,flexWrap:"wrap",padding:"16px 0"}}>
- <div style={{minWidth:180,flex:"1 1 240px"}}><strong>{v.title}</strong><p className="small">{v.version_label}</p>{v.feedback?<p className="small">Feedback: {v.feedback}</p>:null}</div>
- <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+ {versions.map(v=><div key={v.id} className="preview-register-version">
+ <div className="preview-register-file"><strong>{v.title}</strong><p className="small">{v.version_label}</p>{v.feedback?<p className="small">Feedback: {v.feedback}</p>:null}</div>
+ <div className="preview-register-actions">
  <span style={{padding:"5px 10px",border:"1px solid currentColor",borderRadius:99,color:states[v.status]?.color??"#ddd",fontSize:12}}>{states[v.status]?.label??v.status}</span>
  <select aria-label={"Modifica stato "+v.title} value={v.status} onChange={e=>void change(v.id,e.target.value)} disabled={busy===v.id}>{Object.entries(states).map(([key,s])=><option key={key} value={key}>{s.label}</option>)}</select>
  <button type="button" className="secondary" style={{color:"#fca5a5",borderColor:"#854747"}} onClick={()=>void remove(v)} disabled={busy===v.id}>{busy===v.id?"Attendi…":"Elimina definitivamente"}</button>
