@@ -1,6 +1,6 @@
 "use client";
 import {useState} from "react";
-type Detail={from:string;to:string;subject:string;date:string;body:string;attachments:{name:string;mimeType:string;size:number}[];notice?:string};
+type Detail={from:string;to:string;subject:string;date:string;body:string;attachments:{index:number;name:string;mimeType:string;size:number}[];notice?:string};
 type Draft={id:string;accountId:string|null;recipient:string;subject:string;body:string;updatedAt:string};
 type Incoming={id:string;accountId:string;provider:"gmail"|"aruba";from:string;subject:string;date:string;snippet:string;unread:boolean};
 function mailDate(value:string){const d=new Date(value);return Number.isNaN(d.getTime())?(value||"Data non disponibile"):new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(d);}
@@ -50,7 +50,7 @@ export default function MailWorkspace({accounts,migrationNeeded}:{accounts:Accou
      {detailError?<p role="status">{detailError}</p>:null}
      {detail?<><div className="mail-detail-body">{detail.body||"Nessun testo disponibile."}</div>
       {detail.notice?<p className="small">{detail.notice}</p>:null}
-      {detail.attachments.length?<div className="mail-attachment-list"><strong>Allegati ({detail.attachments.length})</strong>{detail.attachments.map((a,i)=><p key={i}>{a.name} · {Math.ceil(a.size/1024)} KB · download non ancora attivo</p>)}</div>:null}
+      {detail.attachments.length?<div className="mail-attachment-list"><strong>Allegati ({detail.attachments.length})</strong>{detail.attachments.map((a,i)=><p key={i}><a href={"/api/mail/attachment?"+new URLSearchParams({accountId:opened.accountId,messageId:opened.id,index:String(a.index)})} download={a.name}>{a.name}</a> · {Math.ceil(a.size/1024)} KB</p>)}</div>:null}
      </>:null}
      <div className="mail-popup-actions"><button type="button" className="mail-reply-button" onClick={()=>{setReplyOpen(v=>!v);setReplyNotice("");}} disabled={opening}>↩ Rispondi</button></div>
      {replyOpen?<form className="mail-popup-reply" onSubmit={async e=>{e.preventDefault();if(replySaving)return;setReplySaving(true);setReplyNotice("");try{
