@@ -13,12 +13,12 @@ export async function GET(req:Request){
   const r=await getDb().query("SELECT id,provider,address FROM studio_mail_accounts WHERE owner_id=$1 AND ($2::text IS NULL OR provider=$2) ORDER BY provider",[session.workspaceOwnerId,provider]);
   const responses=await Promise.allSettled(r.rows.map(async (a:{id:string;provider:string;address:string})=>{
    if(a.provider==="gmail")return listGmailHeaders(session.workspaceOwnerId,a.id,folder==="sent"?"SENT":"INBOX");
-   if(a.provider==="aruba"&&folder==="sent")return [];
-   if(a.provider==="aruba"&&a.address.toLowerCase()===(process.env.ARUBA_MAIL_USERNAME??"").trim().toLowerCase())return listArubaHeaders(a.id);
+   
+   if(a.provider==="aruba"&&a.address.toLowerCase()===(process.env.ARUBA_MAIL_USERNAME??"").trim().toLowerCase())return listArubaHeaders(a.id,folder==="sent"?"sent":"inbox");
    throw Error("Casella Aruba non configurata");
   }));
   const messages=responses.flatMap(x=>x.status==="fulfilled"?x.value:[]).sort((a,b)=>(Date.parse(b.date)||0)-(Date.parse(a.date)||0)).slice(0,30);
   const failures=responses.flatMap((x,i)=>x.status==="rejected"?[{provider:r.rows[i].provider,address:r.rows[i].address,error:x.reason instanceof Error?x.reason.message:"Lettura non disponibile"}]:[]);
-  return Response.json({messages,failures,readOnly:true,folder,arubaSentSupported:false},{headers:{"Cache-Control":"no-store"}});
+  return Response.json({messages,failures,readOnly:true,folder,arubaSentSupported:true},{headers:{"Cache-Control":"no-store"}});
  }catch{return Response.json({error:"Posta in arrivo non disponibile"},{status:503,headers:{"Cache-Control":"no-store"}});}
 }
