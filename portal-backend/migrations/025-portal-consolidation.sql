@@ -64,7 +64,7 @@ CREATE OR REPLACE FUNCTION studio_lock_artist_file() RETURNS trigger LANGUAGE pl
 DECLARE fid text;
 BEGIN
  IF current_setting('emme.restoring',true)='1' THEN RETURN NEW; END IF;
- fid=CASE WHEN TG_TABLE_NAME='studio_artist_previews' THEN NEW.drive_file_id ELSE NEW.file_id END;
+ fid=COALESCE(to_jsonb(NEW)->>'drive_file_id',to_jsonb(NEW)->>'file_id');
  PERFORM pg_advisory_xact_lock(hashtextextended(NEW.owner_id||'/'||fid,9723187));
  IF EXISTS(SELECT 1 FROM studio_artist_previews WHERE owner_id=NEW.owner_id AND drive_file_id=fid AND purged_at IS NOT NULL) THEN RAISE EXCEPTION 'PREVIEW_FILE_PURGED'; END IF;
  RETURN NEW;
