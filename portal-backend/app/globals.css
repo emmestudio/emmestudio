@@ -239,3 +239,24 @@
 .portal-navigation-v2 .portal-nav-indicator-line{display:block;width:7px;height:2px;border-radius:2px;background:#d4b27c;box-shadow:0 0 8px #d4b27c40;transition:width .22s ease,transform .22s ease}
 .portal-navigation-v2 .portal-nav-trigger[aria-expanded=true] .portal-nav-indicator-line{width:13px;transform:rotate(90deg)}
 .artist-status-pill{display:inline-flex;align-items:center;border:1px solid #d4b27c65;background:#d4b27c13;color:#f0d2a2;padding:7px 11px;border-radius:999px;font-size:12px;line-height:1.2}
+
+
+/* Emme Studio mailbox — cinematic readable message hierarchy */
+.mail-message-card{padding:19px 21px;margin:11px 0;border:1px solid #ffffff20;border-radius:14px;background:linear-gradient(125deg,#1c1d23,#121318 80%);text-align:left;box-shadow:0 7px 24px #00000020;transition:border-color .2s,background .2s}
+.mail-message-card:hover{border-color:#d4b27c5f;background:linear-gradient(125deg,#252329,#16161b 80%)}
+.mail-message-card.is-unread{border-left:3px solid #d4b27c;background:linear-gradient(110deg,#d4b27c0e,#16171c 70%)}
+.mail-message-top{display:flex;align-items:center;gap:13px;min-width:0}
+.mail-sender-avatar{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:12px;background:#d4b27c1a;border:1px solid #d4b27c44;color:#e9c28b;font-weight:700;font-size:18px}
+.mail-message-identity{min-width:0;flex:1}
+.mail-message-sender{display:flex;align-items:center;gap:9px;color:#faf3e9;font-size:14px;font-weight:650;line-height:1.4;overflow-wrap:anywhere}
+.mail-message-address{color:#a5a3a9;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.mail-unread-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#d4b27c;box-shadow:0 0 8px #d4b27c66;flex-shrink:0}
+.mail-message-metadata{display:flex;align-items:flex-end;flex-direction:column;gap:7px;color:#a5a3a9;font-size:11px;white-space:nowrap}
+.mail-provider-tag{border:1px solid #d4b27c40;border-radius:999px;padding:4px 9px;color:#e9c28b;background:#d4b27c10;font-size:10px;font-weight:650;letter-spacing:.04em}
+.mail-provider-tag.gmail{color:#bbcae7;border-color:#7793c14d;background:#7793c114}
+.mail-message-main{margin:17px 0 0 55px;border-top:1px solid #ffffff16;padding-top:13px}
+.mail-message-label{color:#ae8d5a;font-size:9px;font-weight:750;letter-spacing:.15em;margin-bottom:5px}
+.mail-message-main h3{font-size:16px;line-height:1.4;color:#f4e4cd;margin:0 0 7px;font-weight:650;overflow-wrap:anywhere}
+.mail-message-preview{font-size:12px;line-height:1.65;color:#bbb8bd;margin:0;max-width:100%;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+.mail-message-preview.is-placeholder{color:#797982;font-style:italic}
+@media(max-width:650px){.mail-message-card{padding:15px}.mail-message-top{flex-wrap:wrap}.mail-message-metadata{width:100%;flex-direction:row;justify-content:space-between;align-items:center;margin-left:55px}.mail-message-main{margin-left:0}}
