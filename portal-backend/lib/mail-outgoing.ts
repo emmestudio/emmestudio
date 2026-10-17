@@ -85,7 +85,7 @@ async function smtpAruba(from:string,mail:OutgoingMail){
  });
  const step=async(cmd:string|undefined,expected:number[])=>{
   if(cmd!==undefined)socket.write(cmd+"\r\n");
-  const response=await reply();const n=Number(response.slice(-4,-1));
+  const response=await reply();const n=Number(response.match(/^(\d{3})/)?.[1]);
   if(!expected.includes(n))throw Error("SMTP Aruba: comando rifiutato ("+n+")");
  };
  try{
