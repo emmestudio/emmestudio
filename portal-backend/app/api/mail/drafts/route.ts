@@ -23,18 +23,19 @@ export async function POST(req:Request){
  if(!sameOrigin(req.headers.get("origin"),process.env.BETTER_AUTH_URL))return respond({error:"Origine non consentita"},403);
  const owner=await ownerMailboxSession(req.headers);
  if(!owner)return respond({error:"Solo titolare"},403);
+ let b:Record<string,any>={};let recipient="";let inputAttachments:any[]=[];
  try{
-  const b=await req.json();
+  b=await req.json();
   if(b.id!==null&&b.id!==undefined&&!validId(b.id))return respond({error:"Bozza non valida"},400);
   if(typeof b.recipient!=="string"||b.recipient.length>320||typeof b.subject!=="string"||b.subject.length>300||typeof b.body!=="string"||b.body.length>40000)return respond({error:"Contenuto troppo lungo"},400);
-  const recipient=b.recipient.trim();
+  recipient=b.recipient.trim();
   if(recipient&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient))return respond({error:"Destinatario non valido"},400);
   if(b.accountId&&!validId(b.accountId))return respond({error:"Account non valido"},400);
   if(b.accountId){
    const a=await getDb().query("SELECT 1 FROM studio_mail_accounts WHERE id=$1 AND owner_id=$2",[b.accountId,owner.workspaceOwnerId]);
    if(!a.rowCount)return respond({error:"Account non autorizzato"},403);
   }
-  const inputAttachments=b.attachments??[];
+  inputAttachments=b.attachments??[];
   if(!Array.isArray(inputAttachments)||inputAttachments.length>8)return respond({error:"Massimo otto allegati per bozza"},400);
   let total=0;
   for(const a of inputAttachments){
