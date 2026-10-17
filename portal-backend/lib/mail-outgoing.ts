@@ -85,23 +85,23 @@ async function smtpAruba(from:string,mail:OutgoingMail){
   waiter=resolve;failed=reject;
  });
  let returnCode=0;
- const step=async(cmd:string|undefined,expected:number[])=>{
+ const step=async(stage:string,cmd:string|undefined,expected:number[])=>{
   if(cmd!==undefined)socket.write(cmd+"\r\n");
   const response=await reply();const n=Number(response.match(/^(\d{3})/)?.[1]);
   returnCode=n;
-  if(!expected.includes(n))throw Error("SMTP Aruba: comando rifiutato ("+n+")");
+  if(!expected.includes(n)){throw Error("SMTP Aruba: "+stage+" rifiutato ("+n+").");}
  };
  try{
-  await step(undefined,[220]);
-  await step("EHLO emmestudioproduction.it",[250]);
-  await step("AUTH LOGIN",[334]);
-  await step(b64(process.env.ARUBA_MAIL_USERNAME!),[334]);
-  await step(b64(process.env.ARUBA_MAIL_PASSWORD!),[235]);
-  await step("MAIL FROM:<"+from+">",[250]);
-  await step("RCPT TO:<"+mail.to+">",[250,251]);
-  await step("DATA",[354]);
+  await step("connessione",undefined,[220]);
+  await step("identificazione","EHLO emmestudioproduction.it",[250]);
+  await step("autenticazione","AUTH LOGIN",[334]);
+  await step("utente",b64(process.env.ARUBA_MAIL_USERNAME!),[334]);
+  await step("password",b64(process.env.ARUBA_MAIL_PASSWORD!),[235]);
+  await step("mittente","MAIL FROM:<"+from+">",[250]);
+  await step("destinatario","RCPT TO:<"+mail.to+">",[250,251]);
+  await step("inizio messaggio","DATA",[354]);
   const mime=buildRfc822(from,mail).replace(/(^|\r\n)\./g,"$1..");
-  await step(mime+"\r\n.",[250]);
+  await step("conferma messaggio",mime+"\r\n.",[250]);
   return {sent:true,provider:"aruba",smtpAccepted:true,smtpCode:returnCode,notice:"Messaggio accettato dal server SMTP Aruba; recapito al destinatario non ancora confermato."};
  }finally{socket.destroy();}
 }
