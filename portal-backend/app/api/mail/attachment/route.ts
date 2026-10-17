@@ -19,7 +19,7 @@ export async function GET(req:Request){
  type Part={filename?:string;mimeType?:string;body?:{data?:string;attachmentId?:string;size?:number};parts?:Part[]};
  const body=await m.json() as {payload?:Part};const parts:Part[]=[];
  function visit(p:Part,depth:number){if(depth>8||parts.length>80)return;parts.push(p);for(const sub of p.parts??[])visit(sub,depth+1);}
- if(body.payload)visit(body.payload);
+ if(body.payload)visit(body.payload,0);
  const files=parts.filter(p=>p.filename&&(p.body?.attachmentId||p.body?.data)).slice(0,20);
  const file=files[idx];if(!file)return response("Allegato non trovato",404);
  if((file.body?.size??0)>8*1024*1024)return response("Allegato superiore a 8 MB",413);
