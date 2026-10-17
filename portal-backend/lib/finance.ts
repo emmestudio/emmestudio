@@ -1,5 +1,5 @@
 import "server-only";
-import {lockFinanceTarget} from "./finance-targets";
+import {lockFinanceTarget,listFinanceTargets} from "./finance-targets";
 import type { PoolClient } from "pg";
 import { getDb } from "./db";
 import {
@@ -27,7 +27,8 @@ export async function listLedger(owner: string): Promise<Ledger> {
       [owner],
     );
     await c.query("COMMIT");
-    return { quotes: q.rows, installments: i.rows, payments: p.rows };
+    const activeIds=new Set((await listFinanceTargets(owner)).map(x=>x.id));
+    return {quotes:q.rows.filter(x=>activeIds.has(x.projectId)),installments:i.rows.filter(x=>activeIds.has(x.projectId)),payments:p.rows.filter(x=>activeIds.has(x.projectId))};
   } catch (e) {
     await c.query("ROLLBACK");
     throw e;
