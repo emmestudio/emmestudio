@@ -35,3 +35,12 @@ export async function POST(req:Request){
   return r.rowCount?respond({saved:true,id:r.rows[0].id}):respond({error:"Bozza non autorizzata"},403);
  }catch{return respond({error:"Impossibile salvare la bozza"},503);}
 }
+
+export async function DELETE(req:Request){
+ if(!sameOrigin(req.headers.get("origin"),process.env.BETTER_AUTH_URL))return respond({error:"Origine non consentita"},403);
+ const owner=await ownerMailboxSession(req.headers);if(!owner)return respond({error:"Solo titolare"},403);
+ let b:{id?:string};try{b=await req.json()}catch{return respond({error:"Richiesta non valida"},400)}
+ if(!validId(b.id))return respond({error:"Bozza non valida"},400);
+ try{const r=await getDb().query("DELETE FROM studio_mail_drafts WHERE id=$1 AND owner_id=$2 RETURNING id",[b.id,owner.workspaceOwnerId]);return r.rowCount?respond({deleted:true}):respond({error:"Bozza non trovata"},404)}
+ catch{return respond({error:"Impossibile eliminare la bozza"},503)}
+}
