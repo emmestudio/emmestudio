@@ -101,3 +101,19 @@ export async function PATCH(request: Request) {
     return result.rowCount?reply({saved:true}):reply({error:"Anteprima non trovata."},404);
   } catch {return reply({error:"Modifica anteprima non disponibile."},503);}
 }
+
+export async function DELETE(request: Request) {
+ if (!sameOrigin(request.headers.get("origin"),process.env.BETTER_AUTH_URL))
+  return reply({error:"Origine non autorizzata."},403);
+ try {
+  const s=await workspaceSession(request.headers);
+  if(!s)return reply({error:"Accesso richiesto."},401);
+  if(s.role!=="admin")return reply({error:"Solo amministratore."},403);
+  const b=await request.json();
+  if(!validId(b.id)||b.confirm!==true)return reply({error:"Identificativo e conferma obbligatori."},400);
+  // Remove the portal reference permanently, not the original Google Drive file.
+  // Existing stream routes immediately deny deleted previews.
+  const result=await getDb().query("DELETE FROM studio_artist_previews WHERE owner_id=$1 AND id=$2 RETURNING id",[s.workspaceOwnerId,b.id]);
+  return result.rowCount?reply({deleted:true}):reply({error:"Anteprima non trovata."},404);
+ }catch{return reply({error:"Eliminazione non riuscita. Verifica i riferimenti collegati."},503)}
+}
