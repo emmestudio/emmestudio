@@ -1,3 +1,4 @@
+import PreviewRegister from "./preview-register";
 import Deliveries from "./deliveries";
 import CreatePreview from "./create-preview";
 import {headers} from "next/headers";
@@ -32,13 +33,7 @@ export default async function Page() {
   <h1>Anteprime <em>artisti.</em></h1>
   <p>Registro amministrativo delle versioni di ascolto. I master originali restano privati.</p>
   {unavailable?<section className="card"><h2>Registro da attivare</h2><p>Applicare prima la migrazione 013 al database. Nessun file o permesso è stato modificato.</p></section>:
-  <section className="card"><h2>Versioni registrate</h2>
-  {!items.length?<p>Nessuna anteprima presente.</p>:items.map(i=>
-    <div className="ledger-row" key={i.id}>
-     <div><strong>{i.title}</strong><p className="small">{i.artist_name} · {i.track_name} · {i.version_label}</p></div>
-     <div><span>{i.status}</span>{i.feedback?<p>{i.feedback}</p>:null}</div>
-    </div>)}
-  </section>}
+  <PreviewRegister initial={items}/>}
   {!unavailable?<><CreatePreview artists={artists} tracks={tracks}/><Deliveries artists={artists} tracks={tracks}/></>:null}
   <p className="small">L’ascolto degli artisti verrà attivato soltanto dopo la verifica dell’autenticazione separata e dei permessi.</p>
  </main>;
