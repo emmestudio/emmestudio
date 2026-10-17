@@ -47,7 +47,7 @@ export default function Navigation(){
      <button type="button" className="portal-nav-trigger" aria-expanded={expanded===group.label} aria-haspopup="menu" onClick={()=>setExpanded(expanded===group.label?null:group.label)} data-active={group.items.some(i=>active(i.href))?"true":undefined}>{group.label}<span aria-hidden="true" className="portal-nav-indicator"><span className="portal-nav-indicator-line"/></span></button>
      {expanded===group.label?<div className="portal-nav-dropdown">{group.items.map(link)}</div>:null}
     </div>)}
-    {owner?link(entry("/posta","Posta")):null}
+    {signedIn?<div className="portal-nav-group"><button type="button" className="portal-nav-trigger" aria-expanded={expanded==="posta"} onClick={()=>setExpanded(expanded==="posta"?null:"posta")} data-active={pathname.startsWith("/posta")||pathname.startsWith("/messaggi-artisti")?"true":undefined}>Posta <span className="portal-nav-indicator" aria-hidden="true"><span className="portal-nav-indicator-line"/></span></button>{expanded==="posta"?<div className="portal-nav-dropdown">{owner?link(entry("/posta","Caselle email")):null}{link(entry("/messaggi-artisti","Messaggi artisti"))}</div>:null}</div>:null}
    </>:link(entry("/accesso","Accesso team"))}
    <div className="portal-nav-group portal-nav-account">
     <button type="button" className="portal-nav-trigger" aria-expanded={expanded==="account"} onClick={()=>setExpanded(expanded==="account"?null:"account")}>Account <span aria-hidden="true" className="portal-nav-indicator"><span className="portal-nav-indicator-line"/></span></button>
