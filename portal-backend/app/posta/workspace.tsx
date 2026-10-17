@@ -1,7 +1,12 @@
 "use client";
 import {useState} from "react";
 type OutgoingAttachment={name:string;mimeType:string;contentBase64:string;size:number};
-type Detail={messageId?:string;threadId?:string;from:string;to:string;subject:string;date:string;body:string;attachments:{index:number;name:string;mimeType:string;size:number}[];notice?:string};
+function makeEmailDocument(html:string,images:boolean){
+ const csp="default-src 'none'; script-src 'none'; object-src 'none'; form-action 'none'; base-uri 'none'; connect-src 'none'; font-src 'none'; frame-src 'none'; img-src "+(images?"https: data:":"data:")+"; style-src 'unsafe-inline';";
+ const escapedCsp=csp.replace(/"/g,"&quot;");
+ return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="'+escapedCsp+'"><meta name="referrer" content="no-referrer"><base target="_blank"><style>html,body{margin:0;padding:0;background:#fff;color:#222;overflow-wrap:anywhere}body{padding:15px;font:14px/1.5 Arial,sans-serif}img{max-width:100%;height:auto}table{max-width:100%}a{cursor:pointer}</style></head><body>'+html.slice(0,150000)+'</body></html>';
+}
+type Detail={htmlBody?:string;messageId?:string;threadId?:string;from:string;to:string;subject:string;date:string;body:string;attachments:{index:number;name:string;mimeType:string;size:number}[];notice?:string};
 type Draft={id:string;accountId:string|null;recipient:string;subject:string;body:string;attachments?:OutgoingAttachment[];updatedAt:string};
 type Incoming={id:string;accountId:string;provider:"gmail"|"aruba";from:string;subject:string;date:string;snippet:string;unread:boolean};
 function mailDate(value:string){const d=new Date(value);return Number.isNaN(d.getTime())?(value||"Data non disponibile"):new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(d);}
@@ -11,9 +16,10 @@ export default function MailWorkspace({accounts,migrationNeeded,sendEnabled,arub
  const [view,setView]=useState<"inbox"|"sent"|"drafts"|"contacts">("inbox");
  const [provider,setProvider]=useState<"all"|"aruba"|"gmail">("all");
  const [compose,setCompose]=useState(false),[draftId,setDraftId]=useState<string|null>(null);
+ const [showRemoteImages,setShowRemoteImages]=useState(false),[showPlainText,setShowPlainText]=useState(false);
  const [replyOpen,setReplyOpen]=useState(false),[replyText,setReplyText]=useState(""),[replySaving,setReplySaving]=useState(false),[replySending,setReplySending]=useState(false),[replyNotice,setReplyNotice]=useState("");
  const [opened,setOpened]=useState<Incoming|null>(null),[detail,setDetail]=useState<Detail|null>(null),[detailError,setDetailError]=useState(""),[opening,setOpening]=useState(false);
- async function openMessage(m:Incoming){setReplyOpen(false);setReplyText("");setReplyNotice("");setOpened(m);setDetail(null);setDetailError("");setOpening(true);try{const params=new URLSearchParams({accountId:m.accountId,messageId:m.id,provider:m.provider,folder:view==="sent"?"sent":"inbox"});const r=await fetch("/api/mail/message?"+params,{cache:"no-store"});const d=await r.json();if(!r.ok)throw Error(d.error||"Messaggio non disponibile");setDetail(d.message)}catch(e){setDetailError(e instanceof Error?e.message:"Impossibile aprire il messaggio")}finally{setOpening(false)}}
+ async function openMessage(m:Incoming){setShowRemoteImages(false);setShowPlainText(false);setReplyOpen(false);setReplyText("");setReplyNotice("");setOpened(m);setDetail(null);setDetailError("");setOpening(true);try{const params=new URLSearchParams({accountId:m.accountId,messageId:m.id,provider:m.provider,folder:view==="sent"?"sent":"inbox"});const r=await fetch("/api/mail/message?"+params,{cache:"no-store"});const d=await r.json();if(!r.ok)throw Error(d.error||"Messaggio non disponibile");setDetail(d.message)}catch(e){setDetailError(e instanceof Error?e.message:"Impossibile aprire il messaggio")}finally{setOpening(false)}}
  const [mailSearch,setMailSearch]=useState(""),[contactSearch,setContactSearch]=useState(""),[contacts,setContacts]=useState<{id:string;name:string;email:string}[]>([]),[contactsLoading,setContactsLoading]=useState(false);
  async function loadContacts(){setContactsLoading(true);try{const r=await fetch("/api/artists",{cache:"no-store"});const d=await r.json();if(!r.ok)throw Error(d.error||"Rubrica non disponibile");setContacts((d.artists??[]).filter((a:{email?:string})=>Boolean(a.email)).map((a:{id:string;name:string;email:string})=>({id:a.id,name:a.name,email:a.email})));}catch(e){setNotice(e instanceof Error?e.message:"Impossibile caricare i contatti")}finally{setContactsLoading(false)}}
  const [incoming,setIncoming]=useState<Incoming[]>([]),[incomingErrors,setIncomingErrors]=useState<string[]>([]),[loadingInbox,setLoadingInbox]=useState(false);
@@ -73,7 +79,7 @@ export default function MailWorkspace({accounts,migrationNeeded,sendEnabled,arub
      <p><strong>Data:</strong> {detail?.date??opened.date}</p>
      {opening?<p role="status">Caricamento del messaggio…</p>:null}
      {detailError?<p role="status">{detailError}</p>:null}
-     {detail?<><div className="mail-detail-body">{detail.body||"Nessun testo disponibile."}</div>
+     {detail?<>{detail.htmlBody&&!showPlainText?<><div className="mail-html-toolbar"><span>Email HTML</span><button type="button" onClick={()=>setShowRemoteImages(v=>!v)}>{showRemoteImages?"Blocca immagini esterne":"Mostra immagini esterne"}</button><button type="button" onClick={()=>setShowPlainText(true)}>Mostra testo semplice</button></div><iframe title="Contenuto HTML della email" className="mail-html-frame" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerPolicy="no-referrer" srcDoc={makeEmailDocument(detail.htmlBody,showRemoteImages)}/></>:<><div className="mail-detail-body">{detail.body||"Nessun testo disponibile."}</div>{detail.htmlBody?<button type="button" className="secondary" onClick={()=>setShowPlainText(false)}>Visualizza versione HTML</button>:null}</>}
       {detail.notice?<p className="small">{detail.notice}</p>:null}
       {detail.attachments.length?<div className="mail-attachment-list"><strong>Allegati ({detail.attachments.length})</strong>{detail.attachments.map((a,i)=><p key={i}><a href={"/api/mail/attachment?"+new URLSearchParams({accountId:opened.accountId,messageId:opened.id,provider:opened.provider,folder:view==="sent"?"sent":"inbox",index:String(a.index)})} download={a.name}>{a.name}</a> · {Math.ceil(a.size/1024)} KB</p>)}</div>:null}
      </>:null}
