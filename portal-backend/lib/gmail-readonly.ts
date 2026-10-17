@@ -13,7 +13,16 @@ export async function listGmailHeaders(ownerId:string,accountId:string):Promise<
  const info=await token.json() as {access_token?:string};if(!info.access_token)throw Error("Token Gmail non disponibile");
  const headers={Authorization:"Bearer "+info.access_token};
  const list=await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages?"+new URLSearchParams({maxResults:"15",labelIds:"INBOX"}),{headers,signal:AbortSignal.timeout(10000),cache:"no-store"});
- if(!list.ok)throw Error("Impossibile leggere la posta Gmail.");
+ if(!list.ok){
+  const status=list.status;
+  let reason="";
+  try{const body=await list.json() as {error?:{status?:string;message?:string;errors?:{reason?:string}[]}};reason=body.error?.errors?.[0]?.reason??body.error?.status??"";}catch{}
+  if(status===403&&(reason==="accessNotConfigured"||reason==="SERVICE_DISABLED"))throw Error("Gmail API non abilitata nel progetto Google Cloud.");
+  if(status===403)throw Error("Accesso Gmail negato (403): verifica API Gmail e autorizzazioni dell’app Google.");
+  if(status===401)throw Error("Gmail richiede una nuova autorizzazione (401).");
+  if(status===429)throw Error("Limite temporaneo di richieste Gmail (429).");
+  throw Error("Lettura Gmail non riuscita (HTTP "+status+").");
+ }
  const ids=await list.json() as {messages?:{id:string}[]};
  const records=await Promise.all((ids.messages??[]).slice(0,15).map(async m=>{
   const u="https://gmail.googleapis.com/gmail/v1/users/me/messages/"+encodeURIComponent(m.id)+"?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date";
