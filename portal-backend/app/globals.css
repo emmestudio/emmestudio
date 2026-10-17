@@ -260,3 +260,15 @@
 .mail-message-preview{font-size:12px;line-height:1.65;color:#bbb8bd;margin:0;max-width:100%;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
 .mail-message-preview.is-placeholder{color:#797982;font-style:italic}
 @media(max-width:650px){.mail-message-card{padding:15px}.mail-message-top{flex-wrap:wrap}.mail-message-metadata{width:100%;flex-direction:row;justify-content:space-between;align-items:center;margin-left:55px}.mail-message-main{margin-left:0}}
+
+
+.mail-message-card[role=button]{cursor:pointer}.mail-message-card[role=button]:focus-visible{outline:2px solid #d4b27c;outline-offset:3px}
+.mail-message-detail{margin:18px 0 6px;padding:22px;border:1px solid #d4b27c63;border-radius:15px;background:linear-gradient(145deg,#202026,#101116);text-align:left;box-shadow:0 16px 35px #0004}
+.mail-detail-heading{display:flex;gap:15px;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #ffffff25;padding-bottom:14px;margin-bottom:14px}
+.mail-detail-heading h3{font-size:19px;color:#f3d3a1;margin:0;overflow-wrap:anywhere}
+.mail-detail-heading button{border:1px solid #d4b27c66;background:transparent;color:#ead5b5;padding:7px 11px;border-radius:8px;cursor:pointer}
+.mail-message-detail>p{font-size:12px;color:#c1bdc2;overflow-wrap:anywhere}
+.mail-message-detail>p strong{color:#e7d3b6}
+.mail-detail-body{margin-top:20px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75;font-size:13px;color:#f2ecdf;max-height:55vh;overflow:auto}
+.mail-attachment-list{margin-top:22px;border-top:1px solid #ffffff25;padding-top:13px;font-size:12px;color:#ddd1bd}
+.mail-attachment-list p{overflow-wrap:anywhere}
