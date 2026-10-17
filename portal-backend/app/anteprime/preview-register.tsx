@@ -31,8 +31,8 @@ export default function PreviewRegister({initial}: {initial:Preview[]}){
   try{const r=await fetch("/api/artist-previews",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:x.id,confirm:true})});const d=await r.json();if(!r.ok)throw Error(d.error||"Eliminazione non riuscita");setItems(old=>old.filter(v=>v.id!==x.id));}
   catch(e){setError(e instanceof Error?e.message:"Errore di eliminazione");}finally{setBusy("")}
  }
- return <section className="card">
- <div style={{display:"flex",justifyContent:"space-between",gap:16,alignItems:"center",flexWrap:"wrap"}}><div><h2>Versioni registrate</h2><p className="small">{items.length} versioni · organizzate per artista e brano</p></div><label style={{display:"grid",gap:5}}>Cerca artista o brano<input type="search" value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Cerca nel registro…"/></label></div>
+ return <section className="card preview-register">
+ <div className="preview-register-head"><div><h2>Versioni registrate</h2><p className="small">{items.length} versioni · organizzate per artista e brano</p></div><label className="preview-register-search">Cerca artista o brano<input type="search" value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Cerca nel registro…"/></label></div>
  {error?<p role="alert" style={{color:"#fca5a5"}}>{error}</p>:null}
  {!groups.length?<p>Nessuna anteprima trovata.</p>:groups.map(g=><section key={g.artist} style={{marginTop:26}}>
  <h3 style={{borderBottom:"1px solid #444",paddingBottom:10}}>{g.artist}</h3>
