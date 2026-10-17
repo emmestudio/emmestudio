@@ -64,6 +64,6 @@ export default function MailWorkspace({accounts,migrationNeeded}:{accounts:Accou
      </form>:null}
     </div>
    </div>
-  </div>:null}setBody("");setDraftId(null);setCompose(true);setOpened(null);setDetail(null);setNotice("Risposta pronta come bozza. L’invio email non è ancora abilitato.");}}>↩ Rispondi</button></div></div>:null}</>:null}</div></div></div>:null}
+  </div>:null}
  </section>;
 }
