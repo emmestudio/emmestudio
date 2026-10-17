@@ -294,3 +294,5 @@
 .mail-contact-row strong{color:#e9e1d4}
 .mail-contact-row .small{overflow-wrap:anywhere}
 .mail-contact-row button{flex-shrink:0;background:#d4b27c1f;border:1px solid #d4b27c60;color:#edd6ac;border-radius:8px;padding:9px 14px}
+
+.mail-draft-entry{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #ffffff17;padding:8px 0}.mail-draft-entry>button:first-child{flex:1;min-width:220px}.mail-delete-draft{border:1px solid #aa696955;border-radius:8px;background:#aa696914;color:#e4b3b3;padding:8px 11px;cursor:pointer}
