@@ -42,14 +42,15 @@ function parse(bytes:Buffer,depth=0):Part{
  return {name,type,bytes:transfer(body,headers["content-transfer-encoding"]??""),children:[]};
 }
 function parts(root:Part){const out:Part[]=[];const visit=(p:Part)=>{if(out.length>=80)return;out.push(p);for(const x of p.children)visit(x)};visit(root);return out;}
-export async function fetchArubaFull(uid:string){
+export async function fetchArubaFull(uid:string,folder:"inbox"|"sent"="inbox"){
  if(!/^\d{1,18}$/.test(uid))throw Error("UID IMAP non valido");
  if(!arubaMailReadiness().configured)throw Error("Casella Aruba non configurata");
  const username=process.env.ARUBA_MAIL_USERNAME!,password=process.env.ARUBA_MAIL_PASSWORD!;
  if(/[\r\n"\\]/.test(username+password))throw Error("Credenziali Aruba non valide");
  const bytes=await new Promise<Buffer>((resolve,reject)=>{
   const sock=tls.connect({host:ARUBA_MAIL.imap.host,port:993,servername:ARUBA_MAIL.imap.host,rejectUnauthorized:true});
-  sock.setTimeout(18000);let buffer=Buffer.alloc(0),state=0,done=false;
+  sock.setTimeout(18000);let buffer=Buffer.alloc(0),state=0,done=false,folderIndex=0;
+  const folders=folder==="sent"?["Sent","Sent Items","INBOX.Sent","Posta inviata"]:["INBOX"];
   const finish=(error:Error|null,value?:Buffer)=>{if(done)return;done=true;sock.destroy();if(error)reject(error);else resolve(value??Buffer.alloc(0))};
   const send=(tag:string,command:string)=>sock.write(tag+" "+command+"\r\n");
   sock.on("timeout",()=>finish(Error("Timeout IMAP Aruba")));
@@ -64,10 +65,10 @@ export async function fetchArubaFull(uid:string){
    }
    if(state===1&&/\r\nA001 (OK|NO|BAD)\b/i.test("\r\n"+text)){
     if(!/\r\nA001 OK\b/i.test("\r\n"+text))return finish(Error("Login Aruba rifiutato"));
-    state=2;buffer=Buffer.alloc(0);send("A002","EXAMINE INBOX");return;
+    state=2;buffer=Buffer.alloc(0);send("A002","EXAMINE "+JSON.stringify(folders[folderIndex]));return;
    }
    if(state===2&&/\r\nA002 (OK|NO|BAD)\b/i.test("\r\n"+text)){
-    if(!/\r\nA002 OK\b/i.test("\r\n"+text))return finish(Error("Cartella IMAP non disponibile"));
+    if(!/\r\nA002 OK\b/i.test("\r\n"+text)){folderIndex++;if(folderIndex>=folders.length)return finish(Error("Cartella IMAP non disponibile"));buffer=Buffer.alloc(0);send("A002","EXAMINE "+JSON.stringify(folders[folderIndex]));return;}
     state=3;buffer=Buffer.alloc(0);send("A003","UID FETCH "+uid+" (UID BODY.PEEK[])");return;
    }
    if(state===3&&/\r\nA003 (OK|NO|BAD)\b/i.test("\r\n"+text)){
