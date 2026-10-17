@@ -86,6 +86,7 @@ export async function fetchArubaFull(uid:string,folder:"inbox"|"sent"="inbox"){
  const html=all.find(p=>p.type==="text/html"&&!p.name);
  const selected=plain??html;
  let text=selected?.bytes.toString("utf8")??"";
- if(!plain&&html)text=text.replace(/<[^>]*>/g," ").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&");
- return {message:{from:headers.from??"",to:headers.to??"",subject:headers.subject??"",date:headers.date??"",messageId:headers["message-id"]??"",threadId:"",body:text.slice(0,150000),attachments:attachments.map((a,index)=>({index,name:a.name??"allegato",size:a.bytes.length,mimeType:a.type}))},buffers:attachments.map(a=>a.bytes)};
+ const htmlBody=html?html.bytes.toString("utf8").slice(0,150000):undefined;
+ if(!plain&&html)text=text.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi," ").replace(/<[^>]*>/g," ").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&");
+ return {message:{from:headers.from??"",to:headers.to??"",subject:headers.subject??"",date:headers.date??"",messageId:headers["message-id"]??"",threadId:"",body:text.slice(0,150000),htmlBody,attachments:attachments.map((a,index)=>({index,name:a.name??"allegato",size:a.bytes.length,mimeType:a.type}))},buffers:attachments.map(a=>a.bytes)};
 }
