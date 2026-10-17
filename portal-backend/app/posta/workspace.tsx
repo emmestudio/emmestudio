@@ -22,6 +22,14 @@ export default function MailWorkspace({accounts,migrationNeeded,sendEnabled}:{ac
  const [attachments,setAttachments]=useState<OutgoingAttachment[]>([]),[sending,setSending]=useState(false);
  async function attachFiles(files:FileList|null){if(!files)return;try{const newFiles:OutgoingAttachment[]=[];let total=attachments.reduce((n,a)=>n+a.size,0);for(const file of Array.from(files)){total+=file.size;if(file.size>1536*1024||total>2*1024*1024||attachments.length+newFiles.length>=8)throw Error("Limite allegati: massimo 8 file, 1,5 MB ciascuno e 2 MB complessivi.");const contentBase64=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]??"");reader.onerror=()=>reject(Error("Impossibile leggere l’allegato"));reader.readAsDataURL(file);});newFiles.push({name:file.name,mimeType:file.type||"application/octet-stream",contentBase64,size:file.size});}setAttachments(v=>[...v,...newFiles]);}catch(e){setNotice(e instanceof Error?e.message:"Allegati non validi");}}
  async function sendMessage(){if(!sendEnabled||sending)return;setSending(true);setNotice("");try{if(!from)throw Error("Seleziona il mittente");const r=await fetch("/api/mail/send",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accountId:from,to,subject,body,attachments:attachments.map(({name,mimeType,contentBase64})=>({name,mimeType,contentBase64}))})});const d=await r.json();if(!r.ok)throw Error(d.error||"Invio non riuscito");setNotice("Messaggio inviato tramite "+(d.provider==="gmail"?"Gmail":"Aruba")+".");setCompose(false);setAttachments([]);setDraftId(null);}catch(e){setNotice(e instanceof Error?e.message:"Invio non riuscito");}finally{setSending(false);}}
+ async function sendReply(){if(!sendEnabled||!opened||!replyText.trim()||replySending)return;setReplySending(true);setReplyNotice("");try{
+ const raw=detail?.from??opened.from;const match=raw.match(/<([^<>\\s]+@[^<>\\s]+)>/);const recipient=(match?.[1]??raw.trim()).toLowerCase();
+ if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(recipient))throw Error("Destinatario non valido");
+ const subject=/^re\\s*:/i.test(opened.subject)?opened.subject:"Re: "+(opened.subject||"(Senza oggetto)");
+ const r=await fetch("/api/mail/send",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accountId:opened.accountId,to:recipient,subject,body:replyText,attachments:[],replyMessageId:detail?.messageId,threadId:detail?.threadId})});
+ const data=await r.json();if(!r.ok)throw Error(data.error||"Invio risposta non riuscito");
+ setReplyNotice("Risposta inviata.");setReplyOpen(false);setReplyText("");
+ }catch(e){setReplyNotice(e instanceof Error?e.message:"Invio risposta non riuscito");}finally{setReplySending(false);}}
  const [from,setFrom]=useState("");
  const [to,setTo]=useState(""),[subject,setSubject]=useState(""),[body,setBody]=useState("");
  const nav=[["inbox","Posta in arrivo"],["sent","Inviate"],["drafts","Bozze"],["contacts","Contatti"]] as const;
@@ -65,7 +73,7 @@ export default function MailWorkspace({accounts,migrationNeeded,sendEnabled}:{ac
       const d=await r.json();if(!r.ok)throw Error(d.error||"Impossibile salvare la risposta");setReplyNotice("Risposta salvata nelle bozze. Nessuna email inviata.");
      }catch(err){setReplyNotice(err instanceof Error?err.message:"Errore durante il salvataggio");}finally{setReplySaving(false);}}}>
       <label>Risposta<textarea rows={6} required value={replyText} onChange={e=>setReplyText(e.target.value)} placeholder="Scrivi qui la tua risposta…"/></label>
-      <div className="mail-popup-actions"><button type="submit" disabled={replySaving||!replyText.trim()}>{replySaving?"Salvataggio…":"Salva risposta nelle bozze"}</button><button type="button" disabled title="Invio non ancora collaudato">Invia risposta</button></div>
+      <div className="mail-popup-actions"><button type="submit" disabled={replySaving||!replyText.trim()}>{replySaving?"Salvataggio…":"Salva risposta nelle bozze"}</button><button type="button" onClick={()=>void sendReply()} disabled={!sendEnabled||replySending||!replyText.trim()} title={!sendEnabled?"Invio non ancora collaudato":undefined}>{replySending?"Invio…":"Invia risposta"}</button></div>
       {replyNotice?<p role="status">{replyNotice}</p>:<p className="small">L’invio sarà disponibile dopo il collaudo SMTP/Gmail Send.</p>}
      </form>:null}
     </div>
