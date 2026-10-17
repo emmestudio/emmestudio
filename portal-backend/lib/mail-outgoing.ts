@@ -89,7 +89,7 @@ async function smtpAruba(from:string,mail:OutgoingMail){
   if(cmd!==undefined)socket.write(cmd+"\r\n");
   const response=await reply();const n=Number(response.match(/^(\d{3})/)?.[1]);
   returnCode=n;
-  if(!expected.includes(n)){throw Error("SMTP Aruba: "+stage+" rifiutato ("+n+").");}
+  if(!expected.includes(n)){const detail=response.replace(/[^\x20-\x7e]/g," ").replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,"[indirizzo]").replace(/\b[A-Za-z0-9+/]{32,}={0,2}\b/g,"[dato riservato]").slice(0,150);throw Error("SMTP Aruba: "+stage+" rifiutato ("+n+"). "+detail);}
  };
  try{
   await step("connessione",undefined,[220]);
