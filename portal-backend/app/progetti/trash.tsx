@@ -61,7 +61,7 @@ export default function Trash({ onRestored }: { onRestored: () => void }) {
         ripristino.
       </p>
       <p role="status">{error}</p>
-      <p className="small">I progetti nel cestino possono anche essere eliminati definitivamente, insieme a tutti i dati operativi ed economici collegati.</p>
+      <p className="small">Progetti, brani, produzioni, registrazioni e servizi nel cestino possono essere eliminati definitivamente, insieme ai dati operativi ed economici collegati.</p>
       {items.map((p) => (
         <div className="ledger-row" key={p.kind + p.id}>
           <div>
@@ -85,7 +85,7 @@ export default function Trash({ onRestored }: { onRestored: () => void }) {
           >
             {busy === p.id ? "Ripristino…" : "Ripristina"}
           </button>
-          {p.kind === "project" && !busy ? <RemoveButton permanent kind="project" id={p.id} version={p.version} title={p.title} onRemoved={() => {setRefresh(n=>n+1);onRestored();}} /> : null}
+          {["project","production"].includes(p.kind) && !busy ? <RemoveButton permanent kind={p.kind} id={p.id} version={p.version} title={p.title} onRemoved={() => {setRefresh(n=>n+1);onRestored();}} /> : null}
           </div>
         </div>
       ))}
