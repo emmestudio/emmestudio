@@ -87,5 +87,5 @@ export async function fetchArubaFull(uid:string,folder:"inbox"|"sent"="inbox"){
  const selected=plain??html;
  let text=selected?.bytes.toString("utf8")??"";
  if(!plain&&html)text=text.replace(/<[^>]*>/g," ").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&");
- return {message:{from:headers.from??"",to:headers.to??"",subject:headers.subject??"",date:headers.date??"",body:text.slice(0,150000),attachments:attachments.map((a,index)=>({index,name:a.name??"allegato",size:a.bytes.length,mimeType:a.type}))},buffers:attachments.map(a=>a.bytes)};
+ return {message:{from:headers.from??"",to:headers.to??"",subject:headers.subject??"",date:headers.date??"",messageId:headers["message-id"]??"",threadId:"",body:text.slice(0,150000),attachments:attachments.map((a,index)=>({index,name:a.name??"allegato",size:a.bytes.length,mimeType:a.type}))},buffers:attachments.map(a=>a.bytes)};
 }
