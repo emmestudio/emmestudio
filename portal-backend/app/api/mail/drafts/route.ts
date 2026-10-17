@@ -11,7 +11,13 @@ export async function GET(req:Request){
   const r=await getDb().query(`SELECT id,account_id AS "accountId",recipient,subject,body,attachments,updated_at AS "updatedAt"
    FROM studio_mail_drafts WHERE owner_id=$1 ORDER BY updated_at DESC LIMIT 100`,[owner.workspaceOwnerId]);
   return respond({items:r.rows});
- }catch{return respond({error:"Bozze non disponibili: verificare la migrazione 024 per gli allegati."},503);}
+ }catch(e){
+  if((e as {code?:string}).code==="42703"){
+   const r=await getDb().query('SELECT id,account_id AS "accountId",recipient,subject,body,updated_at AS "updatedAt" FROM studio_mail_drafts WHERE owner_id=$1 ORDER BY updated_at DESC LIMIT 100',[owner.workspaceOwnerId]);
+   return respond({items:r.rows.map(row=>({...row,attachments:[]})),attachmentMigrationNeeded:true});
+  }
+  return respond({error:"Bozze non disponibili"},503);
+ }
 }
 export async function POST(req:Request){
  if(!sameOrigin(req.headers.get("origin"),process.env.BETTER_AUTH_URL))return respond({error:"Origine non consentita"},403);
@@ -41,7 +47,17 @@ export async function POST(req:Request){
    ON CONFLICT(id) DO UPDATE SET account_id=EXCLUDED.account_id,recipient=EXCLUDED.recipient,subject=EXCLUDED.subject,body=EXCLUDED.body,attachments=EXCLUDED.attachments,updated_at=now()
    WHERE studio_mail_drafts.owner_id=$2 RETURNING id`,[b.id??null,owner.workspaceOwnerId,b.accountId??null,recipient,b.subject.trim(),b.body,JSON.stringify(inputAttachments)]);
   return r.rowCount?respond({saved:true,id:r.rows[0].id}):respond({error:"Bozza non autorizzata"},403);
- }catch{return respond({error:"Impossibile salvare la bozza"},503);}
+ }catch(e){
+  if((e as {code?:string}).code==="42703"){
+   if(inputAttachments.length)return respond({error:"Prima di salvare gli allegati occorre applicare la migrazione 024 su Neon main."},409);
+   const r=await getDb().query(`INSERT INTO studio_mail_drafts(id,owner_id,account_id,recipient,subject,body)
+   VALUES(COALESCE($1::uuid,gen_random_uuid()),$2,$3,$4,$5,$6)
+   ON CONFLICT(id) DO UPDATE SET account_id=EXCLUDED.account_id,recipient=EXCLUDED.recipient,subject=EXCLUDED.subject,body=EXCLUDED.body,updated_at=now()
+   WHERE studio_mail_drafts.owner_id=$2 RETURNING id`,[b.id??null,owner.workspaceOwnerId,b.accountId??null,recipient,b.subject.trim(),b.body]);
+   return r.rowCount?respond({saved:true,id:r.rows[0].id,attachmentMigrationNeeded:true}):respond({error:"Bozza non autorizzata"},403);
+  }
+  return respond({error:"Impossibile salvare la bozza"},503);
+ }
 }
 
 export async function DELETE(req:Request){
