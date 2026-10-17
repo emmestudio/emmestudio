@@ -4,12 +4,13 @@ import {ARUBA_MAIL,arubaMailReadiness} from "./aruba-mail-config";
 import type {MailHeader} from "./gmail-readonly";
 const MAX_BYTES=900000;
 function decode(v:string){return v.replace(/=\?UTF-8\?B\?([^?]+)\?=/gi,(_,s:string)=>{try{return Buffer.from(s,"base64").toString("utf8")}catch{return s}}).replace(/=\?UTF-8\?Q\?([^?]+)\?=/gi,(_,s:string)=>s.replace(/_/g," ").replace(/=([0-9a-f]{2})/gi,(_x:string,h:string)=>String.fromCharCode(parseInt(h,16))));}
-export async function listArubaHeaders(accountId:string):Promise<MailHeader[]>{
+export async function listArubaHeaders(accountId:string,folder:"inbox"|"sent"="inbox"):Promise<MailHeader[]>{
  if(!arubaMailReadiness().configured)throw Error("Credenziali Aruba non configurate");
  const user=process.env.ARUBA_MAIL_USERNAME!,password=process.env.ARUBA_MAIL_PASSWORD!;
  if(/[\r\n]/.test(user+password))throw Error("Credenziali non valide");
  return new Promise((resolve,reject)=>{
-  let finished=false, buffer=Buffer.alloc(0),step=0;let collected:MailHeader[]=[];
+  let finished=false, buffer=Buffer.alloc(0),step=0,folderIndex=0;let collected:MailHeader[]=[];
+  const folders=folder==="sent"?["Sent","Sent Items","INBOX.Sent","Posta inviata"]:["INBOX"];
   const sock=tls.connect({host:ARUBA_MAIL.imap.host,port:993,servername:ARUBA_MAIL.imap.host,rejectUnauthorized:true,timeout:12000});
   const fail=(msg:string)=>{if(finished)return;finished=true;sock.destroy();reject(Error(msg))};
   const ok=()=>{if(finished)return;finished=true;sock.destroy();resolve(collected)};
@@ -25,10 +26,10 @@ export async function listArubaHeaders(accountId:string):Promise<MailHeader[]>{
    }
    if(step===1&&/A001 (OK|NO|BAD)\b/i.test(text)){
     if(!/A001 OK\b/i.test(text))return fail("Autenticazione Aruba rifiutata");
-    buffer=Buffer.alloc(0);step=2;send("A002","EXAMINE INBOX");return;
+    buffer=Buffer.alloc(0);step=2;send("A002","EXAMINE "+JSON.stringify(folders[folderIndex]));return;
    }
    if(step===2&&/A002 (OK|NO|BAD)\b/i.test(text)){
-    if(!/A002 OK\b/i.test(text))return fail("Lettura INBOX non disponibile");
+    if(!/A002 OK\b/i.test(text)){folderIndex++;if(folderIndex>=folders.length)return fail("Cartella Posta inviata Aruba non disponibile");buffer=Buffer.alloc(0);send("A002","EXAMINE "+JSON.stringify(folders[folderIndex]));return;}
     buffer=Buffer.alloc(0);step=3;send("A003","UID SEARCH ALL");return;
    }
    if(step===3&&/A003 (OK|NO|BAD)\b/i.test(text)){
