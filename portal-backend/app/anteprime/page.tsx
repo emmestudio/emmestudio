@@ -1,3 +1,4 @@
+import "./previews.css";
 import PreviewRegister from "./preview-register";
 import Deliveries from "./deliveries";
 import CreatePreview from "./create-preview";
