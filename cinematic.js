@@ -166,6 +166,19 @@ document.querySelectorAll('[data-studio-gallery]').forEach(gallery => {
     render();
     track.scrollTo({left: offset(current), behavior: reducedMotion.matches ? 'instant' : 'smooth'});
   };
+  const expand = gallery.querySelector('.gallery-expand');
+  if (expand && document.fullscreenEnabled && gallery.requestFullscreen) {
+    expand.hidden = false;
+    expand.addEventListener('click', async () => {
+      try {
+        if (document.fullscreenElement === gallery) await document.exitFullscreen();
+        else await gallery.requestFullscreen();
+      } catch { track.focus({preventScroll: true}); }
+    });
+    document.addEventListener('fullscreenchange', () => {
+      expand.textContent = document.fullscreenElement === gallery ? 'Riduci ↙' : 'Schermo intero ↗';
+    });
+  }
   previous.hidden = false;
   next.hidden = false;
   previous.addEventListener('click', () => go(current - 1));
