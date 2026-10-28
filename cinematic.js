@@ -137,3 +137,47 @@ if (journey) {
   const deepLink = panels.findIndex(panel => '#' + panel.id === window.location.hash);
   selectStep(deepLink < 0 ? 0 : deepLink);
 }
+
+// Studio gallery: native touch scrolling, with optional keyboard/button controls.
+document.querySelectorAll('[data-studio-gallery]').forEach(gallery => {
+  const track = gallery.querySelector('.gallery-track');
+  const slides = [...gallery.querySelectorAll('.gallery-slide')];
+  const previous = gallery.querySelector('.gallery-prev');
+  const next = gallery.querySelector('.gallery-next');
+  const status = gallery.parentElement.querySelector('.gallery-status');
+  if (!track || !slides.length || !previous || !next || !status) return;
+  let current = 0;
+  let frame = 0;
+  const offset = index => slides[index].offsetLeft - slides[0].offsetLeft;
+  const render = () => {
+    previous.disabled = current === 0;
+    next.disabled = current === slides.length - 1;
+    const text = `Foto ${current + 1} di ${slides.length}`;
+    if (status.textContent !== text) status.textContent = text;
+  };
+  const sync = () => {
+    frame = 0;
+    current = slides.reduce((closest, slide, index) =>
+      Math.abs(offset(index) - track.scrollLeft) < Math.abs(offset(closest) - track.scrollLeft) ? index : closest, 0);
+    render();
+  };
+  const go = index => {
+    current = Math.max(0, Math.min(slides.length - 1, index));
+    render();
+    track.scrollTo({left: offset(current), behavior: reducedMotion.matches ? 'instant' : 'smooth'});
+  };
+  previous.hidden = false;
+  next.hidden = false;
+  previous.addEventListener('click', () => go(current - 1));
+  next.addEventListener('click', () => go(current + 1));
+  track.addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(sync); }, {passive: true});
+  track.addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key) || event.altKey || event.ctrlKey || event.metaKey) return;
+    event.preventDefault();
+    go(event.key === 'Home' ? 0 : event.key === 'End' ? slides.length - 1 : current + (event.key === 'ArrowLeft' ? -1 : 1));
+  });
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(() => {track.scrollTo({left: offset(current), behavior: 'instant'}); render();}).observe(track);
+  }
+  render();
+});

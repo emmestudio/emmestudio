@@ -24,8 +24,8 @@
 .start-links>a{padding:0}
 .start-link{border:1px solid var(--line);background:#181a1f;position:relative;overflow:hidden;transition:border-color .3s,background .3s,transform .3s}
 .start-links .start-link:hover{border-color:#8e7b60;background:#1d2026;color:var(--fg);transform:translateY(-2px)}
-.start-featured{background:linear-gradient(100deg,#1b1d22f5,#1b1d22d9),url('assets/studio/regia-800.webp') center/cover;border-color:#796a52}
-.start-links .start-featured:hover{background:linear-gradient(100deg,#23252af2,#23252ad4),url('assets/studio/regia-800.webp') center/cover}
+.start-featured{background:linear-gradient(100deg,#1b1d22f5,#1b1d22d9),url('assets/studio-blue/produzione-960.webp') center/cover;border-color:#796a52}
+.start-links .start-featured:hover{background:linear-gradient(100deg,#23252af2,#23252ad4),url('assets/studio-blue/produzione-960.webp') center/cover}
 .start-featured .start-link-copy{padding:26px;display:block}
 .start-label{display:block;font-size:8px;letter-spacing:.13em;line-height:1.7;color:var(--accent)}
 .start-featured h2{font-size:29px;line-height:1.12;margin:13px 0 12px;font-weight:500}
@@ -55,3 +55,5 @@
  .start-content{padding:30px 22px 22px}.start-heading{font-size:8px;margin-bottom:18px}.start-contact{padding:20px;min-height:88px}.start-contact strong{font-size:21px}.start-contact small{font-size:11px}.start-links{margin-top:20px}.start-featured .start-link-copy{padding:24px}.start-featured h2{font-size:29px}.start-service{grid-template-columns:66px minmax(0,1fr) 16px;gap:14px;padding:15px!important}.start-service img{width:66px;height:94px}.start-service h2{font-size:18px}.start-link p{font-size:11px}.start-service .start-label{font-size:7px}.start-secondary{gap:14px}.start-secondary a{font-size:10px}.start-footer{margin-top:16px;padding-top:18px}
 }
 @media(prefers-reduced-motion:reduce){.start-photo img{animation:none}.start-contact,.start-link,.start-arrow,.start-service img{transition:none}.start-contact:hover,.start-links .start-link:hover,.start-link:hover .start-arrow,.start-contact:hover .start-arrow{transform:none}}
+
+.start-gallery-link{display:flex;justify-content:space-between;gap:20px;align-items:center;padding:20px 0;border-bottom:1px solid var(--line);font-size:12px;color:var(--accent);min-height:52px;margin-top:12px}
