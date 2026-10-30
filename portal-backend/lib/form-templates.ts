@@ -1,10 +1,17 @@
+import {remainingStudioForms} from './remaining-studio-forms';
+import {remainingLabelForms} from './remaining-label-forms';
+import {remainingLiveForms} from './remaining-live-forms';
+import {validateRemainingForm} from './remaining-form-validation';
 import {developmentContinuityTemplate} from './development-continuity-template';
 import {collaborationFormTemplates} from './collaboration-form-templates';
 import {additionalFormTemplates} from './additional-form-templates';
 export type FormField={key:string;label:string;type?:'textarea'|'date'|'email'|'select';options?:string[];required?:boolean;hint?:string};
-export type FormDefinition={id:string;slug:string;title:string;category:string;brand:'studio'|'label';description:string;fields:FormField[];rowTitle:string;columns:FormField[];minRows:number;notes:string[];contract?:boolean;authorization?:boolean;rowLabel?:string;signatures:'authors'|'parties'|'participants'|'tripartite'};
+export type FormDefinition={id:string;slug:string;title:string;category:string;brand:'studio'|'label';description:string;fields:FormField[];rowTitle:string;columns:FormField[];minRows:number;notes:string[];contract?:boolean;authorization?:boolean;notice?:boolean;rowLabel?:string;signatures:'authors'|'parties'|'participants'|'tripartite'|'none'|'guardians'};
 const field=(key:string,label:string,required=false,type?:FormField['type'],options?:string[]):FormField=>({key,label,required,type:type||(['goals','services','materials','references','budget','schedule','collaborators','nextSteps','notes','reference','phono','copyright','masterOwner','artwork','profiles','agreements','method','reservations','representative'].includes(key)?'textarea':undefined),...(options?{options}:{})});
 export const formTemplates:FormDefinition[]=[
+ ...remainingStudioForms,
+ ...remainingLabelForms,
+ ...remainingLiveForms,
  developmentContinuityTemplate,
  ...collaborationFormTemplates,
  ...additionalFormTemplates,
@@ -83,6 +90,7 @@ export function validateGeneralForm(t:FormDefinition,input:unknown,ready:boolean
  if(t.id==='featuring-agreement-v1'&&ready){if(d.fields.otherAgreements==='Da verificare')throw Error('Verifica gli altri rapporti contrattuali rilevanti.');if(d.fields.otherAgreements==='Autorizzazioni degli aventi diritto documentate'&&!d.fields.otherAuthorizations)throw Error('Indica le autorizzazioni degli aventi diritto.');if(d.fields.paymentMode!=='Partecipazione ai ricavi'&&!d.fields.fee)throw Error('Definisci il compenso fisso.');if(d.fields.paymentMode!=='Compenso fisso'&&!d.fields.revenueReference)throw Error('Indica le quote e l’accordo economico per i ricavi.');}
  if(ready&&t.id==='release-sheet-v1'&&d.fields.rightsCheck!=='Verificata con riferimenti agli accordi')throw Error('Completa la verifica dei diritti prima di preparare la scheda.');
  if(ready&&t.id==='delivery-approval-v1'&&d.fields.outcome==='Approvato con riserve'&&!d.fields.reservations)throw Error('Descrivi le riserve e le attività residue.');
+ validateRemainingForm(t,d,ready);
  return d;
 }
 
