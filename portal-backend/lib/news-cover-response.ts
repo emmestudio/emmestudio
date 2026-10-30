@@ -1,0 +1,2 @@
+// Stream large originals in bounded chunks instead of buffering the HTTP response.
+export function newsCoverResponse(bytes:Uint8Array,mime:string,privateFile=false){let offset=0;const stream=new ReadableStream<Uint8Array>({pull(controller){if(offset>=bytes.length){controller.close();return;}const end=Math.min(offset+64*1024,bytes.length);controller.enqueue(bytes.subarray(offset,end));offset=end;}});return new Response(stream,{headers:{'Content-Type':mime,'Cache-Control':privateFile?'private,no-store':'no-cache','X-Content-Type-Options':'nosniff'}});}

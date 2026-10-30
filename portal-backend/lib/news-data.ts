@@ -21,3 +21,6 @@ export function imageType(b:Uint8Array):string|null{
 }
 
 export function mediaEmbed(value:string):string|null{try{const u=new URL(value);if(u.protocol!=='https:'||u.username||u.password)return null;const parts=u.pathname.split('/').filter(Boolean);if(u.hostname==='open.spotify.com'){if(parts[0]?.startsWith('intl-'))parts.shift();if(['track','album','playlist','artist'].includes(parts[0])&&/^[a-zA-Z0-9]{22}$/.test(parts[1]||'')&&parts.length===2)return 'https://open.spotify.com/embed/'+parts.join('/');}let id:string|null=null;if(['youtube.com','www.youtube.com'].includes(u.hostname)){if(u.pathname==='/watch')id=u.searchParams.get('v');else if(['shorts','embed'].includes(parts[0]))id=parts[1];}else if(u.hostname==='youtu.be')id=parts[0];if(id&&/^[a-zA-Z0-9_-]{11}$/.test(id))return 'https://www.youtube-nocookie.com/embed/'+id;return null;}catch{return null;}}
+
+export const newsCoverMaxBytes=30*1024*1024;
+export const newsCoverChunkBytes=2*1024*1024;
