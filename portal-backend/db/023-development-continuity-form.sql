@@ -1,0 +1,3 @@
+-- Latest catalog constraint; supersedes narrower checks in 020 through 022.
+ALTER TABLE studio_form_documents DROP CONSTRAINT IF EXISTS studio_form_documents_template_check;
+ALTER TABLE studio_form_documents ADD CONSTRAINT studio_form_documents_template_check CHECK(template IN('studio-services-v1','project-intake-v1','author-split-v1','release-sheet-v1','delivery-approval-v1','label-release-agreement-v1','master-license-v1','revenue-recoupment-v1','work-change-v1','quote-acceptance-v1','image-voice-authorization-v1','portfolio-authorization-v1','session-musician-v1','featuring-agreement-v1','artist-development-continuity-v1'));

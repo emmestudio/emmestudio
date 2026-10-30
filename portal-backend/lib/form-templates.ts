@@ -1,9 +1,11 @@
+import {developmentContinuityTemplate} from './development-continuity-template';
 import {collaborationFormTemplates} from './collaboration-form-templates';
 import {additionalFormTemplates} from './additional-form-templates';
 export type FormField={key:string;label:string;type?:'textarea'|'date'|'email'|'select';options?:string[];required?:boolean;hint?:string};
-export type FormDefinition={id:string;slug:string;title:string;category:string;brand:'studio'|'label';description:string;fields:FormField[];rowTitle:string;columns:FormField[];minRows:number;notes:string[];contract?:boolean;authorization?:boolean;rowLabel?:string;signatures:'authors'|'parties'|'participants'};
+export type FormDefinition={id:string;slug:string;title:string;category:string;brand:'studio'|'label';description:string;fields:FormField[];rowTitle:string;columns:FormField[];minRows:number;notes:string[];contract?:boolean;authorization?:boolean;rowLabel?:string;signatures:'authors'|'parties'|'participants'|'tripartite'};
 const field=(key:string,label:string,required=false,type?:FormField['type'],options?:string[]):FormField=>({key,label,required,type:type||(['goals','services','materials','references','budget','schedule','collaborators','nextSteps','notes','reference','phono','copyright','masterOwner','artwork','profiles','agreements','method','reservations','representative'].includes(key)?'textarea':undefined),...(options?{options}:{})});
 export const formTemplates:FormDefinition[]=[
+ developmentContinuityTemplate,
  ...collaborationFormTemplates,
  ...additionalFormTemplates,
  {id:'project-intake-v1',slug:'scheda-progetto',title:'Scheda progetto e primo incontro',category:'Studio',brand:'studio',description:'Raccogli obiettivi, materiali, servizi, riferimenti e tempi prima di definire il lavoro.',fields:[field('contactName','Nome e cognome del referente',true),field('email','Email del referente',true,'email'),field('phone','Telefono'),field('artistName','Nome artistico / progetto',true),field('projectTitle','Titolo del progetto',true),field('projectType','Tipo di progetto',true,'select',['Singolo','EP','Album','Servizio singolo','Live','Da definire']),field('goals','Obiettivi artistici e risultati attesi',true),field('services','Attività e servizi richiesti',true),field('materials','Materiali disponibili e stato del lavoro'),field('references','Riferimenti musicali e collegamenti'),field('budget','Budget indicativo e priorità'),field('schedule','Scadenze, disponibilità e passaggi previsti'),field('collaborators','Collaboratori e ruoli'),field('nextSteps','Prossime azioni concordate',true),field('notes','Altre esigenze')],rowTitle:'Materiali e riferimenti',columns:[field('name','Materiale',true),field('reference','Link / riferimento',true),field('notes','Note')],minRows:0,notes:['Questa scheda raccoglie le informazioni del primo incontro. Non costituisce preventivo, incarico o accettazione di costi. Servizi, compensi e diritti saranno definiti negli accordi specifici.'],signatures:'parties'},
@@ -14,7 +16,7 @@ export const formTemplates:FormDefinition[]=[
 export const findFormTemplate=(key:string)=>formTemplates.find(t=>t.id===key||t.slug===key);
 export type ImportedFormQuote={id:string;version:number;title:string;artist:string;service:string;amount:number;notes:string;items:{description:string;quantity:number;unitPrice:number}[]};
 export type GeneralFormDraft={title:string;date:string;place:string;artistId:string;fields:Record<string,string>;rows:Record<string,string>[];quoteId?:string;quoteVersion?:number|null;quoteSnapshot?:ImportedFormQuote};
-export const emptyGeneralForm=(t:FormDefinition):GeneralFormDraft=>({title:t.title,date:'',place:'Caltanissetta',artistId:'',fields:Object.fromEntries(t.fields.map(f=>[f.key,''])),rows:[]});
+export const emptyGeneralForm=(t:FormDefinition):GeneralFormDraft=>({title:t.title,date:'',place:'Caltanissetta',artistId:'',fields:Object.fromEntries(t.fields.map(f=>[f.key,t.id==='artist-development-continuity-v1'&&f.key==='academyBrand'?'Accademia Amici del Canto':t.id==='artist-development-continuity-v1'&&f.key==='academyRepresentative'?'Martina Giordano':''])),rows:[]});
 export function shareBasisPoints(value:string){if(!/^\d{1,3}([.,]\d{1,2})?$/.test(value.trim()))throw Error('Inserisci quote percentuali con massimo due decimali.');const [n,d='']=value.trim().replace(',','.').split('.');const v=Number(n)*100+Number(d.padEnd(2,'0'));if(v>10000)throw Error('Una quota non può superare il 100%.');return v;}
 export function splitTotals(rows:Record<string,string>[]){return {dem:rows.reduce((n,r)=>n+(r.dem?shareBasisPoints(r.dem):0),0),drm:rows.reduce((n,r)=>n+(r.drm?shareBasisPoints(r.drm):0),0)};}
 export function validateGeneralForm(t:FormDefinition,input:unknown,ready:boolean):GeneralFormDraft{
@@ -47,6 +49,20 @@ export function validateGeneralForm(t:FormDefinition,input:unknown,ready:boolean
  if(t.id==='work-change-v1'){
   for(const value of [d.fields.previousAmount,d.fields.deltaAmount,d.fields.newAmount,...d.rows.map(r=>r.amount)])if(value)changeMoney(value);
   if(ready){const previous=changeMoney(d.fields.previousAmount),delta=changeMoney(d.fields.deltaAmount),next=changeMoney(d.fields.newAmount);if(previous<0||next<0||previous+delta!==next)throw Error('Verifica compenso precedente, variazione e nuovo totale.');if(d.rows.reduce((n,r)=>n+changeMoney(r.amount),0)!==delta)throw Error('La somma delle righe deve coincidere con la variazione del compenso.');}
+ }
+ if(t.id==='artist-development-continuity-v1'&&ready){
+  const x=d.fields;if(!/^\d{1,3}$/.test(x.noticeDays)||Number(x.noticeDays)<1||Number(x.noticeDays)>365)throw Error('Indica un termine di comunicazione da 1 a 365 giorni.');
+  if(x.academyType==='Persona fisica che gestisce l’Accademia'&&x.academyTaxCode.replace(/\s/g,'').toUpperCase()!==x.academyRepresentativeTaxCode.replace(/\s/g,'').toUpperCase())throw Error('Per il gestore persona fisica i due identificativi fiscali devono corrispondere.');
+  if(x.opportunityRegister==='Opportunità già individuate nelle righe allegate'&&!d.rows.length)throw Error('Aggiungi le opportunità già individuate al registro.');
+  if(x.opportunityRegister==='Nessuna opportunità già individuata; le nuove saranno identificate per iscritto'&&d.rows.length)throw Error('Il registro contiene opportunità: aggiorna la scelta sul suo stato.');
+  for(const row of d.rows)if(row.date>d.date||row.date>x.termEnd)throw Error('La data di un’opportunità non può essere successiva alla data del documento o alla fine del percorso.');
+  if(x.tailMode==='Solo opportunità specificamente identificate prima della fine, entro il termine indicato'){if(!x.tailEnd||x.tailEnd<x.termEnd||!x.tailRules)throw Error('Definisci termine successivo alla fine del percorso e limiti delle sole opportunità già individuate.');}
+  else if(x.tailEnd||x.tailRules)throw Error('Rimuovi termine e condizioni successive oppure seleziona l’estensione limitata.');
+  if(x.capacity==='Minorenne rappresentato'){
+   if(!x.guardianMode||!x.minorChecks)throw Error('Completa la verifica della rappresentanza e delle autorizzazioni del minore.');
+   if(x.guardianMode==='Entrambi i genitori / esercenti'&&(!x.secondRepresentative||!x.secondRepresentativeTaxCode))throw Error('Indica entrambi i genitori o esercenti con i relativi identificativi.');
+   if(x.guardianMode==='Unico soggetto legittimato documentato'&&!x.guardianEvidence)throw Error('Documenta la legittimazione del solo rappresentante del minore.');
+  }
  }
  if(t.id==='quote-acceptance-v1'){
   d.quoteId=typeof v.quoteId==='string'?v.quoteId:'';d.quoteVersion=v.quoteVersion===null||v.quoteVersion===undefined?null:Number(v.quoteVersion);
