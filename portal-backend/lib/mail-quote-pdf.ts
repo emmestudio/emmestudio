@@ -1,48 +1,32 @@
+import {quoteLogo,quoteWidths,quoteFonts} from './quote-pdf-assets.ts';
 type Line={description:string;quantity:number;unitPrice:number};
 type QuotePdf={title:string;artist:string;service:string;id:string;version:number;status:string;amount:number;notes:string;items:Line[]};
-const esc=(s:string)=>s.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^\x20-\x7E]/g," ").replace(/[()\\]/g,c=>"\\"+c).slice(0,240);
-const eur=(c:number)=>(c/100).toFixed(2)+" EUR";
+const H=842,W=595,L=44,R=551;
+const money=(n:number)=>(n/100).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})+' EUR';
+function win(s:string){return s.replace(/[\u2010-\u2015]/g,'-').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/€/g,'\x80').replace(/…/g,'...').replace(/[^\x20-\xFF\n]/g,' ');}
+const escape=(s:string)=>win(s).replace(/[()\\]/g,c=>'\\'+c);
+function width(s:string,size:number,bold=false){return [...win(s)].reduce((n,c)=>n+(quoteWidths[bold?1:0][c.charCodeAt(0)]||556),0)*size/1000;}
+function wrap(s:string,max:number,size:number,bold=false){const lines:string[]=[];for(const paragraph of win(s).split(/\r?\n/)){let line='';for(let word of paragraph.split(/\s+/).filter(Boolean)){while(width(word,size,bold)>max){if(line){lines.push(line);line='';}let cut=1;while(cut<word.length&&width(word.slice(0,cut+1),size,bold)<=max)cut++;lines.push(word.slice(0,cut));word=word.slice(cut);}if(!word)continue;if(line&&width(line+' '+word,size,bold)>max){lines.push(line);line=word;}else line+=(line?' ':'')+word;}lines.push(line);}return lines;}
 export function renderQuotePdf(q:QuotePdf):Buffer{
- const lines:{font:"F1"|"F2";size:number;x:number;y:number;text:string}[][]=[];
- let current:typeof lines[number]=[],y=738;
- const next=()=>{if(current.length)lines.push(current);current=[];y=738;};
- const put=(text:string,size=11,bold=false,indent=0)=>{if(y<90)next();current.push({font:bold?"F2":"F1",size,x:58+indent,y,text:esc(text)});y-=size+9;};
- const short=(s:string,width=83)=>{const tokens=s.split(/\s+/);const out:string[]=[];let x="";for(const t of tokens){if((x+" "+t).trim().length>width){if(x)out.push(x);x=t;}else x=(x+" "+t).trim()}if(x)out.push(x);return out.slice(0,150);};
- put("EMME STUDIO",22,true);put("PROPOSTA DI LAVORO  /  PREVENTIVO",11,true);y-=15;
- put(q.title,17,true);put("Artista: "+q.artist,11);put("Servizio: "+q.service,11);
- put("Riferimento: "+q.id.slice(0,8).toUpperCase()+"   |   Versione: "+q.version+"   |   Stato: "+q.status,10);
- y-=16;put("DETTAGLIO ECONOMICO",12,true);y-=8;
- if(q.items.length){
-  q.items.slice(0,100).forEach((item,index)=>{
-   for(const [i,line] of short((index+1)+". "+item.description,69).entries())put(line,10,i===0,0);
-   put("Quantita: "+(item.quantity/100).toFixed(2)+"    Tariffa: "+eur(item.unitPrice)+"    Totale: "+eur(Math.round(item.quantity*item.unitPrice/100)),10,false,12);
-  });
- }else put(q.service+"  -  "+eur(q.amount),11);
- y-=10;put("TOTALE PREVENTIVO: "+eur(q.amount),14,true);
- y-=18;put("CONDIZIONI E NOTE",12,true);
- for(const para of q.notes.split(/\r?\n/).slice(0,100)){for(const ln of short(para||" ",88))put(ln,10);}
- next();
- const objects:string[]=[];
- const add=(x:string)=>{objects.push(x);return objects.length};
- const font1=add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
- const font2=add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
- const pagesId=add("");
- const pageIds:number[]=[];
- for(const page of lines){
-  const commands=['0.09 0.10 0.13 rg','0 0 595 842 re f','0.85 0.70 0.44 rg','45 785 505 1.5 re f'];
-  for(const line of page){commands.push(line.font==="F2"?"0.93 0.86 0.73 rg":"0.87 0.87 0.88 rg");commands.push("BT /"+line.font+" "+line.size+" Tf "+line.x+" "+line.y+" Td ("+line.text+") Tj ET");}
-  commands.push('0.85 0.70 0.44 rg','45 52 505 1 re f','0.7 0.7 0.7 rg','BT /F1 9 Tf 58 35 Td (EMME STUDIO  -  MUSIC PRODUCTION) Tj ET');
-  const stream=commands.join("\n");
-  const contentId=add("<< /Length "+Buffer.byteLength(stream,"latin1")+" >>\nstream\n"+stream+"\nendstream");
-  const id=add("<< /Type /Page /Parent "+pagesId+" 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 "+font1+" 0 R /F2 "+font2+" 0 R >> >> /Contents "+contentId+" 0 R >>");
-  pageIds.push(id);
- }
- objects[pagesId-1]="<< /Type /Pages /Kids ["+pageIds.map(id=>id+" 0 R").join(" ")+"] /Count "+pageIds.length+" >>";
- const root=add("<< /Type /Catalog /Pages "+pagesId+" 0 R >>");
- let output="%PDF-1.4\n";const offsets=[0];
- for(let i=0;i<objects.length;i++){offsets.push(Buffer.byteLength(output,"latin1"));output+=(i+1)+" 0 obj\n"+objects[i]+"\nendobj\n";}
- const offset=Buffer.byteLength(output,"latin1");output+="xref\n0 "+(objects.length+1)+"\n0000000000 65535 f \n";
- for(const n of offsets.slice(1))output+=String(n).padStart(10,"0")+" 00000 n \n";
- output+="trailer\n<< /Size "+(objects.length+1)+" /Root "+root+" 0 R >>\nstartxref\n"+offset+"\n%%EOF";
- return Buffer.from(output,"latin1");
+ const pages:string[][]=[];let page:string[]=[],y=0;
+ const color=(hex:string)=>hex.match(/../g)!.map(v=>(parseInt(v,16)/255).toFixed(4)).join(' ');
+ const rect=(x:number,top:number,w:number,h:number,hex:string)=>page.push(color(hex)+' rg '+x+' '+(H-top-h)+' '+w+' '+h+' re f');
+ const rule=(top:number,x=L,end=R)=>rect(x,top,end-x,.6,'dce0e5');
+ const text=(s:string,x:number,top:number,size=10,bold=false,hex='252a31',right=false)=>{const value=win(s);page.push(color(hex)+' rg BT /'+(bold?'F2':'F1')+' '+size+' Tf '+(right?x-width(value,size,bold):x)+' '+(H-top-size)+' Td ('+escape(value)+') Tj ET');};
+ const logo=(top:number,w=170)=>page.push('q '+w+' 0 0 '+(w*quoteLogo.height/quoteLogo.width)+' '+L+' '+(H-top-w*quoteLogo.height/quoteLogo.width)+' cm /Logo Do Q');
+ function newPage(continued=false){if(page.length)pages.push(page);page=[];rect(0,0,W,H,'ffffff');logo(35,continued?126:170);text('PREVENTIVO',R,continued?36:44,continued?15:21,true,'252a31',true);text('RIF. '+q.id.slice(0,8).toUpperCase()+'  /  VERSIONE '+q.version,R,continued?59:76,8,false,'626973',true);rule(continued?91:113);y=continued?110:137;}
+ const ensure=(height:number)=>{if(y+height>755)newPage(true);};
+ const block=(value:string,x:number,top:number,max:number,size=10,bold=false,hex='252a31')=>{const lines=wrap(value,max,size,bold);for(let i=0;i<lines.length;i++)text(lines[i],x,top+i*(size+4),size,bold,hex);return lines.length*(size+4);};
+ newPage();y+=block(q.title,L,y,R-L,20,true)+18;
+ const clientLines=wrap(q.artist||'Da definire',222,11),serviceLines=wrap(q.service||'Da definire',222,11);const infoHeight=38+Math.max(clientLines.length,serviceLines.length)*15;ensure(infoHeight+60);rect(L,y,R-L,infoHeight,'f4f5f7');text('CLIENTE / PROGETTO',L+14,y+12,8,true,'626973');text('SERVIZIO',L+273,y+12,8,true,'626973');clientLines.forEach((s,i)=>text(s,L+14,y+30+i*15,11));serviceLines.forEach((s,i)=>text(s,L+273,y+30+i*15,11));y+=infoHeight+13;y+=block(q.status,L,y,R-L,9,false,'626973')+21;
+ const header=()=>{ensure(60);rect(L,y,R-L,30,'e9edf1');text('DESCRIZIONE',L+10,y+10,8,true);text('Q.TÀ',359,y+10,8,true,'252a31',true);text('PREZZO UNITARIO',450,y+10,8,true,'252a31',true);text('IMPORTO',R-10,y+10,8,true,'252a31',true);y+=30;};
+ header();const items=q.items.length?q.items:[{description:q.service,quantity:100,unitPrice:q.amount}];
+ items.forEach((item,index)=>{const lines=wrap(item.description,249,10);const height=Math.max(39,lines.length*14+20);if(y+height+(index===items.length-1?82+(q.notes.trim()?Math.min(110,45+wrap(q.notes,R-L,10).length*15):0):0)>755){newPage(true);header();}rect(L,y,R-L,height,index%2?'f7f8fa':'ffffff');lines.forEach((s,i)=>text(s,L+10,y+11+i*14,10));text((item.quantity/100).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2}),359,y+11,10,false,'252a31',true);text(money(item.unitPrice),450,y+11,9,false,'252a31',true);text(money(Math.round(item.quantity*item.unitPrice/100)),R-10,y+11,9,true,'252a31',true);y+=height;rule(y);});
+ y+=18;ensure(68);rect(300,y,251,56,'f0e8dc');text('TOTALE PREVENTIVO',314,y+10,8,true,'62605a');text(money(q.amount),537,y+27,17,true,'252a31',true);y+=84;
+ if(q.notes.trim()){ensure(65);text('CONDIZIONI E NOTE',L,y,10,true);y+=24;for(const line of wrap(q.notes,R-L,10)){ensure(17);text(line,L,y,10,false,'414852');y+=15;}}
+ pages.push(page);
+ const objects:Buffer[]=[];const add=(s:string|Buffer)=>{objects.push(typeof s==='string'?Buffer.from(s,'latin1'):s);return objects.length;};
+ const stream=(dictionary:string,bytes:Buffer)=>Buffer.concat([Buffer.from('<< '+dictionary+' /Length '+bytes.length+' >>\nstream\n','latin1'),bytes,Buffer.from('\nendstream','latin1')]);
+ const fontIds=quoteFonts.map((font,index)=>{const bytes=Buffer.from(font.data,'base64');const file=add(stream('/Filter /FlateDecode /Length1 '+font.length,bytes));const descriptor=add('<< /Type /FontDescriptor /FontName /'+font.name+' /Flags 32 /FontBBox [-1021 -463 1793 1232] /ItalicAngle 0 /Ascent 928 /Descent -236 /CapHeight 729 /StemV '+(index?120:80)+' /FontFile2 '+file+' 0 R >>');return add('<< /Type /Font /Subtype /TrueType /BaseFont /'+font.name+' /Encoding /WinAnsiEncoding /FirstChar 32 /LastChar 255 /Widths ['+quoteWidths[index].slice(32).join(' ')+'] /FontDescriptor '+descriptor+' 0 R >>');});const [font1,font2]=fontIds;const mask=add(stream('/Type /XObject /Subtype /Image /Width '+quoteLogo.width+' /Height '+quoteLogo.height+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode',Buffer.from(quoteLogo.alpha,'base64')));const image=add(stream('/Type /XObject /Subtype /Image /Width '+quoteLogo.width+' /Height '+quoteLogo.height+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /SMask '+mask+' 0 R',Buffer.from(quoteLogo.rgb,'base64')));const pagesId=add('');const pageIds:number[]=[];
+ pages.forEach((commands,i)=>{page=commands;rule(786);text('EMME STUDIO  |  emmestudioproduction.it',L,798,8,false,'626973');text((i+1)+' / '+pages.length,R,798,8,false,'626973',true);const content=add(stream('',Buffer.from(page.join('\n'),'latin1')));pageIds.push(add('<< /Type /Page /Parent '+pagesId+' 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 '+font1+' 0 R /F2 '+font2+' 0 R >> /XObject << /Logo '+image+' 0 R >> >> /Contents '+content+' 0 R >>'));});objects[pagesId-1]=Buffer.from('<< /Type /Pages /Kids ['+pageIds.map(id=>id+' 0 R').join(' ')+'] /Count '+pages.length+' >>','latin1');const catalog=add('<< /Type /Catalog /Pages '+pagesId+' 0 R >>');const chunks=[Buffer.from('%PDF-1.4\n','latin1')];const offsets=[0];let length=chunks[0].length;objects.forEach((object,i)=>{offsets.push(length);const part=Buffer.concat([Buffer.from((i+1)+' 0 obj\n','latin1'),object,Buffer.from('\nendobj\n','latin1')]);chunks.push(part);length+=part.length;});const xref=length;chunks.push(Buffer.from('xref\n0 '+(objects.length+1)+'\n0000000000 65535 f \n'+offsets.slice(1).map(n=>String(n).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<< /Size '+(objects.length+1)+' /Root '+catalog+' 0 R >>\nstartxref\n'+xref+'\n%%EOF','latin1'));return Buffer.concat(chunks);
 }

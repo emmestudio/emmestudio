@@ -7,7 +7,7 @@ test("quote PDF contains a correct header, trailer and one or more pages",()=>{
  assert.ok(str.startsWith("%PDF-1.4"));
  assert.ok(str.endsWith("%%EOF"));
  assert.match(str,/\/Type \/Catalog/);
- assert.match(str,/250\.00 EUR/);
+ assert.match(str,/250,00 EUR/);
  assert.match(str,/xref\n0 \d+/);
  assert.ok(pdf.length>500);
 });
