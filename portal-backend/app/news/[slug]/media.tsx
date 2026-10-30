@@ -1,0 +1,3 @@
+"use client";
+import {useState} from 'react';
+export default function Media({src}:{src:string}){const [loaded,setLoaded]=useState(false);const spotify=src.startsWith('https://open.spotify.com/');return <div className="news-media">{loaded?<iframe title={spotify?'Ascolta su Spotify':'Guarda su YouTube'} src={src} width="100%" height={spotify?352:440} allow="encrypted-media; fullscreen; picture-in-picture" allowFullScreen loading="lazy"/>:<div><p>{spotify?'Ascolta il progetto su Spotify.':'Guarda il video su YouTube.'}</p><p>Il player si collega al servizio esterno solo quando lo attivi.</p><button className="news-back" type="button" onClick={()=>setLoaded(true)}>{spotify?'Carica Spotify':'Carica YouTube'}</button></div>}</div>;}

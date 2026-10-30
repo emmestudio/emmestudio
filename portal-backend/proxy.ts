@@ -5,6 +5,7 @@ const studioOrigins = new Set([
 ]);
 // Use the origin already configured for Google OAuth. Do not duplicate sessions across domains.
 export function proxy(request: NextRequest) {
+  if(request.nextUrl.pathname.startsWith("/api/public/news")||request.nextUrl.pathname.startsWith("/news/"))return NextResponse.next();
   const base = process.env.BETTER_AUTH_URL;
   if (!base) return NextResponse.next();
   try {
