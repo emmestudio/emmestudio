@@ -69,6 +69,8 @@ revealItems.forEach((item) => item.addEventListener('focusin', () => item.classL
 
 const header = document.querySelector('.nav');
 const sectionLinks = [...document.querySelectorAll('#links a')];
+// Remember the page-level fallback, but highlight only one navigation item.
+const pageLinks = sectionLinks.filter(link => link.getAttribute('aria-current') === 'page');
 const linkedSections = sectionLinks.map((link) => ({
   link, section:link.hash && new URL(link.href).pathname === window.location.pathname ? document.getElementById(decodeURIComponent(link.hash.slice(1))) : null
 })).filter((item) => item.section);
@@ -84,6 +86,10 @@ function updateScrollState() {
   for (const item of linkedSections) {
     if (item.section.getBoundingClientRect().top <= threshold) current = item;
   }
+  pageLinks.forEach(link => {
+    if (current) link.removeAttribute('aria-current');
+    else link.setAttribute('aria-current', 'page');
+  });
   linkedSections.forEach((item) => {
     if (item === current) item.link.setAttribute('aria-current', 'location');
     else item.link.removeAttribute('aria-current');
