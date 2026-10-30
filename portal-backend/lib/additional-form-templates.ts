@@ -40,3 +40,5 @@ export const additionalFormTemplates:FormDefinition[]=[
  '5. Sottoscrizione. Le parti verificano i riferimenti, i conteggi e le modifiche e sottoscrivono di persona il documento. Restano salve le disposizioni inderogabili applicabili.'
  ],signatures:'parties'}
 ];
+
+export const contractParties=parties;
