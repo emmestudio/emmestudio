@@ -1,10 +1,10 @@
 'use client';
 import {useEffect,useState} from 'react';
 import {agreementServices,emptyServiceAgreement,type ServiceAgreement,type AgreementProvider} from '@/lib/service-agreement-data';
-type Doc={id:string;title:string;state:string;version:number;updated_at:string};type Artist={id:string;name:string;first_name:string;last_name:string;email:string;phone:string};type Target={id:string;title:string;artist:string};
+type Doc={template:string;id:string;title:string;state:string;version:number;updated_at:string};type Artist={id:string;name:string;first_name:string;last_name:string;email:string;phone:string};type Target={id:string;title:string;artist:string};
 export default function Editor(){
  const [draft,setDraft]=useState(emptyServiceAgreement),[id,setId]=useState(''),[version,setVersion]=useState(0),[docs,setDocs]=useState<Doc[]>([]),[artists,setArtists]=useState<Artist[]>([]),[targets,setTargets]=useState<Target[]>([]),[provider,setProvider]=useState<AgreementProvider|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[dirty,setDirty]=useState(false);
- async function load(){const r=await fetch('/api/forms',{cache:'no-store'}),v=await r.json();if(!r.ok)throw Error(v.error);setDocs(v.documents);setArtists(v.artists);setProvider(v.provider);}
+ async function load(){const r=await fetch('/api/forms',{cache:'no-store'}),v=await r.json();if(!r.ok)throw Error(v.error);setDocs(v.documents.filter((d:Doc)=>d.template==='studio-services-v1'));setArtists(v.artists);setProvider(v.provider);}
  useEffect(()=>{setId(crypto.randomUUID());load().catch(e=>setError(e.message));fetch('/api/finance/targets',{cache:'no-store'}).then(async r=>{const v=await r.json();if(r.ok)setTargets(v.targets||[]);}).catch(()=>{});},[]);
  const change=(key:keyof ServiceAgreement,value:ServiceAgreement[keyof ServiceAgreement])=>{setDraft(p=>({...p,[key]:value}));setDirty(true);setNotice('');};
  async function open(doc:Doc){if(dirty&&!confirm('Aprire un altro documento? Le modifiche non salvate verranno scartate.'))return;setBusy(true);setError('');try{const r=await fetch('/api/forms?id='+doc.id,{cache:'no-store'}),v=await r.json();if(!r.ok)throw Error(v.error);setDraft(v.document.payload.draft);setId(doc.id);setVersion(v.document.version);setDirty(false);setNotice('Documento caricato.');}catch(e){setError(e instanceof Error?e.message:'Documento non disponibile.');}finally{setBusy(false);}}
