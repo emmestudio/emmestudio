@@ -18,3 +18,9 @@ export function validateBooking(v:Record<string,unknown>,now=Date.now()){
 }
 export function bookingDate(value:string){return new Date(value).toLocaleString('it-IT',{timeZone:'Europe/Rome',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
 export const bookingStates:Record<string,string>={pending:'Da valutare',proposed:'Nuovo orario proposto',confirmed:'Confermata',rejected:'Rifiutata',cancelled:'Annullata',completed:'Completata'};
+
+export function declinedProposal(booking:{id:string;status:string},messages:{booking_id:string;author:string;body:string;created_at?:string}[]){
+ if(booking.status!=='pending')return null;
+ const events=messages.filter(m=>m.booking_id===booking.id&&((m.author==='client'&&m.body.startsWith('Il cliente ha rifiutato l’orario proposto.'))||(m.author==='studio'&&/^(Nuovo orario proposto:|Sessione confermata|Richiesta non accolta|Prenotazione annullata)/.test(m.body))));
+ const latest=events[events.length-1];return latest?.author==='client'?latest:null;
+}
