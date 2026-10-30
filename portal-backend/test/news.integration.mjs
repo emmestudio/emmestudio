@@ -33,6 +33,15 @@ try{
  assert.equal((await svc.api.POST(request({...a,publication_date:'2026-01-01',status:'published',cover_upload_id:ticket.id}))).status,200,'HD cover attaches on save');
  const hd=await svc.cover.GET(new Request('https://portal.example.test'),{params:Promise.resolve({slug:a.slug})});assert.equal(hd.status,200);assert.deepEqual(Buffer.from(await hd.arrayBuffer()),large,'Original bytes streamed without quality loss');
  assert.equal((await db.query('SELECT id FROM studio_news_cover_uploads WHERE id=$1',[ticket.id])).rows.length,0,'Consumed temporary upload removed');
+ a=(await list()).articles[0];
+ const deleteRequest=(extra={},origin='https://portal.example.test')=>new Request('https://portal.example.test/api/news',{method:'DELETE',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify({id:a.id,version:a.version,confirm:true,...extra})});
+ globalThis.newsSession=null;assert.equal((await svc.api.DELETE(deleteRequest())).status,401);globalThis.newsSession={user:{id:'owner'}};
+ assert.equal((await svc.api.DELETE(deleteRequest({},'https://evil.example'))).status,403);
+ assert.equal((await svc.api.DELETE(deleteRequest({confirm:false}))).status,400);
+ globalThis.newsSession={user:{id:'other'}};assert.equal((await svc.api.DELETE(deleteRequest())).status,404);globalThis.newsSession={user:{id:'owner'}};
+ assert.equal((await svc.api.DELETE(deleteRequest({version:a.version-1}))).status,409);
+ assert.equal((await svc.api.DELETE(deleteRequest())).status,200);assert.equal((await list()).articles.length,0);assert.equal((await feed()).articles.length,0);assert.equal((await svc.cover.GET(new Request('https://portal.example.test'),{params:Promise.resolve({slug:a.slug})})).status,404);assert.equal((await db.query('SELECT cover FROM studio_news WHERE id=$1',[a.id])).rows.length,0);assert.equal((await svc.api.DELETE(deleteRequest())).status,404);
+ console.log('Permanent deletion passed: authorization, confirmation, origin, stale versions, database removal and public cover removal.');
  console.log('HD covers passed: 30 MB original uploaded in blocks, unauthorized/oversize/incomplete/out-of-order uploads rejected, original bytes streamed intact.');
  console.log('News integration passed: owner access, origin, drafts, publication, cover validation, public privacy, CORS, version conflicts, stable URLs, future dates and withdrawal.');
 }finally{await db.close();await rm(temp,{recursive:true,force:true});}

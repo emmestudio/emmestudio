@@ -35,3 +35,15 @@ async function save(request:Request){
  }catch(e){await client.query('ROLLBACK');if((e as {code?:string}).code==='23505')return json({error:'Questo indirizzo è già usato. Scegline un altro.'},409);console.error('NEWS_SAVE_FAILED');return json({error:'Salvataggio non riuscito. Riprova.'},500);}finally{client.release();}
 }
 export const POST=save;
+
+export async function DELETE(request:Request){
+ const session=await ownerSession(request.headers);if(!session)return json({error:'Accesso riservato al titolare.'},401);
+ if(!sameOrigin(request.headers.get('origin'),process.env.BETTER_AUTH_URL)&&request.headers.get('origin')!==new URL(request.url).origin)return json({error:'Origine non consentita.'},403);
+ let input;
+ try{const raw=await request.text();if(raw.length>2048)return json({error:'Richiesta non valida.'},400);input=JSON.parse(raw);if(typeof input.id!=='string'||!/^[0-9a-f-]{36}$/.test(input.id)||!Number.isSafeInteger(input.version)||input.version<1||input.confirm!==true)throw Error();}catch{return json({error:'Conferma di eliminazione non valida.'},400);}
+ try{
+  const result=await getDb().query('DELETE FROM studio_news WHERE id=$1 AND owner_id=$2 AND version=$3 RETURNING id',[input.id,session.user.id,input.version]);
+  if(!result.rowCount){const found=await getDb().query('SELECT id FROM studio_news WHERE id=$1 AND owner_id=$2',[input.id,session.user.id]);return json({error:found.rowCount?'Articolo aggiornato in un’altra finestra. Ricarica prima di eliminarlo.':'Articolo non trovato.'},found.rowCount?409:404);}
+  return json({deleted:true});
+ }catch{console.error('NEWS_DELETE_FAILED');return json({error:'Eliminazione non riuscita. Riprova.'},500);}
+}
