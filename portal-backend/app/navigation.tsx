@@ -11,7 +11,7 @@ export default function Navigation(){
  const container=useRef<HTMLDivElement>(null);
  const [authenticated,setAuthenticated]=useState(false),[admin,setAdmin]=useState(false),[owner,setOwner]=useState(false),[signedIn,setSignedIn]=useState(false),[open,setOpen]=useState(false),[expanded,setExpanded]=useState<string|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState("");
  useEffect(()=>{
-  if(pathname.startsWith("/news/"))return;
+  if((pathname.startsWith("/news/")||pathname.startsWith("/prenota/")))return;
   const controller=new AbortController();
   setOpen(false);setExpanded(null);setSignedIn(false);setAdmin(false);setOwner(false);
   fetch("/api/workspace",{cache:"no-store",signal:controller.signal}).then(async r=>{
@@ -30,7 +30,7 @@ export default function Navigation(){
  const artistArea=pathname.startsWith("/area-artista");
  const groups:NavGroup[]=[
   {label:"Produzioni",items:[entry("/progetti","Progetti"),entry("/produzione","Produzione musicale"),entry("/live","Produzione Live"),...(admin?[entry("/anteprime","Anteprime artisti")]:[])]},
-  {label:"Organizzazione",items:[entry("/lavoro","Il mio lavoro"),entry("/attivita","Attività"),entry("/calendario","Calendario")]},
+  {label:"Organizzazione",items:[...(owner?[entry("/prenotazioni","Prenotazioni")]:[]),entry("/lavoro","Il mio lavoro"),entry("/attivita","Attività"),entry("/calendario","Calendario")]},
   ...(admin?[{label:"Amministrazione",items:[entry("/redazione","News del sito"),entry("/guadagni","Guadagni"),entry("/costi","Costi"),entry("/archivio","Archivio Drive"),entry("/accessi","Team e accessi")]}]:[])
  ];
  const active=(href:string)=>pathname===href||pathname.startsWith(href+"/")||(href==="/progetti"&&pathname.startsWith("/preventivi/"));
@@ -40,7 +40,7 @@ export default function Navigation(){
   try{const r=await authClient.signOut();if(r.error)throw Error();window.location.assign("/accesso");}
   catch{setError("Uscita non completata. Riprova.");setBusy(false);}
  }
- if(pathname.startsWith("/news/"))return <nav aria-label="Navigazione sito"><a href="https://emmestudioproduction.it/">Emme Studio</a><a href="https://emmestudioproduction.it/label.html">Label</a><a href="https://emmestudioproduction.it/news.html">News</a></nav>;
+ if((pathname.startsWith("/news/")||pathname.startsWith("/prenota/")))return <nav aria-label="Navigazione sito"><a href="https://emmestudioproduction.it/">Emme Studio</a><a href="https://emmestudioproduction.it/label.html">Label</a><a href="https://emmestudioproduction.it/news.html">News</a></nav>;
  return <div className="portal-navigation portal-navigation-v2" ref={container}>
   <button type="button" className="portal-menu-toggle secondary" aria-controls="portal-links" aria-expanded={open} onClick={()=>setOpen(!open)}>Menu <span aria-hidden="true">{open?"×":"☰"}</span></button>
   <nav id="portal-links" className={open?"is-open":""} aria-label="Navigazione portale">

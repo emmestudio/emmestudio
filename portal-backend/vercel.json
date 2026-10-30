@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/artist-preview-retention",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/bookings",
+      "schedule": "0 6 * * *"
     }
   ]
 }

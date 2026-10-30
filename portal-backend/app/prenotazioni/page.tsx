@@ -1,0 +1,2 @@
+import {headers} from 'next/headers';import {redirect} from 'next/navigation';import {ownerSession} from '@/lib/owner-session';import Manager from './manager';import './bookings.css';
+export const dynamic='force-dynamic';export default async function Page(){if(!await ownerSession(await headers()))redirect('/accesso');return <main className="booking-manager"><p className="eyebrow">ORGANIZZAZIONE · STUDIO</p><h1>Prenotazioni.</h1><p>Richieste dal sito, appuntamenti e conversazioni. Le richieste in attesa non bloccano il calendario.</p><Manager/></main>;}

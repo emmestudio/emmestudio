@@ -1,0 +1,1 @@
+import Client from './request';import './request.css';export const metadata={title:'La tua richiesta — Emme Studio',robots:{index:false,follow:false},referrer:'no-referrer' as const};export default function Page(){return <main className="booking-client"><p className="eyebrow">PRENOTAZIONI · EMME STUDIO</p><h1>La tua richiesta.</h1><Client/></main>;}

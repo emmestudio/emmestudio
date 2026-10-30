@@ -1,0 +1,3 @@
+import {readFile} from 'node:fs/promises';import {Pool} from 'pg';
+if(process.env.VERCEL_PROJECT_ID!=='prj_wYBGT1TA8DnuvDY0fIaYnLS1P8MK'||process.env.VERCEL_ENV!=='production')throw Error('WRONG_PROJECT');
+const db=new Pool({connectionString:process.env.DATABASE_URL_UNPOOLED||process.env.DATABASE_URL,max:1});try{await db.query(await readFile(new URL('../db/015-bookings.sql',import.meta.url),'utf8'));console.log('BOOKINGS_SCHEMA_READY');const a=await db.query("SELECT provider,count(*)::int AS count FROM studio_mail_accounts GROUP BY provider");console.log('BOOKINGS_MAIL_PROVIDERS',JSON.stringify(a.rows),'ARUBA_CONFIGURED',Boolean(process.env.ARUBA_MAIL_USERNAME&&process.env.ARUBA_MAIL_PASSWORD));}finally{await db.end();}
