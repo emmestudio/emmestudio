@@ -1,3 +1,4 @@
+import {formBrand} from '@/lib/form-brand';
 import GeneralPaper from '@/app/modulistica/general-paper';
 import {documentLogo} from '@/lib/document-logo';
 import {headers} from 'next/headers';import {redirect,notFound} from 'next/navigation';import {ownerSession} from '@/lib/owner-session';import {getDb} from '@/lib/db';import {validId} from '@/lib/task-data';import type {ServiceAgreement,AgreementProvider,AgreementClause} from '@/lib/service-agreement-data';import PrintButton from '@/app/preventivi/[id]/print-button';import '../../modulistica.css';
@@ -6,7 +7,7 @@ export default async function Page({params,searchParams}:{params:Promise<{id:str
  const s=await ownerSession(await headers());if(!s)redirect('/accesso');const {id}=await params;if(!validId(id))notFound();
  const doc=(await getDb().query('SELECT * FROM studio_form_documents WHERE id=$1 AND owner_id=$2',[id,s.user.id])).rows[0];if(!doc)notFound();
  const requested=(await searchParams).version;if(requested){if(!/^\d+$/.test(requested)||!Number.isSafeInteger(Number(requested))||Number(requested)<1||Number(requested)>doc.version)notFound();const old=(await getDb().query('SELECT payload,state,version FROM studio_form_history WHERE document_id=$1 AND version=$2',[id,Number(requested)])).rows[0];if(!old)notFound();Object.assign(doc,old);}
- const logo=await documentLogo();
+ const logo=await documentLogo(formBrand(doc.template,doc.payload.definition?.brand));
  const history=(await getDb().query('SELECT version,state,recorded_at FROM studio_form_history WHERE document_id=$1 ORDER BY version DESC',[id])).rows;
  if(doc.template!=='studio-services-v1')return <main className="shell agreement-document"><div className="no-print forms-preview-actions"><a href={'/modulistica/modelli/'+doc.payload.definition.slug}>Torna ai documenti</a><PrintButton/><p>Controlla dati e accordi prima della sottoscrizione. L’anteprima non firma il documento.</p></div><GeneralPaper doc={doc} logo={logo}/><details className="card no-print"><summary>Versioni salvate · {history.length}</summary>{history.map(h=><p key={h.version}><a href={'/modulistica/documenti/'+id+'?version='+h.version}>Versione {h.version} · {h.state==='ready'?'Preparato':'Bozza'} · {new Date(h.recorded_at).toLocaleString('it-IT',{timeZone:'Europe/Rome'})}</a></p>)}</details></main>;
  const {draft:d,provider:p,clauses}=doc.payload as {draft:ServiceAgreement;provider:AgreementProvider;clauses:AgreementClause[]};
