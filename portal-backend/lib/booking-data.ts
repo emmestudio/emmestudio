@@ -13,7 +13,7 @@ export function validateBooking(v:Record<string,unknown>,now=Date.now()){
  const field=(k:string,max:number,required=true)=>{const x=v[k];if(typeof x!=='string'||x.length>max||(required&&!x.trim()))throw Error('Controlla il campo '+k+'.');return x.trim();};
  const name=field('name',120),email=field('email',254).toLowerCase(),phone=field('phone',40),project=field('project',160,false),service=field('service',150),description=field('description',4000),links=field('links',1500,false),alternative=field('alternative',500,false);
  if(!/^[^\s@<>;,]+@[^\s@<>;,]+\.[^\s@<>;,]+$/.test(email)||!/^[-+() 0-9.]{6,40}$/.test(phone)||!bookingServices.includes(service)||v.privacy!==true||typeof v.clientKey!=='string'||!/^[0-9a-f-]{36}$/.test(v.clientKey))throw Error('Controlla contatti, servizio e consenso privacy.');
- const duration=service===firstMeeting?60:Number(v.duration);const slot=bookingTime(String(v.date),String(v.time),duration,now);
+ const duration=Number(v.duration);const slot=bookingTime(String(v.date),String(v.time),duration,now);
  return {name,email,phone,project,service,description,links,alternative,...slot,clientKey:v.clientKey};
 }
 export function bookingDate(value:string){return new Date(value).toLocaleString('it-IT',{timeZone:'Europe/Rome',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
