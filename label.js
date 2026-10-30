@@ -43,7 +43,7 @@
           const img = el('img'); img.src = artist.photo; img.alt = artist.name; img.loading = 'lazy'; a.append(img);
         }
         const copy = el('div', '', 'roster-card-copy');
-        copy.append(el('h3', artist.name), el('p', artist.tagline || ''), el('span', 'Scopri l’artista ↗', 'text-link'));
+        copy.append(el('h3', artist.name), el('p', artist.tagline || ''), el('span', 'Scopri l’artista', 'text-link'));
         a.append(copy); card.append(a, links(artist, 'artist-card-links')); grid.append(card);
       }
     }
