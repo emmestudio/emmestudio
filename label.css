@@ -9,3 +9,6 @@
 @media(hover:hover) and (prefers-reduced-motion:no-preference){.roster-card:hover{transform:translateY(-8px);border-color:var(--accent);box-shadow:0 24px 58px #0006,0 0 32px #9980ff18}.roster-card:hover>a>img{scale:1.035;filter:saturate(1.08)}}
 @media(hover:none){.roster-card:hover{transform:none}}
 @media(prefers-reduced-motion:reduce){.roster-card,.roster-card>a>img{transition:none}.roster-card:hover,.roster-card:focus-within{transform:none}.roster-card:hover>a>img{scale:1}}
+
+/* Label scroll progress follows its purple brand palette. */
+.label-page .nav::after{background:linear-gradient(90deg,#8e70df,#b7a5ff)}
