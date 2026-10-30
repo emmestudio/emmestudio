@@ -18,7 +18,11 @@
     for (const entry of artist.links || []) {
       const href = safeLink(entry.url);
       if (!href) continue;
-      const a = el('a', `${entry.label} ↗`, className === 'profile-links' ? 'button outline' : '');
+      const a = el('a', '', 'social-circle');
+      const icons = {instagram:'instagram',facebook:'facebook',tiktok:'tiktok',spotify:'spotify',youtube:'youtube',soundcloud:'soundcloud',x:'x'};
+      const icon = icons[entry.label.toLowerCase()];
+      if (icon) { const img = el('img'); img.src = `assets/social-outline/${icon}.svg`; img.alt = ''; img.width = 20; img.height = 20; a.append(img); } else { a.textContent = entry.label; a.className = 'button outline'; }
+      a.title = entry.label;
       a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
       a.setAttribute('aria-label', `${entry.label} — ${artist.name} (nuova scheda)`);
       wrap.append(a);
@@ -26,7 +30,7 @@
     return wrap;
   };
   try {
-    const response = await fetch('label-artists.json');
+    const response = await fetch('label-artists.json?v=20261030-moody');
     if (!response.ok) throw new Error('Roster unavailable');
     const data = await response.json();
     const artists = data.filter(a => a.published === true && a.slug && a.name);
