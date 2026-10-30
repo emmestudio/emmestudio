@@ -6,8 +6,7 @@ import {listFinanceTargets} from "@/lib/finance-targets";
 import { listLedger } from "@/lib/finance";
 import { quoteHistory } from "@/lib/costs";
 import { validId } from "@/lib/task-data";
-import { euro, lineTotal } from "@/lib/finance-data";
-import PrintButton from "./print-button";
+import { euro } from "@/lib/finance-data";
 export const dynamic = "force-dynamic";
 export default async function Page({
   params,
@@ -29,110 +28,10 @@ export default async function Page({
   if (!p || !q) notFound();
   return (
     <main className="shell quote-document">
-      <article className="quote-paper">
-        <header className="quote-masthead">
-          {/* Native image keeps the printable document independent of image optimization. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-white.png"
-            alt="Emme Studio"
-            width="150"
-            height="75"
-          />
-          <div>
-            <span>PROPOSTA DI LAVORO</span>
-            <strong>Preventivo</strong>
-            <small>
-              Rif. {id.slice(0, 8).toUpperCase()} · v{q.version}
-            </small>
-          </div>
-        </header>
-        <span className="eyebrow">IL TUO LAVORO, CON EMME STUDIO</span>
-        <h1>{p.title}</h1>
-        <div className="quote-meta quote-info">
-          <p>
-            <strong>Artista / gruppo:</strong> {p.artist}
-            {p.contactName ? <><br/><strong>Nome e cognome:</strong> {p.contactName}</> : null}
-            <br />
-            <strong>Servizio:</strong> {p.service}
-            <br />
-            <strong>Stato:</strong> {q.status}
-          </p>
-          <p>
-            <strong>Riferimento:</strong> {id.slice(0, 8).toUpperCase()}
-            <br />
-            <strong>Versione:</strong> {q.version}
-            <br />
-            <strong>Conferma registrata:</strong>{" "}
-            {q.confirmedOn
-              ? new Date(q.confirmedOn + "T12:00:00Z").toLocaleDateString(
-                  "it-IT",
-                )
-              : "Non registrata"}
-            <br />
-            {q.confirmationNote}
-          </p>
-        </div>
-        <div className="table-scroll">
-          <table className="quote-table">
-            <thead>
-              <tr>
-                <th>Descrizione</th>
-                <th>Quantità</th>
-                <th>Tariffa</th>
-                <th>Totale</th>
-              </tr>
-            </thead>
-            <tbody>
-              {q.items?.length ? (
-                q.items.map((l, i) => (
-                  <tr key={i}>
-                    <td>{l.description}</td>
-                    <td>{(l.quantity / 100).toLocaleString("it-IT")}</td>
-                    <td>{euro(l.unitPrice)}</td>
-                    <td>{euro(lineTotal(l))}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td>{p.service}</td>
-                  <td>1</td>
-                  <td>{euro(q.amount)}</td>
-                  <td>{euro(q.amount)}</td>
-                </tr>
-              )}
-            </tbody>
-            <tfoot className="quote-table-total">
-              <tr>
-                <th colSpan={3}>Totale preventivo</th>
-                <td>{euro(q.amount)}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-        <div className="quote-total">
-          <div>
-            <span>INVESTIMENTO COMPLESSIVO</span>
-            <p>Totale preventivo</p>
-          </div>
-          <strong>{euro(q.amount)}</strong>
-        </div>
-        <section className="quote-conditions">
-          <h2>Dettaglio e condizioni</h2>
-          <p className="preserve-lines">
-            {q.notes || "Condizioni da specificare."}
-          </p>
-        </section>
-        <footer className="quote-footer">
-          <strong>EMME STUDIO</strong>
-          <span>
-            Music Production · Live Show Production · Artist &amp; Project
-            Management
-          </span>
-        </footer>
-      </article>
+      <header className="card no-print"><p className="eyebrow">PREVENTIVO · EMME STUDIO</p><h1>{p.title}</h1><p>{p.artist} · {p.service} · {euro(q.amount)}</p><p>Lo stesso documento viene utilizzato per progetti, prenotazioni e allegati email.</p></header>
+      <iframe className="quote-pdf-preview" title={"Preventivo PDF — "+p.title} src={"/api/finance/quote?id="+id} />
       <div className="dialog-actions no-print">
-        <PrintButton />
+        <a className="button" href={"/api/finance/quote?id="+id} target="_blank" rel="noopener noreferrer">Apri / Scarica PDF</a>
         <Link className="text-button" href={p.subjectKind === "project" ? "/progetti?project="+id : "/produzione?kind="+p.productionKind+"&artist="+p.artistId+(p.productionKind==="track"?"&track="+id:"")}>
           Modifica preventivo ↗
         </Link>

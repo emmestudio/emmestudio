@@ -75,6 +75,13 @@ export default function Production({liveOnly=false}:{liveOnly?:boolean}) {
           const tab = liveOnly ? "live" : q.get("kind");
           if (kinds.includes(tab as ProductionKind))
             setKind(tab as ProductionKind);
+          const linkedItem = a.items.find((item: ProductionItem) => item.id === q.get("item"));
+          if (linkedItem) {
+            const linkedQuote = p.ledger?.quotes.find((quote: {projectId:string}) => quote.projectId === linkedItem.id);
+            setKind(linkedItem.kind);setArtist(linkedItem.artistId || "");setProject(linkedItem.projectId || "");
+            setQuote(linkedQuote ?? {amount:0,status:"Bozza",notes:""});setAmount(((linkedQuote?.amount ?? 0)/100).toFixed(2));setQuoteVersion(linkedQuote?.version ?? 0);setHasQuote(Boolean(linkedQuote));
+            setDraft({...linkedItem});setEditor(linkedItem);setId(linkedItem.id);
+          }
           if (q.get("new") === "1" && a.canEdit && kinds.includes(tab as ProductionKind)) {
             const created = emptyProduction(tab as ProductionKind, q.get("project") || "");
             created.artistId = q.get("artist") || null;

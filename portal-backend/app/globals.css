@@ -329,3 +329,5 @@
 .studio-chat-thread textarea{width:100%;box-sizing:border-box;resize:vertical}
 .studio-chat-thread form button{justify-self:end}
 @media(max-width:720px){.studio-chat{grid-template-columns:1fr}.studio-chat-list{max-height:220px;border-right:0;border-bottom:1px solid #ffffff20}.studio-chat-timeline{max-height:52vh}}
+
+.quote-pdf-preview{display:block;width:100%;height:80vh;min-height:600px;border:1px solid #ffffff25;border-radius:12px;background:#fff;margin:24px 0}.booking-work-link{border:1px solid #c9ae8660;border-radius:16px;padding:20px;margin-bottom:24px;background:#c9ae860b}.booking-work-link p{font-size:13px}@media(max-width:650px){.quote-pdf-preview{min-height:480px;height:70vh}}
