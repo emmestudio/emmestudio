@@ -12,7 +12,7 @@ export async function queueBookingMail(db:{query:Function},b:Record<string,any>,
 }
 export async function deliverBookingMail(owner:string,id?:string){
  const db=getDb();const client=await db.connect();let sent=0,pending=0;
- try{await client.query('BEGIN');const jobs=await client.query(`SELECT m.* FROM studio_booking_mail m JOIN studio_bookings b ON b.id=m.booking_id WHERE b.owner_id=$1 AND m.sent_at IS NULL ${id?'AND b.id=$2':''} ORDER BY m.created_at LIMIT 4 FOR UPDATE OF m SKIP LOCKED`,id?[owner,id]:[owner]);
+ try{await client.query('BEGIN');const lock=await client.query('SELECT pg_try_advisory_xact_lock(hashtext($1)) AS acquired',[owner+'-booking-mail']);if(!lock.rows[0].acquired){await client.query('ROLLBACK');return {sent:0,pending:1};}const jobs=await client.query(`SELECT m.* FROM studio_booking_mail m JOIN studio_bookings b ON b.id=m.booking_id WHERE b.owner_id=$1 AND m.sent_at IS NULL ${id?'AND b.id=$2':''} ORDER BY m.created_at LIMIT 4 FOR UPDATE OF m SKIP LOCKED`,id?[owner,id]:[owner]);
  for(const job of jobs.rows){try{
  const accounts=(await db.query(`SELECT id,provider FROM studio_mail_accounts WHERE owner_id=$1 ORDER BY CASE WHEN provider='aruba' THEN 0 ELSE 1 END`,[owner])).rows;let done=false;
  for(const account of accounts){try{const mail={to:job.recipient,subject:job.subject,body:job.body,attachments:[]};if(account.provider==='aruba'&&arubaMailReadiness().configured){await sendAruba(owner,account.id,mail);done=true;break;}if(account.provider==='gmail'){await sendGmail(owner,account.id,mail);done=true;break;}}catch{}}
