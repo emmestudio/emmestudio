@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://emmestudioproduction.it/sitemap.xml
+Sitemap: https://portal.emmestudioproduction.it/news/sitemap.xml
