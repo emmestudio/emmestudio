@@ -30,7 +30,7 @@
     return wrap;
   };
   try {
-    const response = await fetch('label-artists.json?v=20261030-moody');
+    const response = await fetch('label-artists.json?v=20261030-spotify');
     if (!response.ok) throw new Error('Roster unavailable');
     const data = await response.json();
     const artists = data.filter(a => a.published === true && a.slug && a.name);
