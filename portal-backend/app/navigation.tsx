@@ -31,7 +31,7 @@ export default function Navigation(){
  const groups:NavGroup[]=[
   {label:"Produzioni",items:[entry("/progetti","Progetti"),entry("/produzione","Produzione musicale"),entry("/live","Produzione Live"),...(admin?[entry("/anteprime","Anteprime artisti")]:[])]},
   {label:"Organizzazione",items:[...(owner?[entry("/prenotazioni","Prenotazioni")]:[]),entry("/lavoro","Il mio lavoro"),entry("/attivita","Attività"),entry("/calendario","Calendario")]},
-  ...(admin?[{label:"Amministrazione",items:[entry("/redazione","News del sito"),entry("/guadagni","Guadagni"),entry("/costi","Costi"),entry("/archivio","Archivio Drive"),entry("/accessi","Team e accessi")]}]:[])
+  ...(admin?[{label:"Amministrazione",items:[entry("/redazione","News del sito"),entry("/modulistica","Modulistica"),entry("/guadagni","Guadagni"),entry("/costi","Costi"),entry("/archivio","Archivio Drive"),entry("/accessi","Team e accessi")]}]:[])
  ];
  const active=(href:string)=>pathname===href||pathname.startsWith(href+"/")||(href==="/progetti"&&pathname.startsWith("/preventivi/"));
  function link(item:NavItem){return <Link key={item.href} href={item.href} aria-current={active(item.href)?"page":undefined} onClick={()=>{setOpen(false);setExpanded(null);}}>{item.label}</Link>;}
