@@ -12,11 +12,11 @@ export function labelEntry(row: LabelRow, publicEntry = false): LabelEntry {
       row.data.kind === "artist" && row.data.slug === "moody" ? moodyPhoto : "" };
 }
 
-export async function publicLabel() {
+export async function publicLabel(partnersOnly = false) {
   const result = await getDb().query<LabelRow>(
     `SELECT ${labelColumns} FROM studio_label_catalog
-     WHERE published AND owner_id IN (SELECT id FROM "user" WHERE lower(email)=lower($1) AND "emailVerified"=true)
-     ORDER BY kind,sort_order NULLS LAST,id`, [process.env.PORTAL_OWNER_EMAIL],
+     WHERE published AND (kind='partner')=$2 AND owner_id IN (SELECT id FROM "user" WHERE lower(email)=lower($1) AND "emailVerified"=true)
+     ORDER BY kind,sort_order NULLS LAST,id`, [process.env.PORTAL_OWNER_EMAIL, partnersOnly],
   );
   return result.rows.map(row => labelEntry(row, true));
 }

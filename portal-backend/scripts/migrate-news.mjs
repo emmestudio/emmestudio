@@ -4,6 +4,7 @@ if(process.env.VERCEL_PROJECT_ID!=='prj_wYBGT1TA8DnuvDY0fIaYnLS1P8MK'||process.e
 const pool=new Pool({connectionString:process.env.DATABASE_URL_UNPOOLED||process.env.DATABASE_URL,max:1,connectionTimeoutMillis:15000});
 try{await pool.query(await readFile(new URL('../db/013-news.sql',import.meta.url),'utf8'));await pool.query(await readFile(new URL('../db/014-news-hd-covers.sql',import.meta.url),'utf8'));await pool.query(await readFile(new URL('../db/028-label-catalog.sql',import.meta.url),'utf8'));
 await pool.query(await readFile(new URL('../db/029-label-catalog-order.sql',import.meta.url),'utf8'));
+await pool.query(await readFile(new URL('../db/030-site-partners.sql',import.meta.url),'utf8'));
 const legacy=JSON.parse(await readFile(new URL('../db/label-moody-seed.json',import.meta.url),'utf8'));
 await pool.query(`WITH first_setup AS (
  INSERT INTO studio_label_catalog_seeded(owner_id)

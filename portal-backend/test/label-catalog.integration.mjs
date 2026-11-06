@@ -19,12 +19,13 @@ const origin = process.env.BETTER_AUTH_URL;
 try {
   await db.exec(`CREATE TABLE "user"(id text PRIMARY KEY,email text,"emailVerified" boolean);
     INSERT INTO "user" VALUES ('owner','owner@example.test',true),('other','other@example.test',true);`);
-  for (const sql of ["014-news-hd-covers.sql", "028-label-catalog.sql", "029-label-catalog-order.sql", "029-label-catalog-order.sql"])
+  for (const sql of ["014-news-hd-covers.sql", "028-label-catalog.sql", "029-label-catalog-order.sql", "029-label-catalog-order.sql", "030-site-partners.sql", "030-site-partners.sql"])
     await db.exec(await readFile("db/" + sql, "utf8"));
   await build({
     stdin: {
       contents: `export * as admin from '${resolve("app/api/label-catalog/route.ts")}';
         export * as feed from '${resolve("app/api/public/label/route.ts")}';
+        export * as partners from '${resolve("app/api/public/partners/route.ts")}';
         export * as image from '${resolve("app/api/label-catalog/image/[id]/route.ts")}';`,
       resolveDir: resolve("."),
     },
@@ -40,7 +41,7 @@ try {
       }));
     } }],
   });
-  const { admin, feed, image } = await import(join(tmp, "routes.mjs"));
+  const { admin, feed, image, partners } = await import(join(tmp, "routes.mjs"));
   const post = (data, source = origin) => admin.POST(new Request(origin + "/api/label-catalog", {
     method: "POST", headers: { origin: source, "Content-Type": "application/json" }, body: JSON.stringify(data),
   }));
@@ -117,6 +118,19 @@ try {
   assert.equal((await change("DELETE", { ...moody, confirm: true })).status, 200);
   await db.query(seedSql, seedArgs);
   assert.deepEqual((await (await getFeed()).json()).artists, [], "A deleted seed artist cannot reappear");
+  const partnerFeed = () => partners.GET(new Request(origin + "/api/public/partners"));
+  const collaboration = { kind: "partner", slug: "partner-prova", name: "Partner prova", tagline: "Formazione",
+    body: "Laboratori di produzione musicale.", links: { Sito: "https://example.test" }, published: false };
+  assert.equal((await post({ ...collaboration, body: "", published: true })).status, 400);
+  const partner = (await (await post(collaboration)).json()).entry;
+  assert.deepEqual((await (await partnerFeed()).json()).partners, []);
+  const publishedPartner = (await (await post({ ...partner, published: true })).json()).entry;
+  const secondPartner = (await (await post({ ...collaboration, slug: "partner-due", published: true })).json()).entry;
+  assert.equal((await change("PATCH", { id: secondPartner.id, neighbor: partner.id, direction: -1 })).status, 200);
+  assert.deepEqual((await (await partnerFeed()).json()).partners.map(item => item.slug), ["partner-due", partner.slug]);
+  assert.deepEqual((await (await getFeed()).json()).artists, []);
+  assert.equal((await change("DELETE", { id: partner.id, version: publishedPartner.version, confirm: true })).status, 200);
+  assert.deepEqual((await (await partnerFeed()).json()).partners.map(item => item.slug), ["partner-due"]);
   console.log("PASS Label roster, release publication, draft image privacy, Spotify URL, version protection and public feed.");
 } finally {
   await db.close();

@@ -8,7 +8,7 @@ export const labelPortal = "https://portal.emmestudioproduction.it";
 export const moodyPhoto = labelSite + "/assets/cinematic-team/moody.webp";
 
 export type LabelDraft = {
-  kind: "artist" | "release";
+  kind: "artist" | "release" | "partner";
   name: string;
   slug: string;
   tagline: string;
@@ -39,13 +39,16 @@ export function validateLabelDraft(input: unknown, published: boolean): LabelDra
     return value.trim();
   };
   const kind = v.kind;
-  if (kind !== "artist" && kind !== "release") throw Error("Tipo di scheda non valido.");
+  if (kind !== "artist" && kind !== "release" && kind !== "partner") throw Error("Tipo di scheda non valido.");
   const name = field("name", 160), slug = field("slug", 100), body = field("body", 15000);
   if (!name || !slug || labelSlug(slug) !== slug) throw Error("Inserisci un nome e un indirizzo con lettere minuscole, numeri e trattini.");
   const draft: LabelDraft = { kind, name, slug, body, tagline: "", links: {}, artistSlug: "", artistName: "", type: "", date: "", spotify: "" };
-  if (kind === "artist") {
+  if (kind !== "release") {
     draft.tagline = field("tagline", 240);
-    if (published && (!draft.tagline || !body)) throw Error("Per pubblicare l’artista, aggiungi sottotitolo e biografia.");
+    if (published && kind === "artist" && (!draft.tagline || !body))
+      throw Error("Per pubblicare l’artista, aggiungi sottotitolo e biografia.");
+    if (published && kind === "partner" && !body)
+      throw Error("Per pubblicare, aggiungi una descrizione della collaborazione.");
     const links = v.links as Record<string, unknown> | undefined;
     for (const social of labelSocials) {
       const url = links?.[social];

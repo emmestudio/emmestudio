@@ -10,9 +10,9 @@ const empty = (kind: LabelEntry["kind"]): LabelEntry => ({
   photo: "", links: {}, artistSlug: "", artistName: "", type: "", date: "", spotify: "",
 });
 
-export default function Editor() {
+export default function Editor({ partnersOnly = false }: { partnersOnly?: boolean }) {
   const [entries, setEntries] = useState<LabelEntry[]>([]);
-  const [draft, setDraft] = useState(empty("artist"));
+  const [draft, setDraft] = useState(() => empty(partnersOnly ? "partner" : "artist"));
   const [upload, setUpload] = useState("");
   const [localPhoto, setLocalPhoto] = useState("");
   const [busy, setBusy] = useState(true);
@@ -22,6 +22,8 @@ export default function Editor() {
   const [notice, setNotice] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
   const artist = draft.kind === "artist";
+  const partner = draft.kind === "partner";
+  const kinds = partnersOnly ? (["partner"] as const) : (["artist", "release"] as const);
   const patch = (value: Partial<LabelEntry>) => { setDraft(previous => ({ ...previous, ...value })); setDirty(true); };
   useEffect(() => {
     fetch(endpoint, { cache: "no-store" }).then(async response => {
@@ -131,17 +133,19 @@ export default function Editor() {
 
   const photo = localPhoto || draft.photo;
   const publicPage = artist ? draft.slug === "moody" ? "/label-moody.html" : "/label-artista.html?artista=" + draft.slug
-    : "/label.html#uscita-" + draft.slug;
+    : partner ? "/partner.html#partner-" + draft.slug : "/label.html#uscita-" + draft.slug;
   return <div className="redazione-layout">
     <aside className="redazione-list">
       <div className="redazione-actions">
-        <button type="button" disabled={busy || !ready} onClick={() => open(empty("artist"))}>Nuovo artista</button>
-        <button type="button" className="secondary" disabled={busy || !ready} onClick={() => open(empty("release"))}>Nuova uscita</button>
+        {partnersOnly ? <button type="button" disabled={busy || !ready} onClick={() => open(empty("partner"))}>Nuovo partner</button> : <>
+          <button type="button" disabled={busy || !ready} onClick={() => open(empty("artist"))}>Nuovo artista</button>
+          <button type="button" className="secondary" disabled={busy || !ready} onClick={() => open(empty("release"))}>Nuova uscita</button>
+        </>}
       </div>
-      {(["artist", "release"] as const).map(kind => {
+      {kinds.map(kind => {
         const group = entries.filter(entry => entry.kind === kind);
         return <section key={kind}>
-          <h2>{kind === "artist" ? "Roster" : "Pubblicazioni"}</h2>
+          <h2>{kind === "artist" ? "Roster" : kind === "partner" ? "Partner" : "Pubblicazioni"}</h2>
           <ol className="label-order-list">
             {group.map((entry, index) => <li key={entry.id}>
               <button type="button" className={"secondary news-list-item" + (entry.id === draft.id ? " selected" : "")}
@@ -162,21 +166,21 @@ export default function Editor() {
       })}
     </aside>
     <section>
-      <h2>{artist ? "Scheda artista" : "Scheda pubblicazione"}</h2>
+      <h2>{artist ? "Scheda artista" : partner ? "Scheda partner" : "Scheda pubblicazione"}</h2>
       {error && <p role="alert">{error}</p>}
       {notice && <p role="status">{notice}</p>}
       {progress !== null && <p role="status">Caricamento immagine… {progress}%</p>}
       <form onSubmit={event => { event.preventDefault(); void save(false); }}>
         <fieldset disabled={busy || !ready}>
           <div className="redazione-fields">
-            <label>{artist ? "Nome d’arte" : "Titolo dell’uscita"}<input value={draft.name} maxLength={160} onChange={event => {
+            <label>{artist ? "Nome d’arte" : partner ? "Nome del partner" : "Titolo dell’uscita"}<input value={draft.name} maxLength={160} onChange={event => {
               const name = event.target.value;
               patch({ name, ...(!draft.id ? { slug: labelSlug(name) } : {}) });
             }}/></label>
             <label>Indirizzo breve<input value={draft.slug} maxLength={100} readOnly={draft.publishedOnce} onChange={event => patch({ slug: event.target.value })}/></label>
           </div>
-          {artist ? <>
-            <label>Sottotitolo<input value={draft.tagline} maxLength={240} placeholder="Nome e cognome · Autore & Producer"
+          {artist || partner ? <>
+            <label>{partner ? "Tipo di collaborazione (facoltativo)" : "Sottotitolo"}<input value={draft.tagline} maxLength={240} placeholder={partner ? "Es. Formazione musicale" : "Nome e cognome · Autore & Producer"}
               onChange={event => patch({ tagline: event.target.value })}/></label>
           </> : <>
             <div className="redazione-fields">
@@ -195,12 +199,12 @@ export default function Editor() {
             <label>Link Spotify<input type="url" value={draft.spotify} maxLength={1500} placeholder="https://open.spotify.com/track/…"
               onChange={event => patch({ spotify: event.target.value })}/><small>Incolla il link del brano, dell’EP o dell’album. Il sito crea il player da questo indirizzo.</small></label>
           </>}
-          <label>{artist ? "Foto artista" : "Copertina (facoltativa)"}<input type="file" accept="image/jpeg,image/png,image/webp"
+          <label>{artist ? "Foto artista" : partner ? "Logo o foto (facoltativo)" : "Copertina (facoltativa)"}<input type="file" accept="image/jpeg,image/png,image/webp"
             onChange={event => void selectImage(event.target.files?.[0])}/><small>JPG, PNG o WebP fino a 30 MB.</small></label>
           {photo && <div className="redazione-cover">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={photo} alt="Anteprima immagine selezionata"/></div>}
-          <label>{artist ? "Biografia" : "Testo della pubblicazione"}<textarea value={draft.body} rows={8} maxLength={15000}
+          <label>{artist ? "Biografia" : partner ? "Descrizione della collaborazione" : "Testo della pubblicazione"}<textarea value={draft.body} rows={8} maxLength={15000}
             onChange={event => patch({ body: event.target.value })}/><small>Separa i paragrafi con una riga vuota.</small></label>
-          {artist && <div className="redazione-fields">{labelSocials.map(social =>
+          {(artist || partner) && <div className="redazione-fields">{labelSocials.map(social =>
             <label key={social}>{social}<input type="url" maxLength={1500} value={draft.links[social] || ""}
               placeholder="https://…" onChange={event => patch({ links: { ...draft.links, [social]: event.target.value } })}/></label>)}</div>}
           <div className="redazione-actions">
