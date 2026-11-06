@@ -19,7 +19,7 @@ const origin = process.env.BETTER_AUTH_URL;
 try {
   await db.exec(`CREATE TABLE "user"(id text PRIMARY KEY,email text,"emailVerified" boolean);
     INSERT INTO "user" VALUES ('owner','owner@example.test',true),('other','other@example.test',true);`);
-  for (const sql of ["014-news-hd-covers.sql", "028-label-catalog.sql", "028-label-catalog.sql"])
+  for (const sql of ["014-news-hd-covers.sql", "028-label-catalog.sql", "029-label-catalog-order.sql", "029-label-catalog-order.sql"])
     await db.exec(await readFile("db/" + sql, "utf8"));
   await build({
     stdin: {
@@ -94,6 +94,29 @@ try {
   assert.equal((await post({ ...artist, published: false })).status, 200);
   assert.deepEqual((await (await getFeed()).json()).artists, []);
   assert.equal((await (await getFeed()).json()).releases[0].artistName, fixture.name);
+  const second = (await (await post({ ...release, name: "Seconda uscita", slug: "seconda", artistSlug: "", artistName: fixture.name })).json()).entry;
+  const first = (await released.json()).entry;
+  const change = (method, data) => admin[method](new Request(origin + "/api/label-catalog", {
+    method, headers: { origin, "Content-Type": "application/json" }, body: JSON.stringify(data),
+  }));
+  assert.equal((await change("PATCH", { id: second.id, neighbor: first.id, direction: -1 })).status, 200);
+  assert.deepEqual((await (await getFeed()).json()).releases.map(item => item.slug), ["seconda", release.slug]);
+  assert.equal((await change("PATCH", { id: second.id, neighbor: first.id, direction: -1 })).status, 409);
+  assert.equal((await change("DELETE", { id: artist.id, version: artist.version, confirm: true })).status, 409);
+  assert.equal((await change("DELETE", { id: artist.id, version: artist.version + 1, confirm: true })).status, 200);
+  const remaining = (await (await getFeed()).json()).releases.find(item => item.slug === release.slug);
+  assert.equal(remaining.artistSlug, "");
+  assert.equal(remaining.artistName, fixture.name);
+  assert.equal((await change("DELETE", { id: second.id, version: second.version, confirm: true })).status, 200);
+  assert.deepEqual((await (await getFeed()).json()).releases.map(item => item.slug), [release.slug]);
+  const migration = await readFile("scripts/migrate-news.mjs", "utf8");
+  const seedSql = migration.match(/WITH first_setup AS \([\s\S]+?DO NOTHING(?=`)/)[0];
+  const seedArgs = [process.env.PORTAL_OWNER_EMAIL, await readFile("db/label-moody-seed.json", "utf8")];
+  await db.query(seedSql, seedArgs);
+  const moody = (await db.query("SELECT id,version FROM studio_label_catalog WHERE slug='moody'")).rows[0];
+  assert.equal((await change("DELETE", { ...moody, confirm: true })).status, 200);
+  await db.query(seedSql, seedArgs);
+  assert.deepEqual((await (await getFeed()).json()).artists, [], "A deleted seed artist cannot reappear");
   console.log("PASS Label roster, release publication, draft image privacy, Spotify URL, version protection and public feed.");
 } finally {
   await db.close();

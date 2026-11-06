@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ownerSession } from "@/lib/owner-session";
 import Editor from "./editor";
 import "../redazione/redazione.css";
+import "./gestione-label.css";
 
 export const dynamic = "force-dynamic";
 export default async function GestioneLabel() {

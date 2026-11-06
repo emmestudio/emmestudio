@@ -1,0 +1,4 @@
+.label-order-list { list-style: none; padding: 0; display: grid; gap: 12px; }
+.label-order-list .news-list-item { width: 100%; }
+.label-order-actions { display: flex; gap: 6px; margin-top: 4px; }
+.label-order-actions button { padding: 5px 10px; }

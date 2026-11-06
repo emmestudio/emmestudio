@@ -90,7 +90,8 @@ export default function Editor() {
       const data = await response.json();
       if (!response.ok) throw Error(data.error);
       const entry: LabelEntry = data.entry;
-      setEntries(previous => [entry, ...previous.filter(item => item.id !== entry.id)]);
+      setEntries(previous => previous.some(item => item.id === entry.id)
+        ? previous.map(item => item.id === entry.id ? entry : item) : [...previous, entry]);
       setDraft(entry);
       setUpload("");
       setLocalPhoto("");
@@ -98,6 +99,34 @@ export default function Editor() {
       setNotice(published ? "Scheda pubblicata sul sito." : "Bozza salvata nel portale.");
     } catch (err) { setError(err instanceof Error ? err.message : "Salvataggio non riuscito."); }
     finally { setBusy(false); }
+  }
+
+  async function changeCatalogue(method: "PATCH" | "DELETE", input: object) {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch(endpoint, {
+        method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(input),
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error);
+      setEntries(data.entries);
+      if (method === "DELETE") {
+        setDraft(empty(draft.kind));
+        setUpload("");
+        setLocalPhoto("");
+        setDirty(false);
+      }
+      setNotice(method === "PATCH" ? "Ordine aggiornato sul sito." : "Scheda eliminata.");
+    } catch (err) { setError(err instanceof Error ? err.message : "Aggiornamento non riuscito."); }
+    finally { setBusy(false); }
+  }
+
+  function remove() {
+    const detail = artist ? " Le uscite collegate restano nel catalogo con il nome dell’artista." : "";
+    if (!window.confirm(`Eliminare definitivamente «${draft.name}»?${detail}`)) return;
+    void changeCatalogue("DELETE", { id: draft.id, version: draft.version, confirm: true });
   }
 
   const photo = localPhoto || draft.photo;
@@ -109,14 +138,28 @@ export default function Editor() {
         <button type="button" disabled={busy || !ready} onClick={() => open(empty("artist"))}>Nuovo artista</button>
         <button type="button" className="secondary" disabled={busy || !ready} onClick={() => open(empty("release"))}>Nuova uscita</button>
       </div>
-      {(["artist", "release"] as const).map(kind => <section key={kind}>
-        <h2>{kind === "artist" ? "Roster" : "Pubblicazioni"}</h2>
-        {entries.filter(entry => entry.kind === kind).map(entry =>
-          <button key={entry.id} type="button" className={"secondary news-list-item" + (entry.id === draft.id ? " selected" : "")} disabled={busy}
-            aria-pressed={entry.id === draft.id} onClick={() => open(entry)}>
-            {entry.name} · {entry.published ? "Online" : "Bozza"}
-          </button>)}
-      </section>)}
+      {(["artist", "release"] as const).map(kind => {
+        const group = entries.filter(entry => entry.kind === kind);
+        return <section key={kind}>
+          <h2>{kind === "artist" ? "Roster" : "Pubblicazioni"}</h2>
+          <ol className="label-order-list">
+            {group.map((entry, index) => <li key={entry.id}>
+              <button type="button" className={"secondary news-list-item" + (entry.id === draft.id ? " selected" : "")}
+                disabled={busy} aria-pressed={entry.id === draft.id} onClick={() => open(entry)}>
+                {entry.name} · {entry.published ? "Online" : "Bozza"}
+              </button>
+              <div className="label-order-actions">
+                {([-1, 1] as const).map(direction => <button type="button" className="secondary" key={direction}
+                  disabled={busy || !group[index + direction]}
+                  aria-label={(direction === -1 ? "Sposta su " : "Sposta giù ") + entry.name}
+                  onClick={() => void changeCatalogue("PATCH", {
+                    id: entry.id, neighbor: group[index + direction].id, direction,
+                  })}>{direction === -1 ? "↑ Su" : "↓ Giù"}</button>)}
+              </div>
+            </li>)}
+          </ol>
+        </section>;
+      })}
     </aside>
     <section>
       <h2>{artist ? "Scheda artista" : "Scheda pubblicazione"}</h2>
@@ -163,6 +206,7 @@ export default function Editor() {
           <div className="redazione-actions">
             <button type="submit" className="secondary">{draft.published ? "Ritira e salva come bozza" : "Salva bozza"}</button>
             <button type="button" onClick={() => void save(true)}>{draft.published ? "Aggiorna sul sito" : "Pubblica sul sito"}</button>
+            {draft.id && <button type="button" className="secondary news-delete-button" onClick={remove}>Elimina scheda</button>}
             {draft.published && <a className="button secondary" href={labelSite + publicPage} target="_blank" rel="noreferrer">Apri sul sito</a>}
           </div>
         </fieldset>

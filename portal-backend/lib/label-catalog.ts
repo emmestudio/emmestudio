@@ -16,7 +16,7 @@ export async function publicLabel() {
   const result = await getDb().query<LabelRow>(
     `SELECT ${labelColumns} FROM studio_label_catalog
      WHERE published AND owner_id IN (SELECT id FROM "user" WHERE lower(email)=lower($1) AND "emailVerified"=true)
-     ORDER BY updated_at DESC`, [process.env.PORTAL_OWNER_EMAIL],
+     ORDER BY kind,sort_order NULLS LAST,id`, [process.env.PORTAL_OWNER_EMAIL],
   );
   return result.rows.map(row => labelEntry(row, true));
 }
