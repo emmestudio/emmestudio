@@ -50,6 +50,26 @@ function inline(text: string): ReactNode[] {
   return parts;
 }
 
+/** Inline Markdown for short descriptions (inside an existing <p>). */
+export function NewsInlineMarkdown({ source }: { source: string }) {
+  const lines = (source ?? "").replace(/\\r\\n?/g, "\\n").split("\\n");
+  return <>{lines.map((line, index) =>
+    <Fragment key={index}>{index ? <br /> : null}{inline(line)}</Fragment>
+  )}</>;
+}
+
+/** SEO/social descriptions must be plain text, not literal Markdown. */
+export function plainNewsText(source: string): string {
+  return (source ?? "")
+    .replace(/\\[([^\\]\\n]+)\\]\\((https:\\/\\/[^)\\s]+)\\)/g, "$1")
+    .replace(/\\*\\*(.*?)\\*\\*|__(.*?)__/g, (_match, a: string | undefined, b: string | undefined) => a ?? b ?? "")
+    .replace(/\\*([^*\\n]+)\\*|_([^_\\n]+)_/g, (_match, a: string | undefined, b: string | undefined) => a ?? b ?? "")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\\\\([\\\\`*_{}[\\]()#+.!>-])/g, "$1")
+    .replace(/\\s+/g, " ")
+    .trim();
+}
+
 function paragraph(lines: string[], key: number): ReactNode {
   return <p key={key}>{lines.map((line, index) =>
     <Fragment key={index}>{index ? <br /> : null}{inline(line)}</Fragment>
