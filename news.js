@@ -3,7 +3,25 @@ const endpoint='https://portal.emmestudioproduction.it/api/public/news';
 const feeds=[...document.querySelectorAll('[data-news-feed]')];if(!feeds.length)return;
 const element=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e;};
 const safeUrl=(value)=>{try{const u=new URL(value);return u.protocol==='https:'&&u.hostname==='portal.emmestudioproduction.it'?u.href:null;}catch{return null;}};
-function card(a){const link=element('a','news-card');link.href=safeUrl(a.url);const image=element('div','news-card-image');if(a.cover&&safeUrl(a.cover)){const img=element('img');img.src=safeUrl(a.cover);img.alt='';img.loading='lazy';img.width=800;img.height=500;image.append(img);}const copy=element('div','news-card-copy'),meta=element('div','news-card-meta'),category=element('span','news-category',a.category),date=element('time');category.dataset.category=a.category;date.dateTime=a.publication_date;date.textContent=new Date(a.publication_date+'T12:00:00Z').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});meta.append(category,date);const action=element('span','news-card-cta','Leggi la notizia'),arrow=element('span','news-arrow');arrow.setAttribute('aria-hidden','true');action.append(arrow);copy.append(meta,element('h3','',a.title),element('p','',a.excerpt),action);link.append(image,copy);return link;}
+/* Short descriptions accept basic Markdown without injecting HTML.
+   Cards are themselves links: an inline [label](url) is displayed as text
+   rather than creating an invalid nested anchor. */
+function appendExcerpt(parent,source){
+ const value=String(source||'');
+ const pattern=/\\([\\\x60*_{}\[\]()#+.!>-])|\[([^\]\n]+)\]\((https:\/\/[^)\s]+)\)|\*\*([^*\n]+)\*\*|__([^_\n]+)__|\*([^*\n]+)\*|_([^_\n]+)_/g;
+ let cursor=0;
+ for(const m of value.matchAll(pattern)){
+   const at=m.index||0;
+   if(at>cursor)parent.append(document.createTextNode(value.slice(cursor,at)));
+   if(m[1]!==undefined)parent.append(document.createTextNode(m[1]));
+   else if(m[2]!==undefined)parent.append(document.createTextNode(m[2]));
+   else if(m[3]!==undefined||m[4]!==undefined){const strong=document.createElement('strong');strong.textContent=m[3]??m[4];parent.append(strong);}
+   else if(m[5]!==undefined||m[6]!==undefined){const em=document.createElement('em');em.textContent=m[5]??m[6];parent.append(em);}
+   cursor=at+m[0].length;
+ }
+ if(cursor<value.length)parent.append(document.createTextNode(value.slice(cursor)));
+}
+function card(a){const link=element('a','news-card');link.href=safeUrl(a.url);const image=element('div','news-card-image');if(a.cover&&safeUrl(a.cover)){const img=element('img');img.src=safeUrl(a.cover);img.alt='';img.loading='lazy';img.width=800;img.height=500;image.append(img);}const copy=element('div','news-card-copy'),meta=element('div','news-card-meta'),category=element('span','news-category',a.category),date=element('time');category.dataset.category=a.category;date.dateTime=a.publication_date;date.textContent=new Date(a.publication_date+'T12:00:00Z').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});meta.append(category,date);const action=element('span','news-card-cta','Leggi la notizia'),arrow=element('span','news-arrow');arrow.setAttribute('aria-hidden','true');action.append(arrow);const excerpt=element('p');appendExcerpt(excerpt,a.excerpt);copy.append(meta,element('h3','',a.title),excerpt,action);link.append(image,copy);return link;}
 async function load(feed){const grid=feed.querySelector('.news-grid'),status=feed.querySelector('.news-status'),featured=feed.querySelector('.news-featured');let articles=[];let filter=new URLSearchParams(location.search).get('categoria')||'Tutte';if(!['Tutte','Studio','Label','Uscite','Live'].includes(filter))filter='Tutte';
 function render(){grid.replaceChildren();if(featured)featured.replaceChildren();let list=articles.filter(a=>feed.dataset.newsFeed==='label'?['Label','Uscite'].includes(a.category):true).filter(a=>filter==='Tutte'||a.category===filter);if(feed.dataset.limit)list=list.slice(0,Number(feed.dataset.limit));feed.querySelectorAll('.news-filter').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.category===filter)));status.hidden=!!list.length;status.textContent=filter==='Tutte'?'Le prossime novità saranno pubblicate qui.':'Non ci sono ancora notizie in questa categoria.';if(featured&&list.length){const top=list.find(a=>a.featured)||list[0];featured.append(card(top));list=list.filter(a=>a.id!==top.id);}list.forEach(a=>grid.append(card(a)));}
 feed.querySelectorAll('.news-filter').forEach(b=>b.onclick=()=>{filter=b.dataset.category;const url=new URL(location.href);if(filter==='Tutte')url.searchParams.delete('categoria');else url.searchParams.set('categoria',filter);history.replaceState(null,'',url);render();});
