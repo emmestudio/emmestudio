@@ -1,100 +1,183 @@
 'use strict';
-(async () => {
-  const grid = document.getElementById('roster-grid');
+(() => {
+  const roster = document.getElementById('roster-grid');
   const profile = document.getElementById('artist-profile');
-  if (!grid && !profile) return;
+  const catalogue = document.getElementById('release-grid');
   const el = (tag, text, cls) => {
     const node = document.createElement(tag);
     if (text) node.textContent = text;
     if (cls) node.className = cls;
     return node;
   };
-  const safeLink = value => {
-    try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) ? url.href : null; }
-    catch { return null; }
-  };
-  const links = (artist, className) => {
+
+  function secureLink(value) {
+    try {
+      const url = new URL(value, location.href);
+      return url.protocol === 'https:' || url.origin === location.origin ? url.href : null;
+    } catch { return null; }
+  }
+
+  function external(label, href, cls = 'site-link-button') {
+    const a = el('a', label, cls);
+    a.href = href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    return a;
+  }
+
+  function photo(url, alt) {
+    if (!url) return null;
+    const src = secureLink(url);
+    if (!src) return null;
+    const img = el('img');
+    img.src = src;
+    img.alt = alt;
+    img.loading = 'lazy';
+    return img;
+  }
+
+  function links(artist, className) {
     const wrap = el('div', '', className);
+    const icons = new Set(['instagram', 'facebook', 'tiktok', 'spotify', 'youtube', 'soundcloud', 'x']);
     for (const entry of artist.links || []) {
-      const href = safeLink(entry.url);
+      const href = secureLink(entry.url);
       if (!href) continue;
-      const a = el('a', '', 'social-circle');
-      const icons = {instagram:'instagram',facebook:'facebook',tiktok:'tiktok',spotify:'spotify',youtube:'youtube',soundcloud:'soundcloud',x:'x'};
-      const icon = icons[entry.label.toLowerCase()];
-      if (icon) { const img = el('img'); img.src = `assets/social-outline/${icon}.svg`; img.alt = ''; img.width = 20; img.height = 20; a.append(img); } else { a.textContent = entry.label; a.className = 'button outline'; }
+      const icon = entry.label.toLowerCase();
+      const a = external(icons.has(icon) ? '' : entry.label, href, icons.has(icon) ? 'social-circle' : 'button outline');
+      if (icons.has(icon)) {
+        const img = el('img');
+        img.src = `assets/social-outline/${icon}.svg`;
+        img.alt = '';
+        img.width = img.height = 20;
+        a.append(img);
+      }
       a.title = entry.label;
-      a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
       a.setAttribute('aria-label', `${entry.label} — ${artist.name} (nuova scheda)`);
       wrap.append(a);
     }
     return wrap;
-  };
-  try {
-    const response = await fetch('label-artists.json?v=20261030-complete');
-    if (!response.ok) throw new Error('Roster unavailable');
-    const data = await response.json();
-    const artists = data.filter(a => a.published === true && a.slug && a.name);
-    if (grid) {
-      document.getElementById('roster-empty').hidden = artists.length > 0;
-      for (const artist of artists) {
-        const card = el('article', '', 'roster-card');
-        const a = el('a'); a.href = artist.page || `label-artista.html?artista=${encodeURIComponent(artist.slug)}`;
-        if (artist.photo) {
-          const img = el('img'); img.src = artist.photo; img.alt = artist.name; img.loading = 'lazy'; a.append(img);
-        }
-        const copy = el('div', '', 'roster-card-copy');
-        copy.append(el('h3', artist.name), el('p', artist.tagline || ''), el('span', 'Scopri l’artista', 'text-link'));
-        a.append(copy); card.append(a, links(artist, 'artist-card-links')); grid.append(card);
-      }
-    }
-    if (profile) {
-      const slug = new URLSearchParams(location.search).get('artista');
-      const artist = artists.find(a => a.slug === slug);
-      if (!artist) return;
-      if (artist.page) { location.replace(artist.page); return; }
-      document.title = `${artist.name} — Emme Label`;
-      document.querySelector('meta[name="description"]').content = artist.tagline || `${artist.name} — Emme Label`;
-      const layout = el('div', '', 'profile-grid');
-      if (artist.photo) { const img = el('img'); img.src = artist.photo; img.alt = artist.name; layout.append(img); }
-      const copy = el('div', '', 'artist-bio');
-      copy.append(el('p', 'EMME LABEL · ROSTER', 'eyebrow'), el('h1', artist.name), el('p', artist.tagline || '', 'lead'));
-      for (const paragraph of artist.bio || []) copy.append(el('p', paragraph));
-      copy.append(links(artist, 'profile-links')); layout.append(copy); profile.replaceChildren(layout);
-    }
-  } catch {
-    // Keep the server-rendered introduction and roster notice available on failure.
   }
-})();
 
-// External audio stays unloaded until an explicit visitor action.
-document.querySelectorAll('[data-load-spotify]').forEach(button => button.addEventListener('click', () => {
- const box = button.closest('[data-spotify]');
- if (!/^[A-Za-z0-9]{22}$/.test(box.dataset.spotify)) return;
- const frame = document.createElement('iframe');
- frame.src = `https://open.spotify.com/embed/artist/${box.dataset.spotify}?theme=0`;
- frame.title = 'Moody — Player Spotify'; frame.width = '100%'; frame.height = '352';
- frame.allow = 'encrypted-media; fullscreen; picture-in-picture'; frame.style.border = '0'; frame.style.borderRadius = '20px';
- box.querySelector('.spotify-player-slot').replaceChildren(frame);
- box.querySelector('.player-status').textContent = 'Player attivato. Se non è disponibile, puoi ascoltare dalla pagina Spotify dell’artista.'; button.hidden = true;
-}));
-(async () => {
- const grid = document.getElementById('release-grid'); if (!grid) return;
- try {
- const response = await fetch('label-releases.json?v=20261030-complete'); if (!response.ok) throw new Error();
- const data = await response.json();
- const artist = document.querySelector('[data-artist-releases]')?.dataset.artistReleases;
- const releases = data.filter(r => r.published === true && (!artist || r.artistSlug === artist)).sort((a,b) => b.date.localeCompare(a.date));
- document.getElementById('releases-empty').hidden = releases.length > 0;
- for (const release of releases) {
-  const card = document.createElement('article'); card.className = 'release-card';
-  const img = document.createElement('img'); img.src = release.cover; img.alt = `Copertina di ${release.title}`; img.loading = 'lazy'; card.append(img);
-  const h = document.createElement('h3'); h.textContent = release.title; card.append(h);
-  const info = document.createElement('p'); info.textContent = `${release.artistName} · ${release.type} · ${new Date(release.date + 'T12:00:00').toLocaleDateString('it-IT')}`; card.append(info);
-  for (const link of release.links || []) {
-   const url = new URL(link.url); if (url.protocol !== 'https:') continue;
-   const a = document.createElement('a'); a.href = url.href; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.className = 'site-link-button'; a.textContent = link.label; card.append(a);
+  function addPlayer(button, slot, path, title) {
+    button.addEventListener('click', () => {
+      const frame = el('iframe');
+      frame.src = 'https://open.spotify.com/embed/' + path + '?theme=0';
+      frame.title = title + ' — Player Spotify';
+      frame.width = '100%';
+      frame.height = path.startsWith('track/') ? '152' : '352';
+      frame.allow = 'encrypted-media; fullscreen; picture-in-picture';
+      frame.style.border = '0';
+      frame.style.borderRadius = '16px';
+      slot.replaceChildren(frame);
+      button.hidden = true;
+    }, { once: true });
   }
-  grid.append(card);
- }
- } catch { document.getElementById('releases-empty').textContent = 'Il catalogo non è disponibile in questo momento. Riprova tra poco o segui le novità su Instagram.'; }
+
+  document.querySelectorAll('[data-load-spotify]').forEach(button => {
+    const box = button.closest('[data-spotify]');
+    if (/^[A-Za-z0-9]{22}$/.test(box?.dataset.spotify)) {
+      addPlayer(button, box.querySelector('.spotify-player-slot'), 'artist/' + box.dataset.spotify, 'Moody');
+    }
+  });
+
+  function rosterCards(artists) {
+    document.getElementById('roster-empty').hidden = artists.length > 0;
+    for (const artist of artists) {
+      const card = el('article', '', 'roster-card');
+      const a = el('a');
+      a.href = artist.page || `label-artista.html?artista=${encodeURIComponent(artist.slug)}`;
+      const img = photo(artist.photo, artist.name);
+      if (img) a.append(img);
+      const copy = el('div', '', 'roster-card-copy');
+      copy.append(el('h3', artist.name), el('p', artist.tagline), el('span', 'Scopri l’artista', 'text-link'));
+      a.append(copy);
+      card.append(a, links(artist, 'artist-card-links'));
+      roster.append(card);
+    }
+  }
+
+  function artistProfile(artist) {
+    if (!artist) {
+      profile.replaceChildren(el('h1', 'Scheda artista non disponibile.'), el('p', 'Torna al roster per vedere gli artisti pubblicati.'));
+      document.querySelector('.label-listen')?.remove();
+      return;
+    }
+    document.title = artist.name + ' — Emme Label';
+    document.querySelector('meta[name="description"]').content = artist.tagline;
+    const layout = el('div', '', 'profile-grid');
+    const img = photo(artist.photo, artist.name);
+    if (img) {
+      img.loading = 'eager';
+      layout.append(img);
+    }
+    const copy = el('div', '', 'artist-bio');
+    copy.append(el('p', 'EMME LABEL · ROSTER', 'eyebrow'), el('h1', artist.name), el('p', artist.tagline, 'lead'));
+    for (const paragraph of artist.bio || []) copy.append(el('p', paragraph));
+    copy.append(links(artist, 'profile-links'));
+    layout.append(copy);
+    profile.replaceChildren(layout);
+  }
+
+  function releaseCards(releases, slug) {
+    const items = releases.filter(release => release.published && (!slug || release.artistSlug === slug))
+      .sort((a, b) => b.date.localeCompare(a.date));
+    const section = catalogue.closest('.label-releases');
+    if (section.dataset.hideEmpty !== undefined) section.hidden = !items.length;
+    document.getElementById('releases-empty').hidden = items.length > 0;
+    for (const release of items) {
+      const card = el('article', '', 'release-card');
+      card.id = 'uscita-' + release.slug;
+      const image = photo(release.cover, 'Copertina di ' + release.title);
+      if (image) card.append(image);
+      card.append(el('h3', release.title));
+      const date = new Date(release.date + 'T12:00:00').toLocaleDateString('it-IT');
+      card.append(el('p', [release.artistName, release.type, date].filter(Boolean).join(' · ')));
+      if (release.body) {
+        const copy = el('div', '', 'release-copy');
+        for (const paragraph of release.body.split(/\n\s*\n/)) copy.append(el('p', paragraph));
+        card.append(copy);
+      }
+      const spotify = /^https:\/\/open\.spotify\.com\/(track|album)\/([A-Za-z0-9]{22})$/.exec(release.spotify || '');
+      if (spotify) {
+        const actions = el('div', '', 'release-actions');
+        const button = el('button', 'Attiva il player Spotify', 'button outline');
+        button.type = 'button';
+        const slot = el('div', '', 'release-player');
+        addPlayer(button, slot, spotify[1] + '/' + spotify[2], release.title);
+        actions.append(button, external('Apri su Spotify', spotify[0]));
+        card.append(actions, slot);
+      }
+      for (const link of release.links || []) {
+        const href = secureLink(link.url);
+        if (href) card.append(external(link.label, href));
+      }
+      catalogue.append(card);
+    }
+    if (location.hash.startsWith('#uscita-')) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+  }
+
+  async function json(url, options) {
+    const response = await fetch(url, options);
+    if (!response.ok) throw Error('Catalogo non disponibile');
+    return response.json();
+  }
+
+  if (!roster && !profile && !catalogue) return;
+  (async () => {
+    let data;
+    try {
+      data = await json('https://portal.emmestudioproduction.it/api/public/label', { signal: AbortSignal.timeout(7000) });
+    } catch {
+      const [artists, releases] = await Promise.all([json('label-artists.json'), json('label-releases.json')]);
+      data = { artists, releases };
+    }
+    const artists = data.artists.filter(artist => artist.published === true && artist.slug && artist.name);
+    const slug = profile?.dataset.artist || new URLSearchParams(location.search).get('artista');
+    if (roster) rosterCards(artists);
+    if (profile) artistProfile(artists.find(artist => artist.slug === slug));
+    if (catalogue && (!profile || slug)) releaseCards(data.releases, slug);
+  })().catch(() => {
+    const notice = document.getElementById('releases-empty');
+    if (notice) notice.textContent = 'Il catalogo non è disponibile in questo momento. Riprova tra poco.';
+  });
 })();
