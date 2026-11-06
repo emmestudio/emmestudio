@@ -17,6 +17,12 @@
     } catch { return ''; }
   }
 
+  const icons = new Map([
+    ['Instagram', 'instagram'], ['Spotify', 'spotify'], ['Facebook', 'facebook'],
+    ['TikTok', 'tiktok'], ['YouTube', 'youtube'], ['SoundCloud', 'soundcloud'],
+    ['X', 'x'], ['Sito', 'website'],
+  ]);
+
   try {
     const response = await fetch('https://portal.emmestudioproduction.it/api/public/partners', {
       signal: AbortSignal.timeout(7000),
@@ -24,7 +30,7 @@
     if (!response.ok) throw Error('Partner non disponibili');
     const { partners } = await response.json();
     for (const partner of partners) {
-      const card = element('article', '', 'partner-card');
+      const card = element('article', '', 'roster-card partner-card');
       card.id = 'partner-' + partner.slug;
       const photo = https(partner.photo);
       if (photo) {
@@ -32,16 +38,28 @@
         logo.src = photo;
         logo.alt = '';
         logo.loading = 'lazy';
-        card.append(logo);
+        const media = element('div', '', 'partner-media');
+        media.append(logo);
+        card.append(media);
       }
-      if (partner.tagline) card.append(element('p', partner.tagline, 'eyebrow'));
-      card.append(element('h2', partner.name));
-      for (const paragraph of partner.body.split(/\n\s*\n/)) card.append(element('p', paragraph));
-      const links = element('div', '', 'partner-links');
+      const copy = element('div', '', 'roster-card-copy');
+      if (partner.tagline) copy.append(element('p', partner.tagline, 'eyebrow'));
+      copy.append(element('h2', partner.name));
+      for (const paragraph of partner.body.split(/\n\s*\n/)) copy.append(element('p', paragraph));
+      card.append(copy);
+      const links = element('div', '', 'artist-card-links');
       for (const [label, value] of Object.entries(partner.links)) {
         const href = https(value);
-        if (!href) continue;
-        const link = element('a', label === 'Sito' ? 'Visita il sito' : label, 'site-link-button');
+        const iconName = icons.get(label);
+        if (!href || !iconName) continue;
+        const link = element('a', '', 'social-circle');
+        const icon = element('img');
+        icon.src = `assets/social-outline/${iconName}.svg`;
+        icon.alt = '';
+        icon.width = icon.height = 20;
+        link.append(icon);
+        link.title = label === 'Sito' ? 'Visita il sito' : label;
+        link.setAttribute('aria-label', `${link.title} — ${partner.name} (nuova scheda)`);
         link.href = href;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
