@@ -2,3 +2,19 @@
 .news-editor button:not(.secondary){border:1px solid #c9ae86;background:#c9ae86;color:#151515;padding:13px 20px;border-radius:24px;cursor:pointer;font:inherit;font-size:13px}.news-editor button:disabled{opacity:.5;cursor:wait}.news-editor button:focus-visible{outline:2px solid #b7a5ff;outline-offset:3px}.news-editor input:read-only{opacity:.65}.news-editor section{min-width:0}
 
 .news-editor .news-delete-button{color:#ffb6be;border-color:#a64555;background:#a6455510}.news-editor .news-delete-button:hover{background:#a6455525;border-color:#e17989}
+
+/* Shared article Markdown renderer inside the editorial preview. */
+.redazione-preview .news-body{font-size:1rem;line-height:1.8;overflow-wrap:anywhere}
+.redazione-preview .news-body h2{font-size:1.9rem;line-height:1.2;margin:1.7em 0 .5em}
+.redazione-preview .news-body h3{font-size:1.5rem;line-height:1.3;margin:1.4em 0 .5em}
+.redazione-preview .news-body h4{font-size:1.2rem;line-height:1.3;margin:1.2em 0 .5em}
+.redazione-preview .news-body h2:first-child,.redazione-preview .news-body h3:first-child{margin-top:0}
+.redazione-preview .news-body strong{font-weight:700;color:#fff}
+.redazione-preview .news-body em{font-style:italic}
+.redazione-preview .news-body ul,.redazione-preview .news-body ol{padding-left:1.5em}
+.redazione-preview .news-body li{margin:.35em 0}
+.redazione-preview .news-body blockquote{border-left:3px solid #b7a5ff;padding-left:18px;margin:20px 0}
+.redazione-preview .news-body a{color:#c7b7ff;text-decoration:underline}
+.redazione-preview .news-body code{font-family:ui-monospace,Consolas,monospace;background:#ffffff15;padding:2px 4px}
+.redazione-preview .news-body hr{border:0;border-top:1px solid #ffffff30;margin:28px 0}
+.redazione-preview .news-body p{white-space:normal;overflow-wrap:anywhere;margin:0 0 1.5em}
