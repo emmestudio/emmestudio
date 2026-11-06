@@ -21,7 +21,9 @@ export async function GET(request: Request) {
       `SELECT d.id, d.title, d.template, d.state, d.version, d.work_id AS "workId",
          COALESCE(d.payload #>> '{definition,signatures}' <> 'none', true) AS "requiresSignature",
          signature.version AS "signedVersion", signature.signed_on::text AS "signedOn",
-         signature.evidence_url AS "evidenceUrl"
+         signature.evidence_url AS "evidenceUrl",
+         share.id AS "shareId", share.returned_at AS "returnedAt", outbox.state AS "emailState",
+         previous.id AS "previousReturnId", previous.version AS "previousReturnVersion"
        FROM studio_form_documents d
        JOIN studio_artists a ON a.id=$2 AND a.owner_id=d.owner_id AND a.deleted_at IS NULL
        LEFT JOIN LATERAL (
@@ -30,6 +32,13 @@ export async function GET(request: Request) {
          WHERE s.document_id=d.id AND h.payload #>> '{draft,artistId}'=$2::text
          ORDER BY s.version DESC LIMIT 1
        ) signature ON true
+       LEFT JOIN studio_artist_form_shares share ON share.document_id=d.id AND share.version=d.version AND share.artist_id=a.id
+       LEFT JOIN studio_artist_email_outbox outbox ON outbox.id=share.email_job_id
+       LEFT JOIN LATERAL (
+         SELECT s.id,s.version FROM studio_artist_form_shares s
+         WHERE s.document_id=d.id AND s.artist_id=a.id AND s.version<d.version AND s.returned_at IS NOT NULL
+         ORDER BY s.version DESC LIMIT 1
+       ) previous ON true
        WHERE d.owner_id=$1 AND d.payload #>> '{draft,artistId}'=$2::text
        ORDER BY d.updated_at DESC`,
       [session.user.id, artistId],

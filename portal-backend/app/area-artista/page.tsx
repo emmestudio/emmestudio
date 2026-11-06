@@ -1,3 +1,4 @@
+import DocumentReturn from "./document-return";
 import ArtistNotifications from "./notifications";
 import Feedback from "./feedback";
 import TrackMessages from "./track-messages";
@@ -22,6 +23,14 @@ export default async function ArtistPage(){
  LEFT JOIN studio_projects j ON j.id=p.project_id AND j.owner_id=p.owner_id
  WHERE d.owner_id=$1 AND d.artist_id=$2 AND d.enabled=true AND COALESCE(j.artist_id,p.artist_id)=d.artist_id AND (p.project_id IS NULL OR j.deleted_at IS NULL)
  ORDER BY d.updated_at DESC LIMIT 100`,[session.ownerId,session.artistId]);
+ const forms = await getDb().query(
+  `SELECT f.id,f.title,f.version,f.requires_signature AS "requiresSignature",f.returned_at AS "returnedAt",
+    s.signed_on AS "signedOn"
+   FROM studio_artist_form_shares f
+   LEFT JOIN studio_form_signatures s ON s.document_id=f.document_id AND s.version=f.version
+   WHERE f.owner_id=$1 AND f.artist_id=$2 ORDER BY f.published_at DESC`,
+  [session.ownerId, session.artistId],
+ );
  type ArtistPreview={id:string;title:string;versionLabel:string;status:string;trackTitle:string;trackId:string};
  const groups=new Map<string,ArtistPreview[]>();
  for(const p of r.rows as ArtistPreview[]){const key=p.trackTitle||"Brano senza titolo";const list=groups.get(key)??[];list.push(p);groups.set(key,list);}
@@ -30,6 +39,18 @@ export default async function ArtistPage(){
   <h1>Benvenuto, <em>{session.artistName}.</em></h1>
   <ArtistNotifications/>
   <p>Qui trovi le anteprime che lo studio ha reso disponibili per l’ascolto, le richieste di revisione e le consegne autorizzate.</p>
+  <section className="card" id="modulistica"><h2>Modulistica</h2>
+   {forms.rows.length ? forms.rows.map(form => <div className="artist-version-row" key={form.id}>
+    <div className="artist-version-heading">
+     <div><strong>{form.title}</strong><p className="small">Versione {form.version}</p></div>
+     <span className="status-pill">{form.signedOn ? "Firma registrata" : form.returnedAt ? "Copia restituita" :
+      form.requiresSignature ? "Da firmare" : "Disponibile"}</span>
+    </div>
+    <a className="button" href={"/area-artista/documenti/" + form.id}>Apri e stampa</a>
+    {form.returnedAt ? <p><a href={"/api/artist-documents/" + form.id}>Scarica la copia restituita</a></p> :
+     form.requiresSignature && !form.signedOn ? <DocumentReturn id={form.id}/> : null}
+   </div>) : <p>Nessun documento disponibile.</p>}
+  </section>
   <section className="card"><h2>Le tue produzioni</h2>
    {groups.size?Array.from(groups.entries()).map(([track,versions])=>
     <div className="artist-track-group" key={track}>

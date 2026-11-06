@@ -20,6 +20,11 @@ type TrackedDocument = {
   signedVersion: number | null;
   signedOn: string | null;
   evidenceUrl: string | null;
+  shareId: string | null;
+  returnedAt: string | null;
+  emailState: string | null;
+  previousReturnId: string | null;
+  previousReturnVersion: number | null;
 };
 
 function templateLink(template: string, artistId: string, workId?: string | null, documentId?: string) {
@@ -34,6 +39,7 @@ function templateLink(template: string, artistId: string, workId?: string | null
 function documentStatus(doc: TrackedDocument) {
   if (doc.signedVersion === doc.version) return "Firmato";
   if (doc.state === "draft") return "Bozza";
+  if (doc.returnedAt) return "Copia ricevuta · da verificare";
   return doc.requiresSignature ? "Da firmare" : "Preparato";
 }
 
@@ -79,7 +85,7 @@ export default function ArtistDocuments({ artist, projects, production }: {
   const suggestions = suggestArtistDocuments(artistId, Boolean(artist.labelRoster), projects, production)
     .filter(suggestion => !documents?.some(doc => doc.template === suggestion.template && doc.workId === suggestion.workId));
   const signedCount = documents?.filter(doc => doc.signedVersion === doc.version).length ?? 0;
-  const awaitingCount = documents?.filter(doc => documentStatus(doc) === "Da firmare").length ?? 0;
+  const awaitingCount = documents?.filter(doc => doc.state === "ready" && doc.requiresSignature && doc.signedVersion !== doc.version && !doc.returnedAt).length ?? 0;
   const draftCount = documents?.filter(doc => doc.state === "draft").length ?? 0;
 
   function startEdit(doc: TrackedDocument, action: "link" | "sign") {
@@ -122,6 +128,7 @@ export default function ArtistDocuments({ artist, projects, production }: {
       <ul className="artist-document-counts">
         <li><strong>{signedCount}</strong> firmati</li>
         <li><strong>{awaitingCount}</strong> da firmare</li>
+        <li><strong>{documents.filter(doc => doc.returnedAt && doc.signedVersion !== doc.version).length}</strong> copie da verificare</li>
         <li><strong>{draftCount}</strong> bozze</li>
         <li><strong>{suggestions.length}</strong> da valutare</li>
       </ul>
@@ -134,13 +141,21 @@ export default function ArtistDocuments({ artist, projects, production }: {
           <span className="status-pill">{documentStatus(doc)}</span>
         </div>
         <p className="small">{doc.workId ? workTitles.get(doc.workId) ?? "Lavoro non disponibile" : "Ambito artista"} · v{doc.version}</p>
+        {doc.shareId ? <p className="small">
+          Nell’area artista · {doc.emailState === "sent" ? "email inviata" :
+            doc.emailState === "queued" ? "email in attesa" : "esito email da verificare"}.
+          {doc.returnedAt ? <> <a href={"/api/artist-documents/" + doc.shareId}>Scarica copia ricevuta</a></> : null}
+        </p> : null}
+        {doc.previousReturnId ? <p className="small">
+          <a href={"/api/artist-documents/" + doc.previousReturnId}>Scarica copia ricevuta per la versione {doc.previousReturnVersion}</a>
+        </p> : null}
         {doc.signedVersion && doc.signedOn ? <p className="small">
           Firma registrata il {new Date(doc.signedOn + "T12:00:00").toLocaleDateString("it-IT")} per la versione {doc.signedVersion}.
           {doc.signedVersion !== doc.version ? <> <Link href={"/modulistica/documenti/" + doc.id + "?version=" + doc.signedVersion}>Apri versione sottoscritta</Link></> : null}
           {doc.evidenceUrl ? <> <a href={doc.evidenceUrl} target="_blank" rel="noopener noreferrer">Copia firmata ↗</a></> : null}
         </p> : null}
         <div className="artist-document-actions">
-          <Link className="text-button" href={"/modulistica/documenti/" + doc.id}>Anteprima ↗</Link>
+          <Link className="text-button" href={"/modulistica/documenti/" + doc.id}>{doc.state === "ready" && !doc.shareId ? "Anteprima e invio ↗" : "Anteprima e versioni ↗"}</Link>
           <Link className="text-button" href={templateLink(doc.template, artistId, null, doc.id)}>Modifica</Link>
           <button className="text-button" type="button" disabled={busy} onClick={() => startEdit(doc, "link")}>Associa lavoro</button>
           {doc.state === "ready" && doc.requiresSignature ? <button className="secondary" type="button" disabled={busy}
@@ -176,6 +191,14 @@ export default function ArtistDocuments({ artist, projects, production }: {
 
       <h4>Moduli suggeriti da valutare</h4>
       <p className="small">Le proposte dipendono dai lavori registrati e dall’appartenenza al roster.</p>
+      {artist.labelRoster && !documents.some(doc => doc.template === "artist-development-continuity-v1") ?
+        <div className="artist-document-row">
+          <strong>Partnership con l’Accademia Amici del Canto</strong>
+          <p className="small">Aggiungi l’accordo tripartito se l’artista entra tramite la collaborazione con l’Accademia.</p>
+          <Link className="text-button" href={templateLink("artist-development-continuity-v1", artistId)}>
+            Aggiungi accordo Accademia ↗
+          </Link>
+        </div> : null}
       {suggestions.length === 0 ? <p>Nessun altro modulo suggerito per il percorso registrato.</p> : null}
       {suggestions.map(suggestion => <div className="artist-document-row" key={suggestion.template + ":" + suggestion.workId}>
         <div className="artist-document-heading">

@@ -19,6 +19,7 @@ export function suggestArtistDocuments(
     suggestions.push({ template, reason, workId: work?.id ?? null, workTitle: work?.title ?? "" });
   };
   if (labelRoster) {
+    add("artist-profile-v1", "Raccogli dati, recapiti e referenti all’ingresso nel roster.");
     add("label-collaboration-v1", "Verifica le condizioni della collaborazione con Emme Label.");
   }
 
@@ -26,6 +27,8 @@ export function suggestArtistDocuments(
   const activeProjects = new Set(artistProjects.filter(p => p.status !== "Archiviato").map(p => p.id));
   const works = production.filter(item => item.status !== "Archiviato" && item.status !== "Archiviata" &&
     (item.projectId ? activeProjects.has(item.projectId) : item.artistId === artistId));
+  const releaseProjects = new Set(artistProjects.filter(project =>
+    activeProjects.has(project.id) && ["Singolo", "Album"].includes(project.kind)).map(project => project.id));
   const trackIds = new Set(works.filter(item => item.kind === "track").map(item => item.id));
 
   function release(work: { id: string; title: string }) {
@@ -33,18 +36,24 @@ export function suggestArtistDocuments(
     add("release-approval-v1", "Da valutare quando audio, copertina e metadati saranno pronti per l’approvazione.", work);
     if (labelRoster) {
       add("label-release-agreement-v1", "Da valutare se questa uscita verrà pubblicata con Emme Label.", work);
+      add("coproduction-v1", "Da valutare se la produzione è condivisa con Emme Studio, Emme Label o altri produttori.", work);
+      add("performer-credits-v1", "Da valutare se partecipano featuring, coristi o musicisti di sessione.", work);
+      add("third-party-materials-v1", "Da valutare se usi beat, sample, artwork o altri materiali di terzi.", work);
       add("master-license-v1", "Da valutare se la Label dovrà utilizzare un master di cui l’artista dispone.", work);
     }
   }
 
   for (const project of artistProjects) {
-    if (!activeProjects.has(project.id) || works.some(item => item.projectId === project.id &&
-        ["track", "recording", "service", "live"].includes(item.kind))) continue;
-    if (project.kind === "Live") {
-      add("live-production-v1", "Il progetto riguarda la produzione di uno spettacolo.", project);
-    } else if (project.kind === "Singolo" || project.kind === "Album") {
-      add("studio-services-v1", "Verifica quali attività di produzione sono state affidate allo Studio.", project);
+    if (!activeProjects.has(project.id)) continue;
+    const children = works.filter(item => item.projectId === project.id);
+    if (releaseProjects.has(project.id)) {
+      if (!children.some(item => ["track", "recording", "service"].includes(item.kind)))
+        add("studio-services-v1", "Verifica quali attività di produzione sono state affidate allo Studio.", project);
       release(project);
+      if (labelRoster && project.kind === "Singolo" && !children.some(item => item.kind === "track"))
+        add("author-split-v1", "Da valutare se l’inedito è scritto a più mani.", project);
+    } else if (project.kind === "Live" && !children.some(item => item.kind === "live")) {
+      add("live-production-v1", "Il progetto riguarda la produzione di uno spettacolo.", project);
     }
   }
 
@@ -58,7 +67,10 @@ export function suggestArtistDocuments(
     add("studio-services-v1", work.kind === "recording"
       ? "Verifica l’incarico relativo alla sessione di registrazione."
       : "Verifica l’incarico relativo alle attività affidate allo Studio.", work);
-    if (work.kind === "track") release(work);
+    if (work.kind === "track") {
+      if (!work.projectId || !releaseProjects.has(work.projectId)) release(work);
+      if (labelRoster) add("author-split-v1", "Da valutare se l’inedito è scritto a più mani.", work);
+    }
     if ((work.kind === "track" && work.status === "Consegnato") ||
         (work.kind === "service" && work.status === "Completato")) {
       add("delivery-approval-v1", "Da valutare per documentare la consegna e l’approvazione dei materiali.", work);

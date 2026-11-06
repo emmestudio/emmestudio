@@ -7,11 +7,19 @@ export async function deliverArtistEmail(owner:string,id:string){
  const claimed=await getDb().query("UPDATE studio_artist_email_outbox SET state='sending',attempts=attempts+1,error='',updated_at=now() WHERE owner_id=$1 AND id=$2 AND state IN ('queued','failed') RETURNING recipient_email,notification_id",[owner,id]);
  const job=claimed.rows[0];if(!job)return;
  try{
-  const n=await getDb().query("SELECT body,recipient FROM studio_artist_notifications WHERE owner_id=$1 AND id=$2",[owner,job.notification_id]);
+  const n=await getDb().query(`SELECT n.body,n.recipient,n.event_type,x.email AS current_email
+    FROM studio_artist_notifications n
+    LEFT JOIN studio_artist_access x ON x.owner_id=n.owner_id AND x.artist_id=n.artist_id AND x.enabled
+    LEFT JOIN studio_artists a ON a.owner_id=n.owner_id AND a.id=n.artist_id AND a.deleted_at IS NULL
+    WHERE n.owner_id=$1 AND n.id=$2 AND (n.event_type<>'document' OR a.id IS NOT NULL)`,[owner,job.notification_id]);
   if(!n.rows[0])throw Error('Notifica non disponibile');
-  const path=n.rows[0].recipient==='artist'?'/area-artista':'/messaggi-artisti';
+  if(n.rows[0].event_type==='document' && n.rows[0].current_email!==job.recipient_email){
+   await getDb().query("UPDATE studio_artist_email_outbox SET state='failed',error='L’accesso artista o il recapito è cambiato.',updated_at=now() WHERE owner_id=$1 AND id=$2",[owner,id]);
+   return;
+  }
+  const path=n.rows[0].event_type==='document'?'/area-artista#modulistica':n.rows[0].recipient==='artist'?'/area-artista':'/messaggi-artisti';
   const base=process.env.BETTER_AUTH_URL!;
-  const result=await sendArtistGmail(owner,job.recipient_email,"Emme Studio — Nuova comunicazione",n.rows[0].body+"\n\nApri il portale: "+new URL(path,base).href);
+  const result=await sendArtistGmail(owner,job.recipient_email,(n.rows[0].event_type==='document'?"Emme Studio — Documento disponibile":"Emme Studio — Nuova comunicazione"),n.rows[0].body+"\n\nApri il portale: "+new URL(path,base).href);
   await getDb().query("UPDATE studio_artist_email_outbox SET state=$3,error=$4,updated_at=now() WHERE owner_id=$1 AND id=$2",[owner,id,result.sent?'sent':'failed',result.sent?'':result.reason]);
  }catch(e){
   const definitive=e instanceof Error && /^Gmail API 4\d\d$/.test(e.message);
