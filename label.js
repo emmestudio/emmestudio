@@ -73,13 +73,6 @@
     }, { once: true });
   }
 
-  document.querySelectorAll('[data-load-spotify]').forEach(button => {
-    const box = button.closest('[data-spotify]');
-    if (/^[A-Za-z0-9]{22}$/.test(box?.dataset.spotify)) {
-      addPlayer(button, box.querySelector('.spotify-player-slot'), 'artist/' + box.dataset.spotify, 'Moody');
-    }
-  });
-
   function rosterCards(artists) {
     document.getElementById('roster-empty').hidden = artists.length > 0;
     for (const artist of artists) {
@@ -98,6 +91,7 @@
 
   function artistProfile(artist) {
     if (!artist) {
+      document.querySelector('meta[name="robots"]').content = 'noindex, follow';
       profile.replaceChildren(el('h1', 'Scheda artista non disponibile.'), el('p', 'Torna al roster per vedere gli artisti pubblicati.'));
       document.querySelector('.label-listen')?.remove();
       return;
@@ -116,11 +110,17 @@
     copy.append(links(artist, 'profile-links'));
     layout.append(copy);
     profile.replaceChildren(layout);
+    const box = document.querySelector('.label-listen');
+    const player = /^https:\/\/open\.spotify\.com\/(?:intl-[^/]+\/)?artist\/([A-Za-z0-9]{22})(?:[/?#]|$)/
+      .exec(artist.links?.find(link => link.label === 'Spotify')?.url || '');
+    if (box && player) {
+      addPlayer(box.querySelector('[data-load-spotify]'), box.querySelector('.spotify-player-slot'), 'artist/' + player[1], artist.name);
+      box.hidden = false;
+    }
   }
 
   function releaseCards(releases, slug) {
-    const items = releases.filter(release => release.published && (!slug || release.artistSlug === slug))
-      .sort((a, b) => b.date.localeCompare(a.date));
+    const items = releases.filter(release => release.published && (!slug || release.artistSlug === slug));
     const section = catalogue.closest('.label-releases');
     if (section.dataset.hideEmpty !== undefined) section.hidden = !items.length;
     document.getElementById('releases-empty').hidden = items.length > 0;
@@ -164,19 +164,16 @@
 
   if (!roster && !profile && !catalogue) return;
   (async () => {
-    let data;
-    try {
-      data = await json('https://portal.emmestudioproduction.it/api/public/label', { signal: AbortSignal.timeout(7000) });
-    } catch {
-      const [artists, releases] = await Promise.all([json('label-artists.json'), json('label-releases.json')]);
-      data = { artists, releases };
-    }
+    const data = await json('https://portal.emmestudioproduction.it/api/public/label', { signal: AbortSignal.timeout(7000) });
     const artists = data.artists.filter(artist => artist.published === true && artist.slug && artist.name);
     const slug = profile?.dataset.artist || new URLSearchParams(location.search).get('artista');
     if (roster) rosterCards(artists);
     if (profile) artistProfile(artists.find(artist => artist.slug === slug));
     if (catalogue && (!profile || slug)) releaseCards(data.releases, slug);
   })().catch(() => {
+    if (profile) profile.replaceChildren(el('h1', 'Scheda artista temporaneamente non disponibile.'));
+    const rosterNotice = document.getElementById('roster-empty');
+    if (rosterNotice) rosterNotice.replaceChildren(el('p', 'Il roster è temporaneamente non disponibile.'));
     const notice = document.getElementById('releases-empty');
     if (notice) notice.textContent = 'Il catalogo non è disponibile in questo momento. Riprova tra poco.';
   });
