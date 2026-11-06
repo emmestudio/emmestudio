@@ -3,7 +3,7 @@ const db=new PGlite(),temp=await mkdtemp(join(tmpdir(),'emme-forms-'));
 globalThis.formsDb={query:(q,v)=>db.query(q,v),connect:async()=>({query:(q,v)=>db.query(q,v),release(){}})};globalThis.formsSession={user:{id:'owner'}};
 process.env.BETTER_AUTH_URL='https://portal.example.test';process.env.STUDIO_CONTRACT_PROVIDER=JSON.stringify({name:'Provider fixture',taxCode:'FIXTURE-CODE',address:'Private fixture address',email:'fixture@example.test'});
 try{await db.exec(`CREATE TABLE "user"(id text PRIMARY KEY);INSERT INTO "user" VALUES('owner'),('other');CREATE TABLE studio_artists(id uuid PRIMARY KEY,owner_id text,name text,first_name text,last_name text,email text,phone text,deleted_at timestamptz);CREATE TABLE studio_quotes(project_id uuid PRIMARY KEY,owner_id text,version integer,status text DEFAULT 'Bozza',amount integer DEFAULT 0,notes text DEFAULT '',items jsonb DEFAULT '[]'::jsonb);`);await db.exec(await readFile('db/019-form-documents.sql','utf8'));await db.exec(await readFile('db/019-form-documents.sql','utf8'));await db.exec(await readFile('db/020-more-form-templates.sql','utf8'));await db.exec(await readFile('db/020-more-form-templates.sql','utf8'));await db.exec(await readFile('db/021-label-contract-forms.sql','utf8'));await db.exec(await readFile('db/021-label-contract-forms.sql','utf8'));
- await build({stdin:{contents:`export * as sharing from '${resolve('app/api/forms/share/route.ts')}';export * as returned from '${resolve('app/api/artist-documents/[id]/route.ts')}';export * as tracker from '${resolve('app/api/forms/artist-tracker/route.ts')}';export * from '${resolve('lib/artist-document-rules.ts')}';export * as api from '${resolve('app/api/forms/route.ts')}';export * from '${resolve('lib/service-agreement-data.ts')}';export * from '${resolve('lib/form-templates.ts')}';export * from '${resolve('lib/form-plan.ts')}';export {default as Paper} from '${resolve('app/modulistica/general-paper.tsx')}';export {renderToStaticMarkup} from 'react-dom/server';`,resolveDir:resolve('.')},outfile:join(temp,'svc.mjs'),bundle:true,platform:'node',format:'esm',jsx:'automatic',banner:{js:"import {createRequire as createFormsRequire} from 'node:module';const require=createFormsRequire(import.meta.url);"},plugins:[{name:'isolate',setup(b){b.onResolve({filter:/^(server-only|\.\/(db|artist-gmail)|@\/lib\/(artist-session|owner-session|db|finance-targets|finance))$/},a=>({path:a.path,namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},a=>({contents:a.path==='server-only'?'':a.path==='./artist-gmail'?'export const sendArtistGmail=async (...args)=>{globalThis.formMail.push(args);return {sent:true}}':a.path.endsWith('/artist-session')?'export const artistSession=async()=>globalThis.artistFormsSession':a.path.endsWith('/owner-session')?'export const ownerSession=async()=>globalThis.formsSession':a.path.endsWith('/finance-targets')?'export const listFinanceTargets=async()=>globalThis.formTargets||[]':a.path.endsWith('/finance')?'export const listLedger=async()=>globalThis.formLedger||({quotes:[]})':'export const getDb=()=>globalThis.formsDb'}));}}]});
+ await build({stdin:{contents:`export * as sharing from '${resolve('app/api/forms/share/route.ts')}';export * as uploadToken from '${resolve('app/api/artist-documents/[id]/upload/route.ts')}';export * as returned from '${resolve('app/api/artist-documents/[id]/route.ts')}';export * as tracker from '${resolve('app/api/forms/artist-tracker/route.ts')}';export * from '${resolve('lib/artist-document-rules.ts')}';export * as api from '${resolve('app/api/forms/route.ts')}';export * from '${resolve('lib/service-agreement-data.ts')}';export * from '${resolve('lib/form-templates.ts')}';export * from '${resolve('lib/form-plan.ts')}';export {default as Paper} from '${resolve('app/modulistica/general-paper.tsx')}';export {renderToStaticMarkup} from 'react-dom/server';`,resolveDir:resolve('.')},outfile:join(temp,'svc.mjs'),bundle:true,platform:'node',format:'esm',jsx:'automatic',banner:{js:"import {createRequire as createFormsRequire} from 'node:module';const require=createFormsRequire(import.meta.url);"},plugins:[{name:'isolate',setup(b){b.onResolve({filter:/^(server-only|@vercel\/blob(?:\/client)?|\.\/(db|artist-gmail)|@\/lib\/(artist-session|owner-session|db|finance-targets|finance))$/},a=>({path:a.path,namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},a=>({contents:a.path==='server-only'?'':a.path==='@vercel/blob'?'export const get=(...args)=>globalThis.signedBlob.get(...args);export const del=(...args)=>globalThis.signedBlob.del(...args)':a.path==='@vercel/blob/client'?'export const handleUpload=opts=>opts.onBeforeGenerateToken(opts.body.pathname)':a.path==='./artist-gmail'?'export const sendArtistGmail=async (...args)=>{globalThis.formMail.push(args);return {sent:true}}':a.path.endsWith('/artist-session')?'export const artistSession=async()=>globalThis.artistFormsSession':a.path.endsWith('/owner-session')?'export const ownerSession=async()=>globalThis.formsSession':a.path.endsWith('/finance-targets')?'export const listFinanceTargets=async()=>globalThis.formTargets||[]':a.path.endsWith('/finance')?'export const listLedger=async()=>globalThis.formLedger||({quotes:[]})':'export const getDb=()=>globalThis.formsDb'}));}}]});
  await db.exec(await readFile('db/024-complete-form-catalog.sql','utf8'));
  await db.exec(await readFile('db/025-artist-document-tracker.sql','utf8'));
  await db.exec(await readFile('migrations/014-artist-access.sql','utf8'));
@@ -11,6 +11,7 @@ try{await db.exec(`CREATE TABLE "user"(id text PRIMARY KEY);INSERT INTO "user" V
  const consolidated=await readFile('migrations/025-portal-consolidation.sql','utf8');
  await db.exec(consolidated.match(/CREATE TABLE IF NOT EXISTS studio_artist_email_outbox \([\s\S]*?\n\);/)[0]);
  for(let i=0;i<2;i++)await db.exec(await readFile('db/026-artist-form-sharing.sql','utf8'));
+ for(let i=0;i<2;i++)await db.exec(await readFile('db/027-signed-document-blob.sql','utf8'));
  const svc=await import(join(temp,'svc.mjs'));const id=crypto.randomUUID();const request=(body,origin='https://portal.example.test')=>new Request('https://portal.example.test/api/forms',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify({id,version:0,state:'draft',draft:svc.emptyServiceAgreement(),...body})});
  globalThis.formsSession=null;assert.equal((await svc.api.GET(new Request('https://portal.example.test/api/forms'))).status,401);assert.equal((await svc.api.POST(request({}))).status,401);globalThis.formsSession={user:{id:'owner'}};
  assert.equal((await svc.api.POST(request({},'https://evil.example'))).status,403);assert.equal((await svc.api.POST(request({state:'ready'}))).status,400);
@@ -172,6 +173,51 @@ try{await db.exec(`CREATE TABLE "user"(id text PRIMARY KEY);INSERT INTO "user" V
  globalThis.formsSession={user:{id:'owner'}};
  assert.equal(await (await download()).text(),pdf);
  assert.equal((await db.query('SELECT count(*)::int AS n FROM studio_form_signatures WHERE document_id=$1 AND version=2',[trackedId])).rows[0].n,0);
+ assert.equal((await svc.api.POST(request({id:trackedId,version:3,state:'ready',draft:trackedDraft}))).status,200);
+ assert.equal((await publish(4)).status,200);
+ const largeShare=(await db.query('SELECT id FROM studio_artist_form_shares WHERE document_id=$1 AND version=4',[trackedId])).rows[0];
+ const largeContext={params:Promise.resolve({id:largeShare.id})};
+ const pathname='artist-signed-forms/'+largeShare.id+'/'+crypto.randomUUID();
+ const largeUrl=origin+'/api/artist-documents/'+largeShare.id;
+ const jsonPost=(url,path)=>new Request(url,{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify({pathname:path})});
+ const token=()=>svc.uploadToken.POST(jsonPost(largeUrl+'/upload',pathname),largeContext);
+ const finish=(path=pathname)=>svc.returned.POST(jsonPost(largeUrl,path),largeContext);
+ const largePdf=Buffer.concat([Buffer.from('%PDF-1.7\n'),Buffer.alloc(12*1024*1024),Buffer.from('%%EOF')]);
+ let blobBytes=Buffer.from('%PDF-1.7 invalid');
+ let reportedSize;
+ const deletions=[];
+ globalThis.signedBlob={
+  get:async(path,opts)=>{
+   assert.equal(path,pathname);assert.equal(opts.access,'private');
+   return {stream:new Response(blobBytes).body,blob:{size:reportedSize??blobBytes.length,contentType:'application/pdf'}};
+  },
+  del:async path=>deletions.push(path),
+ };
+ globalThis.artistFormsSession={ownerId:'owner',artistId:crypto.randomUUID()};
+ assert.equal((await token()).status,400);
+ assert.equal((await finish()).status,404);
+ globalThis.artistFormsSession={ownerId:'owner',artistId};
+ const tokenReply=await (await token()).json();
+ assert.equal(tokenReply.maximumSizeInBytes,20*1024*1024);
+ assert.equal(tokenReply.allowOverwrite,false);
+ assert.equal((await finish('https://example.test/file')).status,400);
+ assert.equal((await finish()).status,415);
+ reportedSize=21*1024*1024;
+ assert.equal((await finish()).status,415);
+ assert.equal(deletions.length,2);
+ reportedSize=undefined;
+ blobBytes=largePdf;
+ assert.equal((await finish()).status,200);
+ assert.equal((await finish()).status,200,'A retry preserves the already returned file');
+ assert.equal((await token()).status,400);
+ const largeDownload=()=>svc.returned.GET(new Request(largeUrl),largeContext);
+ assert.deepEqual(Buffer.from(await (await largeDownload()).arrayBuffer()),largePdf);
+ globalThis.formsSession=null;
+ globalThis.artistFormsSession={ownerId:'owner',artistId:crypto.randomUUID()};
+ assert.equal((await largeDownload()).status,404);
+ globalThis.artistFormsSession={ownerId:'owner',artistId};
+ assert.deepEqual(Buffer.from(await (await largeDownload()).arrayBuffer()),largePdf);
+ globalThis.formsSession={user:{id:'owner'}};
  process.env.MAIL_SEND_ENABLED='false';
  const sessionWork={id:workId,artistId,kind:'recording',title:'Sessione',status:'Registrata'};
  const songWork={id:crypto.randomUUID(),artistId,kind:'track',title:'Inedito',status:'Mix'};
