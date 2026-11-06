@@ -1,0 +1,33 @@
+/* Partner: visual coordinato al tema Cinematic Dark */
+.partner-page{background:#101114}
+.partner-hero{position:relative;isolation:isolate;overflow:hidden;max-width:none;min-height:490px;display:flex;flex-direction:column;justify-content:center;background:radial-gradient(ellipse at 82% 28%,#7053b64d,transparent 40%),radial-gradient(ellipse at 16% 85%,#25458242,transparent 53%),#13141b;border-bottom:1px solid #ffffff1a}
+.partner-hero:before{content:'';position:absolute;inset:0;pointer-events:none;z-index:-1;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:62px 62px;mask-image:linear-gradient(90deg,#0008,transparent)}
+.partner-hero .partner-title{max-width:1000px}
+.partner-hero h1{font-size:clamp(50px,6.2vw,98px);max-width:1000px}
+.partner-hero .lead{font-size:clamp(16px,1.35vw,19px);color:#c7c7d6;max-width:690px;margin:0}
+.partner-intro{padding-top:90px;padding-bottom:18px}
+.partner-intro h2{max-width:1000px}
+.partner-intro .section-intro{max-width:570px}
+.partner-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.partner-grid>.partner-card:only-child{grid-column:1/-1;max-width:1120px}
+.partner-card{min-width:0;display:grid;grid-template-columns:minmax(140px,35%) 1fr;align-items:stretch;background:linear-gradient(145deg,#1b1c28,#171820);border:1px solid #5c5d7a45;border-radius:22px;overflow:hidden;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.partner-card:hover{transform:translateY(-4px);border-color:#a28ddd88;box-shadow:0 18px 46px #0003}
+.partner-mark{min-height:280px;display:flex;align-items:center;justify-content:center;padding:30px;background:radial-gradient(ellipse at 45% 38%,#6050996b,transparent 70%),linear-gradient(140deg,#283551,#181925)}
+.partner-mark img{width:100%;max-width:200px;max-height:150px;object-fit:contain}
+.partner-mark-text{font-size:clamp(18px,2.1vw,30px);line-height:1.1;font-weight:600;letter-spacing:-.03em;text-align:center}
+.partner-card-copy{padding:clamp(25px,2.8vw,43px);display:flex;flex-direction:column;align-items:flex-start}
+.partner-card-copy .eyebrow{color:#b8a5ef;margin-bottom:18px;text-transform:uppercase}
+.partner-card-copy h2{font-size:clamp(28px,2.4vw,39px);line-height:1.09;margin:0 0 20px}
+.partner-description{font-size:14px;color:#c5c5d0;margin:0 0 18px}
+.partner-benefits{margin:0;color:#e2dbef;font-size:13px;padding:16px 18px;border-left:2px solid #a89ae1;background:#b2a3eb0c}
+.partner-link{display:inline-block;margin-top:25px;font-size:12px;color:#d7cafa;padding-bottom:6px;border-bottom:1px solid #8f83b9}
+.partner-link:hover{color:#fff;border-color:#fff}
+.partner-status{color:var(--muted);margin-top:24px}
+.partner-invite{max-width:none;background:linear-gradient(110deg,#202331,#1b1d27 55%,#292036);border-top:1px solid #ffffff18}
+.partner-invite .lead{max-width:680px}
+.partner-preview{border-top:1px solid #ffffff14;border-bottom:1px solid #ffffff14;background:radial-gradient(ellipse at 90% 50%,#55478729,transparent 45%),#171820}
+.partner-preview .section-heading{margin:0;align-items:center}
+.partner-preview .section-intro{max-width:570px}
+@media(max-width:1100px){.partner-grid{grid-template-columns:1fr}.partner-card{max-width:900px}}
+@media(max-width:650px){.partner-hero{min-height:380px}.partner-intro{padding-top:70px}.partner-card{grid-template-columns:1fr}.partner-mark{min-height:200px}.partner-card-copy{padding:28px}.partner-preview .section-heading{display:block}.partner-preview .button{margin-top:25px}}
+@media(prefers-reduced-motion:reduce){.partner-card{transition:none}.partner-card:hover{transform:none}}
