@@ -19,7 +19,7 @@ try {
     jsx: "automatic",
     tsconfig: "tsconfig.json",
   });
-  const { default: NewsMarkdown } = await import(pathToFileURL(output).href);
+  const { default: NewsMarkdown, NewsInlineMarkdown, plainNewsText } = await import(pathToFileURL(output).href);
   const render = (source) =>
     renderToStaticMarkup(React.createElement(NewsMarkdown, { source }));
 
@@ -55,6 +55,16 @@ try {
   assert.match(malicious, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   assert.match(malicious, /href="https:\/\/example\.com\/"/);
   assert.match(malicious, /\[clicca\]\(javascript:alert\(1\)\)/);
+  const shortDescription = "Nasce **EMME LABEL**, il nuovo progetto *indipendente* di Emme Studio.";
+  const excerptHtml = renderToStaticMarkup(React.createElement(NewsInlineMarkdown, {source:shortDescription}));
+  assert.match(excerptHtml, /Nasce <strong>EMME LABEL<\/strong>/);
+  assert.match(excerptHtml, /<em>indipendente<\/em>/);
+  assert.doesNotMatch(excerptHtml, /\*\*EMME LABEL\*\*/);
+  assert.equal(plainNewsText(shortDescription), "Nasce EMME LABEL, il nuovo progetto indipendente di Emme Studio.");
+  assert.match(renderToStaticMarkup(React.createElement(NewsInlineMarkdown, {
+    source:"<img src=x onerror=alert(1)> [clicca](javascript:alert(1))"
+  })), /&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.equal(plainNewsText("Visita [Emme Label](https://emmestudioproduction.it/label.html)"), "Visita Emme Label");
   console.log("PASS news Markdown: headings, strong, emphasis, links, Unicode, lists, escapes, plain text, safe HTML.");
 } finally {
   await rm(temp, { recursive: true, force: true });
