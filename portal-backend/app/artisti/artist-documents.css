@@ -1,0 +1,40 @@
+.artist-document-tracker h4 {
+  margin: 1.4rem 0 .5rem;
+}
+.artist-document-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem 1rem;
+  list-style: none;
+  padding: 0;
+}
+.artist-document-counts li {
+  border: 1px solid #ffffff22;
+  border-radius: .6rem;
+  padding: .4rem .65rem;
+}
+.artist-document-row {
+  border-top: 1px solid #ffffff22;
+  padding: .85rem 0;
+}
+.artist-document-row p {
+  margin: .35rem 0 .55rem;
+}
+.artist-document-heading,
+.artist-document-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .45rem .8rem;
+}
+.artist-document-heading .status-pill {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.artist-document-edit {
+  margin-top: .75rem;
+}
+.artist-document-edit fieldset {
+  display: grid;
+  gap: .65rem;
+}

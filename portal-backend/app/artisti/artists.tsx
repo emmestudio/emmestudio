@@ -1,4 +1,5 @@
 "use client";
+import ArtistDocuments from "./artist-documents";
 import ArtistAccess from "./artist-access";
 import SharedMaterials from "./shared-materials";
 import type {FinanceTarget} from "@/lib/finance-targets";
@@ -15,7 +16,7 @@ import {
 } from "@/lib/artist-data";
 import { projectProgress, type StudioProject } from "@/lib/project-data";
 import { type Ledger, projectBalance, euro } from "@/lib/finance-data";
-export default function Artists() {
+export default function Artists({ canManageDocuments = false }: { canManageDocuments?: boolean }) {
   const [financialTargets,setFinancialTargets]=useState<FinanceTarget[]>([]);
   const [production,setProduction] = useState<ProductionItem[]>([]);
   const [admin, setAdmin] = useState(false);
@@ -116,6 +117,7 @@ export default function Artists() {
   const shown = artists.filter(
     (a) =>
       (filter !== "Direzione artistica" || a.direction) &&
+      (filter !== "Roster Emme Label" || a.labelRoster) &&
       (a.name + " " + (a.firstName || "") + " " + (a.lastName || "") + " " + a.genre)
         .toLocaleLowerCase("it")
         .includes(search.toLocaleLowerCase("it")),
@@ -151,6 +153,7 @@ export default function Artists() {
           <select value={filter} onChange={(e) => setFilter(e.target.value)}>
             <option>Tutti</option>
             <option>Direzione artistica</option>
+            <option>Roster Emme Label</option>
           </select>
         </label>
         <button
@@ -205,6 +208,7 @@ export default function Artists() {
                 {selected.direction ? "DIREZIONE ARTISTICA" : "PROFILO ARTISTA"}
               </span>
               <h2>{selected.name}</h2>
+              {selected.labelRoster ? <span className="status-pill">Roster Emme Label</span> : null}
               {selected.firstName || selected.lastName ? <p>{[selected.firstName,selected.lastName].filter(Boolean).join(" ")}</p> : null}
               <p>{selected.genre || "Genere e identità da definire"}</p>
               <div className="contact-chips">
@@ -238,6 +242,8 @@ export default function Artists() {
               </div>
             </section>
             {admin?<><ArtistAccess key={selected.id} artistId={selected.id}/><SharedMaterials key={"materials-"+selected.id} artistId={selected.id}/></>:null}
+            {canManageDocuments ? <ArtistDocuments key={selected.id} artist={selected}
+              projects={projects} production={production} /> : null}
             <DriveFolders key={selected.id+":"+refresh} kind="artist" id={selected.id}/>
             <div className="artist-counts">
               {["Da realizzare", "In realizzazione", "Realizzati"].map((g) => (
@@ -438,6 +444,11 @@ export default function Artists() {
                 }
               />
               Percorso in direzione artistica
+            </label>
+            <label className="checkbox">
+              <input type="checkbox" checked={Boolean(draft.labelRoster)}
+                onChange={e => setDraft({ ...draft, labelRoster: e.target.checked })} />
+              Fa parte del roster Emme Label
             </label>
             <label>
               Referente della direzione artistica

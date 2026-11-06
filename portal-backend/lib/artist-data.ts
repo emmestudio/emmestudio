@@ -8,6 +8,7 @@ export type ArtistDraft = {
   links: string;
   notes: string;
   direction: boolean;
+  labelRoster?: boolean;
   director: string;
   objectives: string;
 };
@@ -23,6 +24,7 @@ export const emptyArtist = (): ArtistDraft => ({
   links: "",
   notes: "",
   direction: false,
+  labelRoster: false,
   director: "",
   objectives: "",
 });
@@ -61,6 +63,9 @@ export function validateArtist(input: unknown): ArtistDraft {
   )
     throw new ArtistInputError("Inserisci nome e contatti validi.");
   result.direction = d.direction;
+  if (d.labelRoster === undefined) delete result.labelRoster;
+  else if (typeof d.labelRoster === "boolean") result.labelRoster = d.labelRoster;
+  else throw new ArtistInputError("Seleziona uno stato valido per il roster.");
   return result;
 }
 export function workGroup(status: string) {

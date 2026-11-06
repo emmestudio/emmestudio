@@ -4,7 +4,8 @@ import { workspaceSession } from "@/lib/workspace-session";
 import Artists from "./artists";
 export const dynamic = "force-dynamic";
 export default async function Page() {
-  if (!(await workspaceSession(await headers()))) redirect("/accesso");
+  const session = await workspaceSession(await headers());
+  if (!session) redirect("/accesso");
   return (
     <main className="shell">
       <span className="eyebrow">EMME STUDIO · ARTIST MANAGEMENT</span>
@@ -13,7 +14,7 @@ export default async function Page() {
         <br />
         <em>Un percorso da costruire.</em>
       </h1>
-      <Artists />
+      <Artists canManageDocuments={session.role === "admin"} />
     </main>
   );
 }

@@ -28,7 +28,7 @@ assert.equal((await svc.listProduction('owner')).find(i=>i.id===legacy).artistId
 const person=randomUUID();
 const d=svc.validateArtist({...svc.emptyArtist(),name:'Nome d’arte',firstName:' Mario ',lastName:' Rossi '});
 assert.equal(await svc.saveArtist('owner',person,undefined,d),true);
-let a=(await svc.listArtists('owner')).find(a=>a.id===person);
+let a=(await svc.listArtists('owner')).find(a=>a.id===person);assert.equal(a.labelRoster,false);
 assert.equal(a.name,'Nome d’arte');assert.equal(a.firstName,'Mario');assert.equal(a.lastName,'Rossi');
 const legacyPayload={...d,name:'Nome d’arte aggiornato'};delete legacyPayload.firstName;delete legacyPayload.lastName;
 assert.equal(await svc.saveArtist('owner',person,1,svc.validateArtist(legacyPayload)),true);
@@ -44,7 +44,8 @@ const inline=randomUUID(),p=randomUUID();
 await svc.createProject('owner',p,{title:'Progetto con nuovo artista',artist:d.name,artistId:inline,kind:'Singolo',status:'Pianificazione',service:'Produzione',deadline:null,vision:'',notes:'',music:0,live:0,image:0},{newArtist:{id:inline,draft:d}});
 assert.equal((await svc.listArtists('owner')).find(a=>a.id===inline).lastName,'Rossi');
 assert.equal((await svc.listFinanceTargets('owner')).find(t=>t.id===p).contactName,'Mario Rossi');
-assert.equal(await svc.saveArtist('owner',person,2,{...d,firstName:'',lastName:''}),true);
+assert.equal(await svc.saveArtist('owner',person,2,{...d,firstName:'',lastName:'',labelRoster:true}),true);
 assert.equal((await svc.listArtists('owner')).find(a=>a.id===person).firstName,'');
+assert.equal((await svc.listArtists('owner')).find(a=>a.id===person).labelRoster,true);
 console.log('PASS separate names, legacy preservation, optional band names, validation, stale edits, workspace isolation, inline artist and printable contact.');
 }finally{await db.close();await rm(scratch,{recursive:true,force:true});}
