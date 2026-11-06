@@ -18,3 +18,7 @@
 .redazione-preview .news-body code{font-family:ui-monospace,Consolas,monospace;background:#ffffff15;padding:2px 4px}
 .redazione-preview .news-body hr{border:0;border-top:1px solid #ffffff30;margin:28px 0}
 .redazione-preview .news-body p{white-space:normal;overflow-wrap:anywhere;margin:0 0 1.5em}
+
+.redazione-preview .news-excerpt-preview strong{font-weight:700;color:#fff}
+.redazione-preview .news-excerpt-preview em{font-style:italic}
+.redazione-preview .news-excerpt-preview a{color:#c7b7ff;text-decoration:underline}

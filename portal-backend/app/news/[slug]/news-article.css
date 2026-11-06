@@ -28,3 +28,9 @@
 .news-body blockquote p:last-child{margin-bottom:.6em}
 .news-body code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;background:#ffffff12;border-radius:4px;padding:.13em .3em}
 .news-body hr{border:0;border-top:1px solid #ffffff2a;margin:2em 0}
+
+/* The short article description supports safe inline Markdown. */
+.news-lead strong{font-weight:700;color:#f5f2ff}
+.news-lead em{font-style:italic}
+.news-lead a{color:var(--news-accent);text-underline-offset:.2em}
+.news-lead a:focus-visible{outline:2px solid var(--news-accent);outline-offset:3px}
