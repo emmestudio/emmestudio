@@ -3,7 +3,7 @@ import type { PoolClient } from "pg";
 import { getDb } from "./db";
 import { getAuth } from "./auth";
 import { googleDrive, type DriveClient } from "./google-drive";
-import { artistFolders, liveFolders, driveScope, DriveError, type DriveSubject } from "./drive-data";
+import { artistFolders, artistSharedDriveKey, liveFolders, driveScope, DriveError, type DriveSubject } from "./drive-data";
 
 export async function drivePermission(owner: string) {
   const r = await getDb().query('SELECT id,scope FROM account WHERE "userId"=$1 AND "providerId"=\'google\'', [owner]);
@@ -32,7 +32,7 @@ async function locked<T>(owner: string, work: (c: PoolClient) => Promise<T>) {
   }
 }
 // IDs are committed before Google writes. A timeout or process crash can always retry the SAME ID.
-export async function ensureDriveFolder(c: Pick<PoolClient,"query">, api: DriveClient, owner: string, key: string, name: string, parent: string | null) {
+export async function ensureDriveFolder(c: Pick<PoolClient,"query">, api: DriveClient, owner: string, key: string, name: string, parent: string | null, pendingMessage = "") {
   let row = (await c.query("SELECT * FROM studio_drive_folders WHERE owner_id=$1 AND subject_key=$2", [owner,key])).rows[0];
   if (!row) {
     const id = await api.generateId();
@@ -50,7 +50,7 @@ export async function ensureDriveFolder(c: Pick<PoolClient,"query">, api: DriveC
     }
     if (remote.trashed || remote.mimeType !== "application/vnd.google-apps.folder") throw new DriveError(409, "La cartella è nel cestino di Drive. Ripristinala prima di sincronizzare.");
     if (remote.name !== name || (parent && !remote.parents?.includes(parent))) await api.update(row.folder_id, name, parent, remote.parents ?? []);
-    await c.query("UPDATE studio_drive_folders SET state='ready',error='',name=$3,parent_id=$4,updated_at=now() WHERE owner_id=$1 AND subject_key=$2", [owner,key,name,parent]);
+    await c.query("UPDATE studio_drive_folders SET state='ready',error=$5,name=$3,parent_id=$4,updated_at=now() WHERE owner_id=$1 AND subject_key=$2", [owner,key,name,parent,pendingMessage]);
     return row.folder_id as string;
   } catch (e) {
     // Retain the 'ready' state on failures so a deleted confirmed folder can never be recreated.
@@ -127,4 +127,58 @@ export async function syncTrackDriveFolders(owner:string,trackId:string){
   const deliveries=await ensureDriveFolder(c,api,owner,base+"/deliveries","Consegne definitive",songFolder);
   return {previews,deliveries};
  });
+}
+
+// This dedicated folder is managed by the portal. It lives outside the internal artist folder (which includes unpublished tracks and documents).
+export async function reconcileArtistDriveAccess(c: Pick<PoolClient,"query">, owner: string, id: string, email: string | null) {
+  const key = artistSharedDriveKey(id);
+  const row = (await c.query("SELECT folder_id FROM studio_drive_folders WHERE owner_id=$1 AND subject_key=$2", [owner,key])).rows[0];
+  if (!row) return null;
+  const api = await clientForOwner(owner);
+  const folder = await api.get(row.folder_id);
+  if (!folder || folder.trashed || folder.mimeType !== "application/vnd.google-apps.folder" || !folder.ownedByMe) {
+    throw new DriveError(409, "Cartella condivisa non disponibile o non di proprietà dello studio.");
+  }
+  const permissions = (await api.permissions(folder.id)).filter(p => p.role !== "owner");
+  if (permissions.some(p => p.type !== "user" || p.permissionDetails?.some(d => d.inherited))) {
+    throw new DriveError(409, "Verifica su Drive che la cartella condivisa non abbia permessi pubblici, di gruppo o ereditati.");
+  }
+  const current = permissions.find(p => p.emailAddress?.trim().toLowerCase() === email && p.role === "reader");
+  const revoke = permissions.filter(p => p.id !== current?.id);
+  for (const p of revoke) await api.revokePermission(folder.id,p.id);
+  if (revoke.length && (await api.permissions(folder.id)).some(p=>revoke.some(old=>old.id===p.id))) {
+    throw new DriveError(409, "Google Drive non ha confermato la revoca. Verifica i permessi della cartella e riprova.");
+  }
+  if (email && !current) await api.shareReader(folder.id,email);
+  return email ? folder.id : null;
+}
+
+export async function syncArtistDriveAccess(owner: string, id: string) {
+  return locked(owner, async c => {
+    const key = artistSharedDriveKey(id);
+    const access = async () => (await c.query(
+      `SELECT a.name,x.enabled,x.email FROM studio_artists a LEFT JOIN studio_artist_access x
+      ON x.owner_id=a.owner_id AND x.artist_id=a.id WHERE a.owner_id=$1 AND a.id=$2 AND a.deleted_at IS NULL`,
+      [owner,id]
+    )).rows[0];
+    const initial = await access();
+    const stored=(await c.query("SELECT state FROM studio_drive_folders WHERE owner_id=$1 AND subject_key=$2",[owner,key])).rows[0];
+    if (initial?.enabled && stored?.state !== "ready") {
+      const api = await clientForOwner(owner);
+      await ensureDriveFolder(c,api,owner,key,`${initial.name} — Materiali condivisi`,null,"Condivisione da sincronizzare");
+    }
+    try {
+      await c.query("BEGIN");
+      await c.query("SELECT id FROM studio_artists WHERE owner_id=$1 AND id=$2 FOR UPDATE",[owner,id]);
+      const latest = await access();
+      const folderId = await reconcileArtistDriveAccess(c,owner,id,latest?.enabled ? latest.email : null);
+      await c.query("UPDATE studio_drive_folders SET error=$3 WHERE owner_id=$1 AND subject_key=$2",[owner,key,folderId ? "" : "Condivisione disattivata"]);
+      await c.query("COMMIT");
+      return folderId;
+    } catch (error) {
+      await c.query("ROLLBACK");
+      await c.query("UPDATE studio_drive_folders SET error=$3 WHERE owner_id=$1 AND subject_key=$2",[owner,key,"Condivisione da verificare"]);
+      throw error;
+    }
+  });
 }

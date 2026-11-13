@@ -220,6 +220,15 @@ export async function trashResource(
         "Scrivi il titolo esatto per confermare l’eliminazione.",
       );
     if (kind === "artist" && !restore) {
+      const schema=await c.query("SELECT to_regclass('public.studio_artist_access') AS access,to_regclass('public.studio_drive_folders') AS drive");
+      if(schema.rows[0]?.access && schema.rows[0]?.drive){
+        const shared=await c.query(`SELECT 1 FROM studio_artist_access a JOIN studio_drive_folders d
+          ON d.owner_id=a.owner_id AND d.subject_key='artist/'||a.artist_id::text||'/shared'
+          WHERE a.owner_id=$1 AND a.artist_id=$2 AND a.enabled`,[owner,id]);
+        if(shared.rowCount)throw new OperationsError("Disabilita l’accesso dalla scheda artista per revocare anche la condivisione Drive, poi riprova.");
+      }
+    }
+    if (kind === "artist" && !restore) {
       const links = await c.query(
         "SELECT id FROM studio_projects WHERE owner_id=$1 AND artist_id=$2 AND deleted_at IS NULL LIMIT 1",
         [owner, id],
