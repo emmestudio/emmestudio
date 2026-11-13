@@ -129,7 +129,7 @@ export async function syncTrackDriveFolders(owner:string,trackId:string){
  });
 }
 
-// This dedicated folder is managed by the portal. It lives outside the internal artist folder (which includes unpublished tracks and documents).
+// Only this child folder is shared; the rest of the artist archive stays private.
 export async function reconcileArtistDriveAccess(c: Pick<PoolClient,"query">, owner: string, id: string, email: string | null) {
   const key = artistSharedDriveKey(id);
   const row = (await c.query("SELECT folder_id FROM studio_drive_folders WHERE owner_id=$1 AND subject_key=$2", [owner,key])).rows[0];
@@ -162,12 +162,21 @@ export async function syncArtistDriveAccess(owner: string, id: string) {
       [owner,id]
     )).rows[0];
     const initial = await access();
-    const stored=(await c.query("SELECT state FROM studio_drive_folders WHERE owner_id=$1 AND subject_key=$2",[owner,key])).rows[0];
-    if (initial?.enabled && stored?.state !== "ready") {
-      const api = await clientForOwner(owner);
-      await ensureDriveFolder(c,api,owner,key,`${initial.name} — Materiali condivisi`,null,"Condivisione da sincronizzare");
-    }
     try {
+      if (initial?.enabled) {
+        const api = await clientForOwner(owner);
+        const root = await ensureDriveFolder(c,api,owner,"root","Emme Studio — Archivio",null);
+        const artists = await ensureDriveFolder(c,api,owner,"artists","Artisti",root);
+        const parent = await ensureDriveFolder(c,api,owner,`artist/${id}`,initial.name,artists);
+        for (const folderId of [root,artists,parent]) {
+          const grants = await api.permissions(folderId);
+          if (!grants.some(p=>p.role==="owner") || grants.some(p=>p.role!=="owner")) {
+            throw new DriveError(409,"L’archivio superiore ha già accessi condivisi. Verifica i permessi delle cartelle superiori prima di sincronizzare.");
+          }
+        }
+        // The existing ID is reused when moving a previously shared folder out of My Drive.
+        await ensureDriveFolder(c,api,owner,key,"Materiali condivisi con l’artista",parent,"Condivisione da sincronizzare");
+      }
       await c.query("BEGIN");
       await c.query("SELECT id FROM studio_artists WHERE owner_id=$1 AND id=$2 FOR UPDATE",[owner,id]);
       const latest = await access();

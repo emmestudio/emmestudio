@@ -30,9 +30,9 @@ export default function ArtistAccess({artistId}:{artistId:string}){
   <label>Email autorizzata<input disabled={busy} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="artista@example.com" maxLength={254}/></label>
   <div className="dialog-actions">
    <div className="artist-permission-control"><span className={"artist-permission-state "+(enabled?"is-active":"is-inactive")}>{enabled?"Accesso attivo":"Accesso disabilitato"}</span><label className="artist-permission-switch"><input type="checkbox" role="switch" aria-label="Abilita accesso artista" checked={enabled} disabled={busy} onChange={e=>void save(e.target.checked)}/><span className="artist-permission-slider" aria-hidden="true"/><span className="artist-permission-label">Abilita accesso artista</span></label></div>
-   <button className="secondary" disabled={busy||!email.trim()} onClick={()=>void save(enabled)}>{enabled&&!driveUrl?"Salva e sincronizza Drive":"Salva email"}</button>
+   <button className="secondary" disabled={busy||!email.trim()} onClick={()=>void save(enabled)}>{enabled?"Salva e sincronizza Drive":"Salva email"}</button>
   </div>
-  {enabled?<p className="small">{driveUrl?<><a href={driveUrl} target="_blank" rel="noopener noreferrer">Apri cartella condivisa ↗</a> · Inserisci qui solo i materiali destinati all’artista.</>:"Cartella Drive da sincronizzare."}</p>:null}
+  {enabled?<p className="small">{driveUrl?<><a href={driveUrl} target="_blank" rel="noopener noreferrer">Apri cartella condivisa ↗</a> · La cartella si trova in Archivio → Artisti → scheda artista. Ogni file che aggiungi qui è visibile all’artista.</>:"Cartella Drive da sincronizzare."}</p>:null}
   {message?<p role="status">{message}</p>:null}
  </section>;
 }

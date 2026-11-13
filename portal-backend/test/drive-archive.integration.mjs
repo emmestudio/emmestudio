@@ -111,9 +111,19 @@ try{
  failShare=false;
  const shared=await (await svc.accessApi.PUT(accessRequest('Artist@example.com',true))).json();
  const sharedId=shared.driveUrl.split('/').pop();
- assert.equal(remote.get(sharedId).parents.length,0,'External folder is outside the internal archive');
+ assert.deepEqual(remote.get(sharedId).parents,[stored.id],'Shared folder is inside the matching artist folder');
+ // Simulate the first release's existing shared folder in My Drive.
+ remote.get(sharedId).parents=[];
+ await svc.accessApi.PUT(accessRequest('artist@example.com',true));
+ assert.deepEqual(remote.get(sharedId).parents,[stored.id],'Migration moves the same Drive folder ID');
+ assert.equal(created.filter(id=>id===sharedId).length,1,'Migration does not duplicate the folder');
  assert.deepEqual(shares.get(sharedId).map(p=>p.emailAddress),['artist@example.com']);
- assert.equal(shares.has(stored.id),false,'Internal artist folder stays private');
+ assert.deepEqual(shares.get(stored.id),[],'Internal artist folder stays private');
+ shares.get(stored.id).push({id:'unexpected',type:'user',role:'reader',emailAddress:'outsider@example.com'});
+ const blocked=await (await svc.accessApi.PUT(accessRequest('artist@example.com',true))).json();
+ assert.match(blocked.driveError,/cartelle superiori/);
+ assert.equal(shares.get(sharedId).length,1,'Unsafe parent does not trigger any new grant');
+ shares.set(stored.id,[]);
  await svc.accessApi.PUT(accessRequest('artist@example.com',true));
  assert.equal(shares.get(sharedId).length,1,'Repeated sync creates no duplicate grant');
  const changed=await (await svc.accessApi.PUT(accessRequest('new@example.com',true))).json();
