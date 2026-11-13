@@ -6,6 +6,7 @@ import {headers} from "next/headers";
 import {redirect} from "next/navigation";
 import {artistSession} from "@/lib/artist-session";
 import {getDb} from "@/lib/db";
+import {artistSharedDriveKey,driveFolderUrl} from "@/lib/drive-data";
 export const dynamic="force-dynamic";
 export default async function ArtistPage(){
  const session=await artistSession(await headers());
@@ -31,6 +32,8 @@ export default async function ArtistPage(){
    WHERE f.owner_id=$1 AND f.artist_id=$2 ORDER BY f.published_at DESC`,
   [session.ownerId, session.artistId],
  );
+ const shared=await getDb().query("SELECT folder_id FROM studio_drive_folders WHERE owner_id=$1 AND subject_key=$2 AND state='ready' AND error=''",[session.ownerId,artistSharedDriveKey(session.artistId)]);
+ const sharedId=shared.rows[0]?.folder_id;
  type ArtistPreview={id:string;title:string;versionLabel:string;status:string;trackTitle:string;trackId:string};
  const groups=new Map<string,ArtistPreview[]>();
  for(const p of r.rows as ArtistPreview[]){const key=p.trackTitle||"Brano senza titolo";const list=groups.get(key)??[];list.push(p);groups.set(key,list);}
@@ -51,6 +54,7 @@ export default async function ArtistPage(){
      form.requiresSignature && !form.signedOn ? <DocumentReturn id={form.id}/> : null}
    </div>) : <p>Nessun documento disponibile.</p>}
   </section>
+  {sharedId?<section className="card"><h2>Materiali su Google Drive</h2><p>Apri la cartella con i materiali condivisi dallo studio usando lo stesso account Google del portale.</p><a className="button" href={driveFolderUrl(sharedId)} target="_blank" rel="noopener noreferrer">Apri cartella Drive ↗</a></section>:null}
   <section className="card"><h2>Le tue produzioni</h2>
    {groups.size?Array.from(groups.entries()).map(([track,versions])=>
     <div className="artist-track-group" key={track}>

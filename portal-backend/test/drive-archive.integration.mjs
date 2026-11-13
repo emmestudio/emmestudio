@@ -5,7 +5,8 @@ import {tmpdir} from 'node:os';import{join,resolve}from'node:path';
 import {randomUUID} from 'node:crypto';import assert from 'node:assert/strict';
 const db=new PGlite(),scratch=await mkdtemp(join(tmpdir(),'emme-drive-'));
 let locked=false,lockAvailable=true,calls=0,sequence=0,failAfterCreate=false,denied=false;
-const remote=new Map(),created=[];
+const remote=new Map(),created=[],shares=new Map();
+let failShare=false;
 const query=async(q,v)=>{
  if(q.includes('pg_try_advisory_lock')){if(!lockAvailable||locked)return{rows:[{acquired:false}]};locked=true;return{rows:[{acquired:true}]}}
  if(q.includes('pg_advisory_unlock')){locked=false;return{rows:[]}}
@@ -26,6 +27,20 @@ globalThis.fetch=async(url,init={})=>{
   if(failAfterCreate){failAfterCreate=false;throw Error('Connection lost after Google created folder')}
   return Response.json({id:b.id});
  }
+ const permissionPath=path.match(/^files\/([^/]+)\/permissions(?:\/([^/]+))?$/);
+ if(permissionPath){
+  const [,id,permissionId]=permissionPath;
+  if(!remote.has(id))return new Response('{}',{status:404});
+  const list=shares.get(id)??[];shares.set(id,list);
+  if(init.method==='POST'){
+   if(failShare)return new Response('{}',{status:403});
+   const entry={...JSON.parse(init.body),id:'grant_'+(++sequence)};
+   assert.equal(entry.type,'user');assert.equal(entry.role,'reader');
+   list.push(entry);return Response.json({id:entry.id});
+  }
+  if(init.method==='DELETE'){shares.set(id,list.filter(p=>p.id!==permissionId));return new Response(null,{status:204});}
+  return Response.json({permissions:[{id:'owner',role:'owner',type:'user'},...list]});
+ }
  const id=path.slice('files/'.length),file=remote.get(id);
  if(!file)return new Response('{}',{status:404});
  if(init.method==='PATCH'){
@@ -35,12 +50,12 @@ globalThis.fetch=async(url,init={})=>{
  return Response.json(file);
 };
 try{
- await build({stdin:{contents:`export * from '${resolve('lib/drive-archive.ts')}';export * from '${resolve('lib/drive-data.ts')}';export * from '${resolve('lib/artists.ts')}';export * from '${resolve('lib/artist-data.ts')}';export * from '${resolve('lib/production.ts')}';export * from '${resolve('lib/production-data.ts')}';export * from '${resolve('lib/workspace-export.ts')}';export * from '${resolve('lib/backup-data.ts')}';export {GET,POST} from '${resolve('app/api/drive/route.ts')}';export * as artistsApi from '${resolve('app/api/artists/route.ts')}';export * as productionApi from '${resolve('app/api/production/route.ts')}';`,resolveDir:resolve('.')},outfile:join(scratch,'svc.mjs'),bundle:true,platform:'node',format:'esm',tsconfig:'tsconfig.json',plugins:[{name:'isolated',setup(b){
- b.onResolve({filter:/^(server-only|\.\/db|\.\/auth|\.\/team|@\/lib\/workspace-session)$/},a=>({path:a.path,namespace:'mock'}));
- b.onLoad({filter:/.*/,namespace:'mock'},a=>({loader:'js',contents:a.path==='./db'?'export const getDb=()=>globalThis.driveDb':a.path==='./auth'?'export const getAuth=()=>globalThis.driveAuth':a.path==='./team'?'export const resolveAssignee=async()=>null':a.path==='@/lib/workspace-session'?'export const workspaceSession=async()=>globalThis.driveSession':''}));
+ await build({stdin:{contents:`export * from '${resolve('lib/drive-archive.ts')}';export * from '${resolve('lib/drive-data.ts')}';export * from '${resolve('lib/artists.ts')}';export * from '${resolve('lib/artist-data.ts')}';export * from '${resolve('lib/production.ts')}';export * from '${resolve('lib/production-data.ts')}';export * from '${resolve('lib/workspace-export.ts')}';export * from '${resolve('lib/backup-data.ts')}';export {GET,POST} from '${resolve('app/api/drive/route.ts')}';export * as accessApi from '${resolve('app/api/artist-access/route.ts')}';export * as artistsApi from '${resolve('app/api/artists/route.ts')}';export * as productionApi from '${resolve('app/api/production/route.ts')}';`,resolveDir:resolve('.')},outfile:join(scratch,'svc.mjs'),bundle:true,platform:'node',format:'esm',tsconfig:'tsconfig.json',plugins:[{name:'isolated',setup(b){
+ b.onResolve({filter:/^(server-only|\.\/db|\.\/auth|\.\/team|@\/lib\/db|@\/lib\/workspace-session)$/},a=>({path:a.path,namespace:'mock'}));
+ b.onLoad({filter:/.*/,namespace:'mock'},a=>({loader:'js',contents:(a.path==='./db'||a.path==='@/lib/db')?'export const getDb=()=>globalThis.driveDb':a.path==='./auth'?'export const getAuth=()=>globalThis.driveAuth':a.path==='./team'?'export const resolveAssignee=async()=>null':a.path==='@/lib/workspace-session'?'export const workspaceSession=async()=>globalThis.driveSession':''}));
  }}]});
  const svc=await import(join(scratch,'svc.mjs'));
- await db.exec(`CREATE TABLE "user"(id text PRIMARY KEY);INSERT INTO "user" VALUES('owner'),('other');CREATE TABLE account(id text,"userId" text,"providerId" text,scope text);INSERT INTO account VALUES('google-owner','owner','google','${svc.driveScope}');`);
+ await db.exec(`CREATE TABLE "user"(id text PRIMARY KEY,email text);INSERT INTO "user" VALUES('owner','owner@example.com'),('other','other@example.com');CREATE TABLE account(id text,"userId" text,"providerId" text,scope text);INSERT INTO account VALUES('google-owner','owner','google','${svc.driveScope}');`);
  const schemaFiles=['002-projects.sql','003-tasks.sql','004-members.sql','005-artists-finance.sql','006-production-finance.sql','007-workflow.sql','008-operations-trash.sql','009-direct-artist-production.sql','010-production-finance.sql','011-artist-personal-names.sql','012-drive-archive.sql'];
  for(const file of schemaFiles)await db.exec(await readFile('db/'+file,'utf8'));
  await db.exec(await readFile('db/012-drive-archive.sql','utf8'));
@@ -82,10 +97,39 @@ try{
  denied=true;
  const liveRequest=new Request('https://portal.example/api/production',{method:'POST',headers:{Origin:'https://portal.example','Content-Type':'application/json'},body:JSON.stringify({id:routeLive,draft:{...svc.emptyProduction('live'),artistId:routeArtist,title:'Live con Drive momentaneamente non disponibile'}})});
  const saved=await svc.productionApi.POST(liveRequest);assert.equal(saved.status,200);assert.equal((await saved.json()).drive.ready,false);assert.ok((await svc.listProduction('owner')).some(p=>p.id===routeLive),'Google failure preserves saved live');denied=false;await svc.syncDriveSubject('owner','live',routeLive);
+ await db.exec(await readFile('migrations/014-artist-access.sql','utf8'));
+ const accessRequest=(email,enabled,artistId=artist)=>new Request('https://portal.example/api/artist-access',{
+  method:'PUT',headers:{Origin:'https://portal.example','Content-Type':'application/json'},body:JSON.stringify({artistId,email,enabled}),
+ });
+ globalThis.driveSession={user:{id:'viewer'},workspaceOwnerId:'owner',role:'viewer'};
+ assert.equal((await svc.accessApi.PUT(accessRequest('artist@example.com',true))).status,403);
+ globalThis.driveSession={user:{id:'owner'},workspaceOwnerId:'owner',role:'admin'};
+ assert.equal((await svc.accessApi.PUT(accessRequest('artist@example.com',true,other))).status,404);
+ failShare=true;
+ const pendingShare=await (await svc.accessApi.PUT(accessRequest('Artist@example.com',true))).json();
+ assert.equal(pendingShare.enabled,true);assert.equal(pendingShare.driveUrl,null);assert.ok(pendingShare.driveError);
+ failShare=false;
+ const shared=await (await svc.accessApi.PUT(accessRequest('Artist@example.com',true))).json();
+ const sharedId=shared.driveUrl.split('/').pop();
+ assert.equal(remote.get(sharedId).parents.length,0,'External folder is outside the internal archive');
+ assert.deepEqual(shares.get(sharedId).map(p=>p.emailAddress),['artist@example.com']);
+ assert.equal(shares.has(stored.id),false,'Internal artist folder stays private');
+ await svc.accessApi.PUT(accessRequest('artist@example.com',true));
+ assert.equal(shares.get(sharedId).length,1,'Repeated sync creates no duplicate grant');
+ const changed=await (await svc.accessApi.PUT(accessRequest('new@example.com',true))).json();
+ assert.equal(changed.driveUrl,shared.driveUrl);
+ assert.deepEqual(shares.get(sharedId).map(p=>p.emailAddress),['new@example.com']);
+ denied=true;
+ assert.equal((await svc.accessApi.PUT(accessRequest('new@example.com',false))).status,403,'Revocation failure is visible');
+ denied=false;
+ assert.equal((await svc.accessApi.PUT(accessRequest('new@example.com',false))).status,200);
+ assert.deepEqual(shares.get(sharedId),[]);
+ assert.ok(remote.has(sharedId),'Revocation preserves materials');
  const exported=await svc.exportWorkspace('owner');assert.equal(exported.version,5);assert.ok(exported.data.studio_drive_folders.length>0);
  const restored=new PGlite();try{
  await restored.exec(`CREATE TABLE "user"(id text PRIMARY KEY);INSERT INTO "user" VALUES('restored');`);
  for(const file of schemaFiles)await restored.exec(await readFile('db/'+file,'utf8'));
+ await restored.exec(await readFile('migrations/014-artist-access.sql','utf8'));
  await svc.restoreBusinessExport({query:(q,v)=>restored.query(q,v)},'restored',exported);
  assert.equal((await restored.query("SELECT * FROM studio_drive_folders WHERE owner_id='restored'")).rows.length,exported.data.studio_drive_folders.length,'Restore preserves folder references');
  }finally{await restored.close()}

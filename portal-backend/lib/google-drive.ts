@@ -2,7 +2,7 @@ import "server-only";
 import { DriveError } from "./drive-data";
 export type GoogleFolder = { id: string; name: string; mimeType: string; trashed?: boolean; parents?: string[]; ownedByMe?: boolean };
 export function googleDrive(token: string, transport: typeof fetch = fetch) {
-  async function call(path: string, init?: RequestInit) {
+  async function call(path: string, init?: RequestInit, strict404 = false) {
     let response: Response;
     try {
       response = await transport(`https://www.googleapis.com/drive/v3/${path}`, {
@@ -11,15 +11,37 @@ export function googleDrive(token: string, transport: typeof fetch = fetch) {
       });
     } catch { throw new DriveError(502, "Drive non risponde. Riprova: le cartelle già create saranno recuperate."); }
     if (!response.ok) {
-      if (response.status === 404) return null;
+      if (response.status === 404 && !strict404) return null;
       throw new DriveError(response.status === 401 || response.status === 403 ? 403 : 502,
         response.status === 401 || response.status === 403
           ? "Google Drive non autorizzato. Verifica Drive API e rinnova il collegamento dall’Archivio Drive."
           : "Google Drive non ha completato l’operazione. Riprova tra poco.");
     }
-    return response.json();
+    return response.status === 204 ? null : response.json();
   }
   return {
+    async permissions(id: string) {
+      const result: { id: string; type: string; role: string; emailAddress?: string; permissionDetails?: { inherited: boolean }[] }[] = [];
+      let pageToken: string | undefined;
+      do {
+        const q = new URLSearchParams({ fields: "nextPageToken,permissions(id,type,role,emailAddress,permissionDetails(inherited))", supportsAllDrives: "true", pageSize: "100" });
+        if (pageToken) q.set("pageToken", pageToken);
+        const page = await call(`files/${encodeURIComponent(id)}/permissions?${q}`, undefined, true);
+        if (!Array.isArray(page?.permissions)) throw new DriveError(502, "Permessi Drive non verificabili.");
+        result.push(...page.permissions);
+        pageToken = page.nextPageToken;
+      } while (pageToken);
+      return result;
+    },
+    async shareReader(id: string, emailAddress: string) {
+      const result = await call(`files/${encodeURIComponent(id)}/permissions?supportsAllDrives=true&sendNotificationEmail=false&fields=id`, {
+        method: "POST", body: JSON.stringify({ type: "user", role: "reader", emailAddress }),
+      }, true);
+      if (!result?.id) throw new DriveError(502, "Condivisione Drive da verificare.");
+    },
+    async revokePermission(id: string, permission: string) {
+      await call(`files/${encodeURIComponent(id)}/permissions/${encodeURIComponent(permission)}?supportsAllDrives=true`, { method: "DELETE" });
+    },
     async generateId(): Promise<string> {
       const data = await call("files/generateIds?count=1&space=drive&type=files");
       const id = data?.ids?.[0];
