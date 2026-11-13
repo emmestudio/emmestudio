@@ -5,6 +5,7 @@ import {headers} from "next/headers";
 import {redirect} from "next/navigation";
 import {artistSession} from "@/lib/artist-session";
 import {getDb} from "@/lib/db";
+import {artistSharedDriveKey,driveFolderUrl} from "@/lib/drive-data";
 export const dynamic="force-dynamic";
 export default async function ArtistPage(){
  const session=await artistSession(await headers());
@@ -22,6 +23,8 @@ export default async function ArtistPage(){
  LEFT JOIN studio_projects j ON j.id=p.project_id AND j.owner_id=p.owner_id
  WHERE d.owner_id=$1 AND d.artist_id=$2 AND d.enabled=true AND COALESCE(j.artist_id,p.artist_id)=d.artist_id AND (p.project_id IS NULL OR j.deleted_at IS NULL)
  ORDER BY d.updated_at DESC LIMIT 100`,[session.ownerId,session.artistId]);
+ const shared=await getDb().query("SELECT folder_id FROM studio_drive_folders WHERE owner_id=$1 AND subject_key=$2 AND state='ready' AND error=''",[session.ownerId,artistSharedDriveKey(session.artistId)]);
+ const sharedId=shared.rows[0]?.folder_id;
  type ArtistPreview={id:string;title:string;versionLabel:string;status:string;trackTitle:string;trackId:string};
  const groups=new Map<string,ArtistPreview[]>();
  for(const p of r.rows as ArtistPreview[]){const key=p.trackTitle||"Brano senza titolo";const list=groups.get(key)??[];list.push(p);groups.set(key,list);}
@@ -30,6 +33,7 @@ export default async function ArtistPage(){
   <h1>Benvenuto, <em>{session.artistName}.</em></h1>
   <ArtistNotifications/>
   <p>Qui trovi le anteprime che lo studio ha reso disponibili per l’ascolto, le richieste di revisione e le consegne autorizzate.</p>
+  {sharedId?<section className="card"><h2>Materiali su Google Drive</h2><p>Apri la cartella con i materiali condivisi dallo studio usando lo stesso account Google del portale.</p><a className="button" href={driveFolderUrl(sharedId)} target="_blank" rel="noopener noreferrer">Apri cartella Drive ↗</a></section>:null}
   <section className="card"><h2>Le tue produzioni</h2>
    {groups.size?Array.from(groups.entries()).map(([track,versions])=>
     <div className="artist-track-group" key={track}>

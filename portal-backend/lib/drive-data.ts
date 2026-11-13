@@ -22,3 +22,5 @@ export const driveFolderUrl = (id: string) => `https://drive.google.com/drive/fo
 export class DriveError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
+
+export const artistSharedDriveKey = (id: string) => `artist/${id}/shared`;
