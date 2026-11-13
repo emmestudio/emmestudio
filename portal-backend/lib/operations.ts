@@ -29,7 +29,7 @@ export async function purgeProject(owner: string, id: string, version: number, c
     if (p.version !== version) throw new OperationsError("Progetto modificato. Aggiorna e riprova.");
     if (confirmation !== p.title) throw new OperationsError("Scrivi il titolo esatto per confermare l’eliminazione definitiva.");
     const children=await c.query("SELECT id FROM studio_production WHERE owner_id=$1 AND project_id=$2 FOR UPDATE",[owner,id]);
-    await cleanupArtistRecords(c,owner,children.rows.map(r=>r.id));
+    await cleanupArtistRecords(c,owner,[id,...children.rows.map(r=>r.id)]);
     // Remove resource histories before their parents; every query is workspace scoped.
     await c.query(`DELETE FROM studio_work_history WHERE owner_id=$1 AND resource_id IN (
       SELECT id FROM studio_projects WHERE owner_id=$1 AND id=$2

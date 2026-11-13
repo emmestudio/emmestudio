@@ -1,3 +1,4 @@
+import {conversationWorks} from "@/lib/artist-conversation-work";
 import {workspaceSession} from "@/lib/workspace-session";
 import {getDb} from "@/lib/db";
 import {validId} from "@/lib/task-data";
@@ -14,11 +15,11 @@ export async function GET(req:Request){
  try{
  const [artists,messages,events,tracks,previews]=await Promise.all([
  getDb().query(`SELECT id,name FROM studio_artists WHERE owner_id=$1 AND deleted_at IS NULL ORDER BY name`,[s.workspaceOwnerId]),
- getDb().query(`SELECT m.id,m.artist_id AS "artistId",m.track_id AS "trackId",m.sender_role AS "senderRole",m.body,m.created_at AS "createdAt",t.data->>'title' AS "trackTitle"
- FROM studio_artist_track_messages m JOIN studio_production t ON t.id=m.track_id AND t.owner_id=m.owner_id AND t.deleted_at IS NULL
- LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id
+ getDb().query(`SELECT m.id,m.artist_id AS "artistId",m.track_id AS "trackId",m.sender_role AS "senderRole",m.body,m.created_at AS "createdAt",w.title AS "trackTitle",w.kind AS "workKind"
+ FROM studio_artist_track_messages m JOIN (${conversationWorks}) w ON w.id=m.track_id AND w.owner_id=m.owner_id AND w.artist_id=m.artist_id
+ JOIN studio_artists a ON a.id=m.artist_id AND a.owner_id=m.owner_id AND a.deleted_at IS NULL
  WHERE m.owner_id=$1 AND ($2::uuid IS NULL OR m.artist_id=$2::uuid) AND ($3::uuid IS NULL OR m.track_id=$3::uuid)
- AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND COALESCE(p.artist_id,t.artist_id)=m.artist_id
+
  AND ($4::timestamptz IS NULL OR (m.created_at,m.id)<($4::timestamptz,COALESCE($5::uuid,'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid))) ORDER BY m.created_at DESC,m.id DESC LIMIT 101`,[s.workspaceOwnerId,artistId,trackId,before,beforeId]),
  getDb().query(`SELECT n.id,n.artist_id AS "artistId",n.track_id AS "trackId",n.event_type AS "eventType",n.body,n.created_at AS "createdAt",t.data->>'title' AS "trackTitle"
  FROM studio_artist_notifications n JOIN studio_production t ON t.id=n.track_id AND t.owner_id=n.owner_id AND t.deleted_at IS NULL
@@ -26,7 +27,7 @@ export async function GET(req:Request){
  WHERE n.owner_id=$1 AND n.recipient='studio' AND n.event_type<>'message' AND ($2::uuid IS NULL OR n.artist_id=$2::uuid)
  AND ($3::uuid IS NULL OR n.track_id=$3::uuid) AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND COALESCE(p.artist_id,t.artist_id)=n.artist_id
  ORDER BY n.created_at DESC LIMIT 300`,[s.workspaceOwnerId,artistId,trackId]),
- getDb().query(`SELECT t.id,COALESCE(p.artist_id,t.artist_id) AS "artistId",COALESCE(t.data->>'title','Brano') AS title FROM studio_production t LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id WHERE t.owner_id=$1 AND t.kind='track' AND t.deleted_at IS NULL AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND ($2::uuid IS NULL OR COALESCE(p.artist_id,t.artist_id)=$2::uuid) ORDER BY t.created_at DESC`,[s.workspaceOwnerId,artistId]),
+ getDb().query(`SELECT w.id,w.artist_id AS "artistId",w.title,w.kind FROM (${conversationWorks}) w JOIN studio_artists a ON a.owner_id=w.owner_id AND a.id=w.artist_id AND a.deleted_at IS NULL WHERE w.owner_id=$1 AND ($2::uuid IS NULL OR w.artist_id=$2) ORDER BY w.created_at DESC`,[s.workspaceOwnerId,artistId]),
  getDb().query(`SELECT v.id,v.artist_id AS "artistId",v.track_id AS "trackId",v.title,v.version_label AS "versionLabel",v.status,v.updated_at AS "updatedAt" FROM studio_artist_previews v JOIN studio_production t ON t.owner_id=v.owner_id AND t.id=v.track_id AND t.deleted_at IS NULL LEFT JOIN studio_projects p ON p.owner_id=t.owner_id AND p.id=t.project_id WHERE v.owner_id=$1 AND v.status IN ('ready','approved','revision_requested') AND (t.project_id IS NULL OR p.deleted_at IS NULL) AND COALESCE(p.artist_id,t.artist_id)=v.artist_id AND ($2::uuid IS NULL OR v.artist_id=$2::uuid) ORDER BY v.updated_at DESC`,[s.workspaceOwnerId,artistId])
  ]);
  const attachments=await getDb().query(`SELECT id,message_id AS "messageId",artist_id AS "artistId",track_id AS "trackId",filename,mime_type AS "mimeType" FROM studio_artist_message_attachments WHERE owner_id=$1 AND message_id=ANY($2::uuid[])`,[s.workspaceOwnerId,messages.rows.slice(0,100).map(m=>m.id)]);
@@ -38,12 +39,12 @@ export async function POST(req:Request){
  const s=await workspaceSession(req.headers);if(!s)return out({error:"Accesso richiesto"},401);
  if(!canEdit(s.role))return out({error:"Ruolo di sola lettura"},403);
  try{
- const b=await req.json();if(!validId(b.artistId)||!validId(b.trackId)||typeof b.body!=="string"||!b.body.trim()||b.body.trim().length>3000)return out({error:"Messaggio non valido"},400);
- const allowed=await getDb().query(`SELECT 1 FROM studio_production t LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id
- JOIN studio_artists a ON a.id=COALESCE(p.artist_id,t.artist_id) AND a.owner_id=t.owner_id
- WHERE t.owner_id=$1 AND t.id=$2 AND t.kind='track' AND t.deleted_at IS NULL AND a.id=$3 AND a.deleted_at IS NULL AND (t.project_id IS NULL OR p.deleted_at IS NULL)`,[s.workspaceOwnerId,b.trackId,b.artistId]);
- if(!allowed.rowCount)return out({error:"Brano non autorizzato"},403);
- const r=await getDb().query(`INSERT INTO studio_artist_track_messages(owner_id,artist_id,track_id,sender_role,body) VALUES($1,$2,$3,'studio',$4) RETURNING id`,[s.workspaceOwnerId,b.artistId,b.trackId,b.body.trim()]);
+ const b=await req.json();if(!validId(b?.artistId)||!validId(b.trackId)||typeof b.body!=="string"||!b.body.trim()||b.body.trim().length>3000)return out({error:"Messaggio non valido"},400);
+ const r=await getDb().query(`INSERT INTO studio_artist_track_messages(owner_id,artist_id,track_id,sender_role,body)
+ SELECT w.owner_id,w.artist_id,w.id,'studio',$4 FROM (${conversationWorks}) w
+ JOIN studio_artists a ON a.owner_id=w.owner_id AND a.id=w.artist_id AND a.deleted_at IS NULL
+ WHERE w.owner_id=$1 AND w.id=$2 AND w.artist_id=$3 LIMIT 1 RETURNING id`,[s.workspaceOwnerId,b.trackId,b.artistId,b.body.trim()]);
+ if(!r.rowCount)return out({error:"Lavoro non autorizzato"},403);
  await notifyArtistEvent(s.workspaceOwnerId,b.artistId,b.trackId,"artist","message","Nuovo messaggio dallo studio");
  return out({created:true,id:r.rows[0].id},201);
  }catch{return out({error:"Messaggio non inviato"},503)}

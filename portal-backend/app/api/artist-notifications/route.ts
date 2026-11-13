@@ -1,3 +1,4 @@
+import {conversationWorks} from "@/lib/artist-conversation-work";
 import {workspaceSession} from "@/lib/workspace-session";
 import {artistSession} from "@/lib/artist-session";
 import {sameOrigin} from "@/lib/calendar-policy";
@@ -15,15 +16,13 @@ export async function GET(r:Request){
  const s=await context(r.headers);if(!s)return reply({error:"Accesso non autorizzato"},401);
  try{
   const q=await getDb().query(`SELECT n.id,n.event_type AS "eventType",n.body,n.track_id AS "trackId",
-  n.created_at AS "createdAt",COALESCE(reads.read_at,CASE WHEN $2='artist' THEN n.read_at ELSE NULL END) AS "readAt",p.data->>'title' AS "trackTitle"
+  n.created_at AS "createdAt",COALESCE(reads.read_at,CASE WHEN $2='artist' THEN n.read_at ELSE NULL END) AS "readAt",w.title AS "trackTitle"
   FROM studio_artist_notifications n
   LEFT JOIN studio_artist_notification_reads reads ON reads.owner_id=n.owner_id AND reads.notification_id=n.id AND reads.user_id=$4
-  LEFT JOIN studio_production p ON p.owner_id=n.owner_id AND p.id=n.track_id AND p.deleted_at IS NULL
-  LEFT JOIN studio_projects j ON j.id=p.project_id AND j.owner_id=p.owner_id
+  LEFT JOIN (${conversationWorks}) w ON w.owner_id=n.owner_id AND w.id=n.track_id AND w.artist_id=n.artist_id
   WHERE n.owner_id=$1 AND n.recipient=$2
   AND ($3::uuid IS NULL OR n.artist_id=$3::uuid)
-  AND (n.event_type='document' OR (COALESCE(j.artist_id,p.artist_id)=n.artist_id
-    AND (p.project_id IS NULL OR j.deleted_at IS NULL)))
+  AND (n.event_type='document' OR w.id IS NOT NULL)
   ORDER BY n.created_at DESC LIMIT 100`,[s.owner,s.recipient,s.artistId,s.userId]);
   return reply({items:q.rows,unread:q.rows.filter((x:{readAt:Date|null})=>!x.readAt).length});
  }catch{return reply({error:"Notifiche non disponibili: verifica migrazione 019"},503);}

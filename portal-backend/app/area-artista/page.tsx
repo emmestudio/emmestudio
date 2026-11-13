@@ -1,3 +1,4 @@
+import {conversationWorks} from "@/lib/artist-conversation-work";
 import DocumentReturn from "./document-return";
 import ArtistNotifications from "./notifications";
 import Feedback from "./feedback";
@@ -34,6 +35,10 @@ export default async function ArtistPage(){
  );
  const shared=await getDb().query("SELECT folder_id FROM studio_drive_folders WHERE owner_id=$1 AND subject_key=$2 AND state='ready' AND error=''",[session.ownerId,artistSharedDriveKey(session.artistId)]);
  const sharedId=shared.rows[0]?.folder_id;
+ const threads=await getDb().query<{id:string;title:string}>(`SELECT w.id,w.title FROM (${conversationWorks}) w
+  WHERE w.owner_id=$1 AND w.artist_id=$2 AND w.kind<>'track' AND EXISTS (
+    SELECT 1 FROM studio_artist_track_messages m WHERE m.owner_id=w.owner_id AND m.artist_id=w.artist_id AND m.track_id=w.id AND m.sender_role='studio')
+  ORDER BY w.created_at DESC`,[session.ownerId,session.artistId]);
  type ArtistPreview={id:string;title:string;versionLabel:string;status:string;trackTitle:string;trackId:string};
  const groups=new Map<string,ArtistPreview[]>();
  for(const p of r.rows as ArtistPreview[]){const key=p.trackTitle||"Brano senza titolo";const list=groups.get(key)??[];list.push(p);groups.set(key,list);}
@@ -55,6 +60,7 @@ export default async function ArtistPage(){
    </div>) : <p>Nessun documento disponibile.</p>}
   </section>
   {sharedId?<section className="card"><h2>Materiali su Google Drive</h2><p>Apri la cartella con i materiali condivisi dallo studio usando lo stesso account Google del portale.</p><a className="button" href={driveFolderUrl(sharedId)} target="_blank" rel="noopener noreferrer">Apri cartella Drive ↗</a></section>:null}
+  {threads.rows.length?<section className="card"><h2>Conversazioni sui tuoi lavori</h2>{threads.rows.map(w=><details key={w.id}><summary>{w.title}</summary><TrackMessages trackId={w.id} workTitle={w.title}/></details>)}</section>:null}
   <section className="card"><h2>Le tue produzioni</h2>
    {groups.size?Array.from(groups.entries()).map(([track,versions])=>
     <div className="artist-track-group" key={track}>

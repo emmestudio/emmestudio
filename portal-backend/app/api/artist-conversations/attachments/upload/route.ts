@@ -1,3 +1,4 @@
+import {conversationWorks} from "@/lib/artist-conversation-work";
 import {handleUpload,type HandleUploadBody} from '@vercel/blob/client';
 import {get,head,del} from '@vercel/blob';
 import {workspaceSession} from '@/lib/workspace-session';
@@ -17,7 +18,7 @@ export async function POST(request:Request){
   const s=await workspaceSession(request.headers);if(!s||!canEdit(s.role))throw Error('Accesso non autorizzato');
   const id=pathname.replace('message-attachments/','');if(pathname!==`message-attachments/${id}`||!validId(id))throw Error('Percorso non valido');
   const p=JSON.parse(payload||'{}');if(!validId(p.messageId)||typeof p.filename!=='string')throw Error('Allegato non valido');
-  const m=await getDb().query(`SELECT m.artist_id,m.track_id FROM studio_artist_track_messages m JOIN studio_production t ON t.owner_id=m.owner_id AND t.id=m.track_id JOIN studio_artists a ON a.owner_id=m.owner_id AND a.id=m.artist_id LEFT JOIN studio_projects j ON j.owner_id=t.owner_id AND j.id=t.project_id WHERE m.owner_id=$1 AND m.id=$2 AND m.sender_role='studio' AND t.deleted_at IS NULL AND a.deleted_at IS NULL AND (j.id IS NULL OR j.deleted_at IS NULL) AND COALESCE(j.artist_id,t.artist_id)=m.artist_id`,[s.workspaceOwnerId,p.messageId]);
+  const m=await getDb().query(`SELECT m.artist_id,m.track_id FROM studio_artist_track_messages m JOIN (${conversationWorks}) w ON w.owner_id=m.owner_id AND w.id=m.track_id AND w.artist_id=m.artist_id JOIN studio_artists a ON a.owner_id=m.owner_id AND a.id=m.artist_id AND a.deleted_at IS NULL WHERE m.owner_id=$1 AND m.id=$2 AND m.sender_role='studio' `,[s.workspaceOwnerId,p.messageId]);
   if(!m.rowCount)throw Error('Messaggio non autorizzato');
   return {allowedContentTypes:allowed,maximumSizeInBytes:10*1024*1024,validUntil:Date.now()+10*60*1000,allowOverwrite:false,addRandomSuffix:true,tokenPayload:JSON.stringify({owner:s.workspaceOwnerId,id,messageId:p.messageId,artistId:m.rows[0].artist_id,trackId:m.rows[0].track_id,filename:p.filename.slice(0,180).replace(/[\\/\x00-\x1f]/g,'_')})};
  },

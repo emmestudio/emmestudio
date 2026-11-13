@@ -1,3 +1,4 @@
+import {conversationWorks} from "@/lib/artist-conversation-work";
 import {randomUUID} from "node:crypto";
 import {put} from "@vercel/blob";
 import {workspaceSession} from "@/lib/workspace-session";
@@ -21,11 +22,9 @@ export async function POST(req:Request){
   if(typeof messageId!=="string"||!validId(messageId)||!(file instanceof File))return out({error:"Richiesta non valida"},400);
   if(!ALLOWED.has(file.type)||file.size<=0||file.size>MAX)return out({error:"Solo PDF o immagini PNG, JPEG, WebP fino a 4 MB nel percorso precedente"},400);
   const result=await getDb().query(`SELECT m.artist_id,m.track_id FROM studio_artist_track_messages m
-   JOIN studio_production t ON t.id=m.track_id AND t.owner_id=m.owner_id AND t.deleted_at IS NULL
-   LEFT JOIN studio_projects p ON p.id=t.project_id AND p.owner_id=t.owner_id
+   JOIN (${conversationWorks}) w ON w.id=m.track_id AND w.owner_id=m.owner_id AND w.artist_id=m.artist_id
    JOIN studio_artists a ON a.id=m.artist_id AND a.owner_id=m.owner_id AND a.deleted_at IS NULL
-   WHERE m.id=$1 AND m.owner_id=$2 AND m.sender_role='studio' AND (t.project_id IS NULL OR p.deleted_at IS NULL)
-   AND COALESCE(p.artist_id,t.artist_id)=m.artist_id`,[messageId,s.workspaceOwnerId]);
+   WHERE m.id=$1 AND m.owner_id=$2 AND m.sender_role='studio' `,[messageId,s.workspaceOwnerId]);
   if(!result.rowCount)return out({error:"Messaggio non autorizzato"},403);
   const magic=new Uint8Array(await file.slice(0,12).arrayBuffer());
   const match=file.type==="application/pdf"?String.fromCharCode(...magic.slice(0,5))==="%PDF-"
