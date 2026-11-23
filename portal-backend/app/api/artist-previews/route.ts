@@ -91,6 +91,23 @@ export async function PATCH(request: Request) {
     if (!s) return reply({error:"Accesso richiesto."},401);
     if (s.role!=="admin") return reply({error:"Solo amministratore."},403);
     const b=await request.json();
+    if(b.action==="rename"){
+      const title=cleaned(b.title,300);
+      const previousTitle=cleaned(b.previousTitle,300);
+      if(!validId(b.id)||!title||!previousTitle||b.status!==undefined||b.deliveryUnlocked!==undefined)
+        return reply({error:"Inserisci un nome da 1 a 300 caratteri."},400);
+      const result=await getDb().query(`UPDATE studio_artist_previews p SET title=$3,updated_at=now()
+        WHERE p.owner_id=$1 AND p.id=$2 AND p.title=$4 AND p.purged_at IS NULL
+        AND EXISTS(
+          SELECT 1 FROM studio_production t
+          LEFT JOIN studio_projects j ON j.id=t.project_id AND j.owner_id=t.owner_id
+          JOIN studio_artists a ON a.id=p.artist_id AND a.owner_id=p.owner_id AND a.deleted_at IS NULL
+          WHERE t.id=p.track_id AND t.owner_id=p.owner_id AND t.kind='track' AND t.deleted_at IS NULL
+          AND (t.project_id IS NULL OR j.deleted_at IS NULL)
+          AND COALESCE(j.artist_id,t.artist_id)=p.artist_id
+        ) RETURNING p.id`,[s.workspaceOwnerId,b.id,title,previousTitle]);
+      return result.rowCount?reply({saved:true}):reply({error:"L’anteprima è cambiata o non è disponibile. Ricarica e riprova."},409);
+    }
     if (!validId(b.id) || !allowed.has(b.status) || b.deliveryUnlocked!==undefined)
       return reply({error:"Stato non valido: la consegna non si sblocca qui."},400);
     const result=await getDb().query(`WITH prior AS (

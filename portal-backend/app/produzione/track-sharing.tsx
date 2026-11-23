@@ -15,6 +15,7 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
  const [deliveries,setDeliveries]=useState<{id:string;title:string;enabled:boolean;fileName:string;trackId:string}[]>([]);
  const [title,setTitle]=useState(""),[version,setVersion]=useState("Mix v01"),[previewFile,setPreviewFile]=useState("");
  const [deliveryName,setDeliveryName]=useState(""),[deliveryFile,setDeliveryFile]=useState(""),[deliveryTitle,setDeliveryTitle]=useState("");
+ const [renaming,setRenaming]=useState<{id:string;previousTitle:string;title:string}|null>(null);
  const [error,setError]=useState(""),[busy,setBusy]=useState(false);
  async function removeMaterial(kind:"preview"|"delivery",id:string,name:string){
   if(!window.confirm("Spostare nel cestino di Google Drive e rimuovere dal portale il file «"+name+"»? L’operazione impedirà immediatamente l’accesso dell’artista."))return;
@@ -81,7 +82,22 @@ export default function TrackSharing({trackId,artistId}:{trackId:string;artistId
   </form>
   <h4>Anteprime per ascolto</h4>
   {previews.map(p=><div key={p.id} className="artist-permission-row">
-   <div className="artist-permission-details"><strong>{p.title} · {p.versionLabel}</strong><span className="artist-permission-file">{previewStates.find(x=>x.value===p.status)?.description??p.status}</span>{p.feedback?<span className="artist-permission-file">Feedback: {p.feedback}</span>:null}</div>
+   <div className="artist-permission-details"><strong>{p.title} · {p.versionLabel}</strong><span className="artist-permission-file">{previewStates.find(x=>x.value===p.status)?.description??p.status}</span>{p.feedback?<span className="artist-permission-file">Feedback: {p.feedback}</span>:null}
+    <audio controls preload="none" src={"/api/artist-audio/"+p.id} aria-label={"Ascolta anteprima "+p.title}
+      style={{width:"100%",maxWidth:520,marginTop:12}}/>
+    {renaming?.id===p.id?<form onSubmit={async e=>{
+      e.preventDefault();
+      if(await request("/api/artist-previews","PATCH",{id:p.id,action:"rename",title:renaming.title,previousTitle:renaming.previousTitle}))
+        setRenaming(null);
+    }}>
+      <label>Nome dell’anteprima<input value={renaming.title} maxLength={300} required disabled={busy}
+        onChange={e=>setRenaming({...renaming,title:e.target.value})}/></label>
+      <p className="small">Il nome sarà visibile anche nell’area artista.</p>
+      <button type="submit" className="secondary" disabled={busy||!renaming.title.trim()}>Salva nome</button>
+      <button type="button" className="secondary" disabled={busy} onClick={()=>setRenaming(null)}>Annulla</button>
+    </form>:<button type="button" className="secondary" disabled={busy}
+      onClick={()=>setRenaming({id:p.id,title:p.title,previousTitle:p.title})}>Rinomina anteprima</button>}
+   </div>
    <div className="artist-preview-status-control"><label htmlFor={"preview-status-"+p.id}>Visibilità e stato dell’anteprima</label><select id={"preview-status-"+p.id} aria-label={"Stato anteprima "+p.title} value={p.status} disabled={busy} onChange={e=>void request("/api/artist-previews","PATCH",{id:p.id,status:e.target.value})}>
     {previewStates.map(x=><option key={x.value} value={x.value}>{x.label}</option>)}
    </select><button type="button" className="secondary" disabled={busy} onClick={()=>void removeMaterial("preview",p.id,p.title)}>Elimina anteprima</button></div>
